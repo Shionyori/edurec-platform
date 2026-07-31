@@ -7,6 +7,7 @@ import (
 	"os"
 
 	"github.com/Shionyori/edurec-platform/backend/internal/config"
+	"github.com/Shionyori/edurec-platform/backend/internal/database"
 	"github.com/gin-gonic/gin"
 )
 
@@ -31,6 +32,21 @@ func main() {
 		logger = slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelDebug}))
 	}
 	slog.SetDefault(logger)
+
+	// 初始化 MySQL
+	db, err := database.InitMySQL(cfg.Database)
+	if err != nil {
+		slog.Error("MySQL 初始化失败", "error", err)
+		os.Exit(1)
+	}
+
+	// 初始化 Redis
+	rdb, err := database.InitRedis(cfg.Redis)
+	if err != nil {
+		slog.Error("Redis 初始化失败", "error", err)
+		os.Exit(1)
+	}
+	_, _ = db, rdb // 后续传递给 handler/service 使用
 
 	// 设置 Gin 运行模式
 	gin.SetMode(cfg.Server.Mode)

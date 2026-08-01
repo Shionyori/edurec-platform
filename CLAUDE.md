@@ -4,10 +4,18 @@
 - After a stage of work, remember to update relevant documentation and tests (if exist).
 
 # Branch and commit rules
+
+## General
 - If needed, create a new branch (just need to give cmd advice). But don't create a new branch for every single commit. 
 - After each change, recommend a commit message (if needed to commit).
+- Each commit should be a single logical change. If a change is too big, break it down into smaller commits.
+- Considering the rules above, if a change is too big, you may need to stop and give commit advice, after mannual review, and then continue to implement the rest of the change in a new commit.
 
-# Commit messages format
+## Branch format
+- Branch names should be clear and concise.
+- For example, "feat/frontend-new-feature" or "fix/backend-login-issue"...
+
+## Commit messages format
 - Commit messages should be clear and concise.
 - For example, "feat(frontend): add new feature" or "fix(backend): resolve issue with login"...
 

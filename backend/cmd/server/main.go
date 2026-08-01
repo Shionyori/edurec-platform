@@ -8,6 +8,7 @@ import (
 
 	"github.com/Shionyori/edurec-platform/backend/internal/config"
 	"github.com/Shionyori/edurec-platform/backend/internal/database"
+	"github.com/Shionyori/edurec-platform/backend/internal/router"
 	"github.com/gin-gonic/gin"
 )
 
@@ -46,28 +47,12 @@ func main() {
 		slog.Error("Redis 初始化失败", "error", err)
 		os.Exit(1)
 	}
-	_, _ = db, rdb // 后续传递给 handler/service 使用
 
 	// 设置 Gin 运行模式
 	gin.SetMode(cfg.Server.Mode)
 
 	// 创建路由
-	r := gin.New()
-
-	// 全局中间件
-	r.Use(gin.Logger())
-	r.Use(gin.Recovery())
-
-	// 健康检查
-	r.GET("/api/v1/health", func(c *gin.Context) {
-		c.JSON(200, gin.H{
-			"code":    0,
-			"message": "ok",
-			"data": gin.H{
-				"status": "healthy",
-			},
-		})
-	})
+	r := router.New(cfg, db, rdb)
 
 	// 启动服务器
 	addr := fmt.Sprintf(":%d", cfg.Server.Port)

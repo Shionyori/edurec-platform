@@ -41,6 +41,23 @@ type resourceListItem struct {
 	CreatedAt   time.Time        `json:"created_at"`
 }
 
+type resourceDetail struct {
+	ID          uint             `json:"id"`
+	Title       string           `json:"title"`
+	Description string           `json:"description"`
+	CoverURL    string           `json:"cover_url"`
+	Type        string           `json:"type"`
+	Category    *categorySummary `json:"category"`
+	Tags        []string         `json:"tags"`
+	Metadata    map[string]any   `json:"metadata"`
+	Author      string           `json:"author"`
+	SourceURL   string           `json:"source_url"`
+	AvgRating   float32          `json:"avg_rating"`
+	ViewCount   uint             `json:"view_count"`
+	CreatedAt   time.Time        `json:"created_at"`
+	UpdatedAt   time.Time        `json:"updated_at"`
+}
+
 func toResourceListItem(resource *model.Resource) resourceListItem {
 	var category *categorySummary
 	if resource.Category.ID != 0 {
@@ -62,6 +79,33 @@ func toResourceListItem(resource *model.Resource) resourceListItem {
 		AvgRating:   resource.AvgRating,
 		ViewCount:   resource.ViewCount,
 		CreatedAt:   resource.CreatedAt,
+	}
+}
+
+func toResourceDetail(resource *model.Resource) resourceDetail {
+	var category *categorySummary
+	if resource.Category.ID != 0 {
+		category = &categorySummary{
+			ID:   resource.Category.ID,
+			Name: resource.Category.Name,
+		}
+	}
+
+	return resourceDetail{
+		ID:          resource.ID,
+		Title:       resource.Title,
+		Description: resource.Description,
+		CoverURL:    resource.CoverURL,
+		Type:        resource.Type,
+		Category:    category,
+		Tags:        parseTags(resource.Tags),
+		Metadata:    parseMetadata(resource.Metadata),
+		Author:      resource.Author,
+		SourceURL:   resource.SourceURL,
+		AvgRating:   resource.AvgRating,
+		ViewCount:   resource.ViewCount,
+		CreatedAt:   resource.CreatedAt,
+		UpdatedAt:   resource.UpdatedAt,
 	}
 }
 
@@ -120,6 +164,22 @@ func (h *ResourceHandler) List(c *gin.Context) {
 	})
 }
 
+func (h *ResourceHandler) Detail(c *gin.Context) {
+	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
+	if err != nil || id == 0 {
+		response.Error(c, 400, apperror.CodeBadRequest, "请求参数错误")
+		return
+	}
+
+	resource, err := h.resources.GetByID(c.Request.Context(), uint(id))
+	if err != nil {
+		handleError(c, err)
+		return
+	}
+
+	response.OK(c, toResourceDetail(resource))
+}
+
 func parseTags(raw string) []string {
 	raw = strings.TrimSpace(raw)
 	if raw == "" {
@@ -134,6 +194,22 @@ func parseTags(raw string) []string {
 		return []string{}
 	}
 	return tags
+}
+
+func parseMetadata(raw string) map[string]any {
+	raw = strings.TrimSpace(raw)
+	if raw == "" {
+		return map[string]any{}
+	}
+
+	var metadata map[string]any
+	if err := json.Unmarshal([]byte(raw), &metadata); err != nil {
+		return map[string]any{}
+	}
+	if metadata == nil {
+		return map[string]any{}
+	}
+	return metadata
 }
 
 func parseCommaList(raw string) []string {

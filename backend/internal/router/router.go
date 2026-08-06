@@ -55,6 +55,7 @@ func New(cfg *config.Config, db *gorm.DB, rdb *redis.Client) *gin.Engine {
 	protected.GET("/categories", categoryHandler.List)
 	protected.POST("/categories", middleware.AdminRequired(userRepo), categoryHandler.Create)
 	protected.GET("/resources", resourceHandler.List)
+	protected.GET("/resources/:id", resourceHandler.Detail)
 
 	return r
 }

@@ -271,6 +271,21 @@ func (h *ResourceHandler) Update(c *gin.Context) {
 	})
 }
 
+func (h *ResourceHandler) Delete(c *gin.Context) {
+	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
+	if err != nil || id == 0 {
+		response.Error(c, 400, apperror.CodeBadRequest, "请求参数错误")
+		return
+	}
+
+	if err := h.resources.Delete(c.Request.Context(), uint(id)); err != nil {
+		handleError(c, err)
+		return
+	}
+
+	response.OK(c, nil)
+}
+
 func parseTags(raw string) []string {
 	raw = strings.TrimSpace(raw)
 	if raw == "" {

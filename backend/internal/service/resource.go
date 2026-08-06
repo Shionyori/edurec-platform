@@ -2,9 +2,11 @@ package service
 
 import (
 	"context"
+	"errors"
 	"strings"
 
 	"github.com/Shionyori/edurec-platform/backend/internal/apperror"
+	"github.com/Shionyori/edurec-platform/backend/internal/model"
 	"github.com/Shionyori/edurec-platform/backend/internal/repository"
 )
 
@@ -31,4 +33,15 @@ func (s *ResourceService) List(ctx context.Context, query repository.ResourceLis
 		return nil, apperror.Internal(err)
 	}
 	return result, nil
+}
+
+func (s *ResourceService) GetByID(ctx context.Context, id uint) (*model.Resource, error) {
+	resource, err := s.resources.FindByID(id)
+	if errors.Is(err, repository.ErrNotFound) {
+		return nil, apperror.NotFound("资源不存在")
+	}
+	if err != nil {
+		return nil, apperror.Internal(err)
+	}
+	return resource, nil
 }

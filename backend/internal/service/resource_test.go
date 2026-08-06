@@ -12,9 +12,12 @@ import (
 )
 
 type fakeResourceRepository struct {
-	result    *repository.ResourceListResult
-	err       error
-	lastQuery repository.ResourceListQuery
+	result     *repository.ResourceListResult
+	err        error
+	lastQuery  repository.ResourceListQuery
+	findResult *model.Resource
+	findErr    error
+	lastFindID uint
 }
 
 func (f *fakeResourceRepository) Create(_ *model.Resource) error {
@@ -29,8 +32,12 @@ func (f *fakeResourceRepository) List(query repository.ResourceListQuery) (*repo
 	return f.result, nil
 }
 
-func (f *fakeResourceRepository) FindByID(_ uint) (*model.Resource, error) {
-	return nil, nil
+func (f *fakeResourceRepository) FindByID(id uint) (*model.Resource, error) {
+	f.lastFindID = id
+	if f.findErr != nil {
+		return nil, f.findErr
+	}
+	return f.findResult, nil
 }
 
 func (f *fakeResourceRepository) Update(_ *model.Resource) error {
@@ -106,5 +113,40 @@ func TestResourceListMapsRepositoryError(t *testing.T) {
 	svc := service.NewResourceService(repo)
 
 	_, err := svc.List(context.Background(), repository.ResourceListQuery{})
+	assertErrorCode(t, err, apperror.CodeInternal)
+}
+
+func TestResourceGetByIDReturnsResource(t *testing.T) {
+	repo := &fakeResourceRepository{
+		findResult: &model.Resource{Title: "机器学习入门"},
+	}
+	svc := service.NewResourceService(repo)
+
+	resource, err := svc.GetByID(context.Background(), 7)
+
+	if err != nil {
+		t.Fatalf("GetByID() error = %v", err)
+	}
+	if repo.lastFindID != 7 {
+		t.Fatalf("GetByID() id = %d, want 7", repo.lastFindID)
+	}
+	if resource.Title != "机器学习入门" {
+		t.Fatalf("GetByID() title = %q, want 机器学习入门", resource.Title)
+	}
+}
+
+func TestResourceGetByIDMapsNotFound(t *testing.T) {
+	repo := &fakeResourceRepository{findErr: repository.ErrNotFound}
+	svc := service.NewResourceService(repo)
+
+	_, err := svc.GetByID(context.Background(), 7)
+	assertErrorCode(t, err, apperror.CodeNotFound)
+}
+
+func TestResourceGetByIDMapsRepositoryError(t *testing.T) {
+	repo := &fakeResourceRepository{findErr: errors.New("db error")}
+	svc := service.NewResourceService(repo)
+
+	_, err := svc.GetByID(context.Background(), 7)
 	assertErrorCode(t, err, apperror.CodeInternal)
 }

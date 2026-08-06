@@ -27,6 +27,19 @@ type CreateResourceInput struct {
 	SourceURL   string
 }
 
+type UpdateResourceInput struct {
+	ID          uint
+	Title       *string
+	Description *string
+	CoverURL    *string
+	Type        *string
+	CategoryID  *uint
+	Tags        *[]string
+	Metadata    *map[string]any
+	Author      *string
+	SourceURL   *string
+}
+
 func NewResourceService(resources repository.ResourceRepository) *ResourceService {
 	return &ResourceService{resources: resources}
 }
@@ -105,6 +118,74 @@ func (s *ResourceService) Create(ctx context.Context, input CreateResourceInput)
 		SourceURL:   input.SourceURL,
 	}
 	if err := s.resources.Create(resource); err != nil {
+		return nil, apperror.Internal(err)
+	}
+	return resource, nil
+}
+
+func (s *ResourceService) Update(ctx context.Context, input UpdateResourceInput) (*model.Resource, error) {
+	resource, err := s.resources.FindByID(input.ID)
+	if errors.Is(err, repository.ErrNotFound) {
+		return nil, apperror.NotFound("资源不存在")
+	}
+	if err != nil {
+		return nil, apperror.Internal(err)
+	}
+
+	if input.Title != nil {
+		value := strings.TrimSpace(*input.Title)
+		if value == "" {
+			return nil, apperror.BadRequest("请求参数错误")
+		}
+		resource.Title = value
+	}
+	if input.Description != nil {
+		value := strings.TrimSpace(*input.Description)
+		if value == "" {
+			return nil, apperror.BadRequest("请求参数错误")
+		}
+		resource.Description = value
+	}
+	if input.CoverURL != nil {
+		resource.CoverURL = strings.TrimSpace(*input.CoverURL)
+	}
+	if input.Type != nil {
+		value := strings.TrimSpace(*input.Type)
+		switch value {
+		case "course", "article", "video":
+			resource.Type = value
+		default:
+			return nil, apperror.BadRequest("请求参数错误")
+		}
+	}
+	if input.CategoryID != nil {
+		if *input.CategoryID == 0 {
+			return nil, apperror.BadRequest("请求参数错误")
+		}
+		resource.CategoryID = *input.CategoryID
+	}
+	if input.Tags != nil {
+		tags, err := json.Marshal(input.Tags)
+		if err != nil {
+			return nil, apperror.BadRequest("请求参数错误")
+		}
+		resource.Tags = string(tags)
+	}
+	if input.Metadata != nil {
+		metadata, err := json.Marshal(input.Metadata)
+		if err != nil {
+			return nil, apperror.BadRequest("请求参数错误")
+		}
+		resource.Metadata = string(metadata)
+	}
+	if input.Author != nil {
+		resource.Author = strings.TrimSpace(*input.Author)
+	}
+	if input.SourceURL != nil {
+		resource.SourceURL = strings.TrimSpace(*input.SourceURL)
+	}
+
+	if err := s.resources.Update(resource); err != nil {
 		return nil, apperror.Internal(err)
 	}
 	return resource, nil

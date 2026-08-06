@@ -20,6 +20,8 @@ type fakeResourceRepository struct {
 	lastFindID  uint
 	lastCreated *model.Resource
 	createErr   error
+	lastUpdated *model.Resource
+	updateErr   error
 }
 
 func (f *fakeResourceRepository) Create(resource *model.Resource) error {
@@ -47,7 +49,11 @@ func (f *fakeResourceRepository) FindByID(id uint) (*model.Resource, error) {
 	return f.findResult, nil
 }
 
-func (f *fakeResourceRepository) Update(_ *model.Resource) error {
+func (f *fakeResourceRepository) Update(resource *model.Resource) error {
+	if f.updateErr != nil {
+		return f.updateErr
+	}
+	f.lastUpdated = resource
 	return nil
 }
 
@@ -210,5 +216,78 @@ func TestResourceCreateMapsRepositoryError(t *testing.T) {
 		Type:        "course",
 		CategoryID:  1,
 	})
+	assertErrorCode(t, err, apperror.CodeInternal)
+}
+
+func TestResourceUpdateAppliesProvidedFields(t *testing.T) {
+	repo := &fakeResourceRepository{
+		findResult: &model.Resource{
+			Title:       "旧标题",
+			Description: "旧描述",
+			Type:        "article",
+			CategoryID:  1,
+			Tags:        `["旧"]`,
+			Metadata:    `{"old":true}`,
+		},
+	}
+	svc := service.NewResourceService(repo)
+	title := "新标题"
+	resourceType := "course"
+	categoryID := uint(3)
+
+	resource, err := svc.Update(context.Background(), service.UpdateResourceInput{
+		ID:         7,
+		Title:      &title,
+		Type:       &resourceType,
+		CategoryID: &categoryID,
+		Tags:       &[]string{"AI", "Python"},
+		Metadata:   &map[string]any{"duration": "12小时"},
+	})
+
+	if err != nil {
+		t.Fatalf("Update() error = %v", err)
+	}
+	if repo.lastUpdated == nil {
+		t.Fatal("Update() did not call repository")
+	}
+	if resource.Title != "新标题" || resource.Type != "course" || resource.CategoryID != 3 {
+		t.Fatalf("Update() fields were not applied")
+	}
+	if resource.Description != "旧描述" {
+		t.Fatalf("Update() description = %q, want 旧描述", resource.Description)
+	}
+	if resource.Tags != `["AI","Python"]` || resource.Metadata != `{"duration":"12小时"}` {
+		t.Fatalf("Update() JSON fields were not serialized")
+	}
+}
+
+func TestResourceUpdateMapsNotFound(t *testing.T) {
+	repo := &fakeResourceRepository{findErr: repository.ErrNotFound}
+	svc := service.NewResourceService(repo)
+
+	_, err := svc.Update(context.Background(), service.UpdateResourceInput{ID: 7})
+	assertErrorCode(t, err, apperror.CodeNotFound)
+}
+
+func TestResourceUpdateRejectsInvalidType(t *testing.T) {
+	repo := &fakeResourceRepository{findResult: &model.Resource{}}
+	svc := service.NewResourceService(repo)
+	resourceType := "book"
+
+	_, err := svc.Update(context.Background(), service.UpdateResourceInput{
+		ID:   7,
+		Type: &resourceType,
+	})
+	assertErrorCode(t, err, apperror.CodeBadRequest)
+}
+
+func TestResourceUpdateMapsRepositoryError(t *testing.T) {
+	repo := &fakeResourceRepository{
+		findResult: &model.Resource{},
+		updateErr:  errors.New("db error"),
+	}
+	svc := service.NewResourceService(repo)
+
+	_, err := svc.Update(context.Background(), service.UpdateResourceInput{ID: 7})
 	assertErrorCode(t, err, apperror.CodeInternal)
 }

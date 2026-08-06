@@ -223,6 +223,54 @@ func (h *ResourceHandler) Create(c *gin.Context) {
 	})
 }
 
+type updateResourceRequest struct {
+	Title       *string         `json:"title" binding:"omitempty,max=256"`
+	Description *string         `json:"description" binding:"omitempty"`
+	CoverURL    *string         `json:"cover_url" binding:"omitempty,max=512"`
+	Type        *string         `json:"type" binding:"omitempty,oneof=course article video"`
+	CategoryID  *uint           `json:"category_id"`
+	Tags        *[]string       `json:"tags"`
+	Metadata    *map[string]any `json:"metadata"`
+	Author      *string         `json:"author" binding:"omitempty,max=128"`
+	SourceURL   *string         `json:"source_url" binding:"omitempty,max=512"`
+}
+
+func (h *ResourceHandler) Update(c *gin.Context) {
+	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
+	if err != nil || id == 0 {
+		response.Error(c, 400, apperror.CodeBadRequest, "请求参数错误")
+		return
+	}
+
+	var req updateResourceRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.Error(c, 400, apperror.CodeBadRequest, "请求参数错误")
+		return
+	}
+
+	resource, err := h.resources.Update(c.Request.Context(), service.UpdateResourceInput{
+		ID:          uint(id),
+		Title:       req.Title,
+		Description: req.Description,
+		CoverURL:    req.CoverURL,
+		Type:        req.Type,
+		CategoryID:  req.CategoryID,
+		Tags:        req.Tags,
+		Metadata:    req.Metadata,
+		Author:      req.Author,
+		SourceURL:   req.SourceURL,
+	})
+	if err != nil {
+		handleError(c, err)
+		return
+	}
+
+	response.OK(c, gin.H{
+		"id":         resource.ID,
+		"updated_at": resource.UpdatedAt,
+	})
+}
+
 func parseTags(raw string) []string {
 	raw = strings.TrimSpace(raw)
 	if raw == "" {

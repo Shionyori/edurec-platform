@@ -17,6 +17,7 @@ import (
 
 func New(cfg *config.Config, db *gorm.DB, rdb *redis.Client) *gin.Engine {
 	userRepo := repository.NewUserRepository(db)
+	categoryRepo := repository.NewCategoryRepository(db)
 	refreshTokenStore := repository.NewRedisRefreshTokenStore(rdb)
 	jwtManager := jwtutil.NewManager(cfg.JWT.AccessSecret)
 
@@ -25,8 +26,10 @@ func New(cfg *config.Config, db *gorm.DB, rdb *redis.Client) *gin.Engine {
 
 	authService := service.NewAuthService(userRepo, refreshTokenStore, jwtManager, accessTTL, refreshTTL)
 	userService := service.NewUserService(userRepo)
+	categoryService := service.NewCategoryService(categoryRepo)
 	authHandler := handler.NewAuthHandler(authService, userService)
 	userHandler := handler.NewUserHandler(userService)
+	categoryHandler := handler.NewCategoryHandler(categoryService)
 
 	r := gin.New()
 	r.Use(gin.Logger())
@@ -46,6 +49,8 @@ func New(cfg *config.Config, db *gorm.DB, rdb *redis.Client) *gin.Engine {
 	protected.Use(middleware.AuthRequired(jwtManager))
 	protected.GET("/users/me", userHandler.Me)
 	protected.PUT("/users/me", userHandler.UpdateMe)
+	protected.GET("/categories", categoryHandler.List)
+	protected.POST("/categories", middleware.AdminRequired(userRepo), categoryHandler.Create)
 
 	return r
 }

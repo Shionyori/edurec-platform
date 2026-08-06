@@ -12,15 +12,22 @@ import (
 )
 
 type fakeResourceRepository struct {
-	result     *repository.ResourceListResult
-	err        error
-	lastQuery  repository.ResourceListQuery
-	findResult *model.Resource
-	findErr    error
-	lastFindID uint
+	result      *repository.ResourceListResult
+	err         error
+	lastQuery   repository.ResourceListQuery
+	findResult  *model.Resource
+	findErr     error
+	lastFindID  uint
+	lastCreated *model.Resource
+	createErr   error
 }
 
-func (f *fakeResourceRepository) Create(_ *model.Resource) error {
+func (f *fakeResourceRepository) Create(resource *model.Resource) error {
+	if f.createErr != nil {
+		return f.createErr
+	}
+	resource.ID = 1
+	f.lastCreated = resource
 	return nil
 }
 
@@ -148,5 +155,60 @@ func TestResourceGetByIDMapsRepositoryError(t *testing.T) {
 	svc := service.NewResourceService(repo)
 
 	_, err := svc.GetByID(context.Background(), 7)
+	assertErrorCode(t, err, apperror.CodeInternal)
+}
+
+func TestResourceCreateStoresJSONFields(t *testing.T) {
+	repo := &fakeResourceRepository{}
+	svc := service.NewResourceService(repo)
+
+	resource, err := svc.Create(context.Background(), service.CreateResourceInput{
+		Title:       "机器学习入门",
+		Description: "面向零基础学习者的课程",
+		Type:        "course",
+		CategoryID:  2,
+		Tags:        []string{"AI", "Python"},
+		Metadata:    map[string]any{"duration": "12小时"},
+	})
+
+	if err != nil {
+		t.Fatalf("Create() error = %v", err)
+	}
+	if repo.lastCreated == nil {
+		t.Fatal("Create() did not call repository")
+	}
+	if resource.Tags != `["AI","Python"]` {
+		t.Fatalf("Create() tags = %s, want JSON array", resource.Tags)
+	}
+	if resource.Metadata != `{"duration":"12小时"}` {
+		t.Fatalf("Create() metadata = %s, want JSON object", resource.Metadata)
+	}
+	if resource.CategoryID != 2 {
+		t.Fatalf("Create() category_id = %d, want 2", resource.CategoryID)
+	}
+}
+
+func TestResourceCreateRejectsInvalidType(t *testing.T) {
+	svc := service.NewResourceService(&fakeResourceRepository{})
+
+	_, err := svc.Create(context.Background(), service.CreateResourceInput{
+		Title:       "测试资源",
+		Description: "描述",
+		Type:        "book",
+		CategoryID:  1,
+	})
+	assertErrorCode(t, err, apperror.CodeBadRequest)
+}
+
+func TestResourceCreateMapsRepositoryError(t *testing.T) {
+	repo := &fakeResourceRepository{createErr: errors.New("db error")}
+	svc := service.NewResourceService(repo)
+
+	_, err := svc.Create(context.Background(), service.CreateResourceInput{
+		Title:       "测试资源",
+		Description: "描述",
+		Type:        "course",
+		CategoryID:  1,
+	})
 	assertErrorCode(t, err, apperror.CodeInternal)
 }

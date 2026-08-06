@@ -12,16 +12,18 @@ import (
 )
 
 type fakeResourceRepository struct {
-	result      *repository.ResourceListResult
-	err         error
-	lastQuery   repository.ResourceListQuery
-	findResult  *model.Resource
-	findErr     error
-	lastFindID  uint
-	lastCreated *model.Resource
-	createErr   error
-	lastUpdated *model.Resource
-	updateErr   error
+	result       *repository.ResourceListResult
+	err          error
+	lastQuery    repository.ResourceListQuery
+	findResult   *model.Resource
+	findErr      error
+	lastFindID   uint
+	lastCreated  *model.Resource
+	createErr    error
+	lastUpdated  *model.Resource
+	updateErr    error
+	lastDeleteID uint
+	deleteErr    error
 }
 
 func (f *fakeResourceRepository) Create(resource *model.Resource) error {
@@ -57,7 +59,11 @@ func (f *fakeResourceRepository) Update(resource *model.Resource) error {
 	return nil
 }
 
-func (f *fakeResourceRepository) Delete(_ uint) error {
+func (f *fakeResourceRepository) Delete(id uint) error {
+	f.lastDeleteID = id
+	if f.deleteErr != nil {
+		return f.deleteErr
+	}
 	return nil
 }
 
@@ -289,5 +295,35 @@ func TestResourceUpdateMapsRepositoryError(t *testing.T) {
 	svc := service.NewResourceService(repo)
 
 	_, err := svc.Update(context.Background(), service.UpdateResourceInput{ID: 7})
+	assertErrorCode(t, err, apperror.CodeInternal)
+}
+
+func TestResourceDeleteCallsRepository(t *testing.T) {
+	repo := &fakeResourceRepository{}
+	svc := service.NewResourceService(repo)
+
+	err := svc.Delete(context.Background(), 7)
+
+	if err != nil {
+		t.Fatalf("Delete() error = %v", err)
+	}
+	if repo.lastDeleteID != 7 {
+		t.Fatalf("Delete() id = %d, want 7", repo.lastDeleteID)
+	}
+}
+
+func TestResourceDeleteMapsNotFound(t *testing.T) {
+	repo := &fakeResourceRepository{deleteErr: repository.ErrNotFound}
+	svc := service.NewResourceService(repo)
+
+	err := svc.Delete(context.Background(), 7)
+	assertErrorCode(t, err, apperror.CodeNotFound)
+}
+
+func TestResourceDeleteMapsRepositoryError(t *testing.T) {
+	repo := &fakeResourceRepository{deleteErr: errors.New("db error")}
+	svc := service.NewResourceService(repo)
+
+	err := svc.Delete(context.Background(), 7)
 	assertErrorCode(t, err, apperror.CodeInternal)
 }

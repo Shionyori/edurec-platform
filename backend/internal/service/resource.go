@@ -190,3 +190,14 @@ func (s *ResourceService) Update(ctx context.Context, input UpdateResourceInput)
 	}
 	return resource, nil
 }
+
+func (s *ResourceService) Delete(ctx context.Context, id uint) error {
+	err := s.resources.Delete(id)
+	if errors.Is(err, repository.ErrNotFound) {
+		return apperror.NotFound("资源不存在")
+	}
+	if err != nil {
+		return apperror.Internal(err)
+	}
+	return nil
+}

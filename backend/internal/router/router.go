@@ -19,6 +19,7 @@ func New(cfg *config.Config, db *gorm.DB, rdb *redis.Client) *gin.Engine {
 	userRepo := repository.NewUserRepository(db)
 	categoryRepo := repository.NewCategoryRepository(db)
 	resourceRepo := repository.NewResourceRepository(db)
+	behaviorRepo := repository.NewUserBehaviorRepository(db)
 	refreshTokenStore := repository.NewRedisRefreshTokenStore(rdb)
 	jwtManager := jwtutil.NewManager(cfg.JWT.AccessSecret)
 
@@ -29,10 +30,12 @@ func New(cfg *config.Config, db *gorm.DB, rdb *redis.Client) *gin.Engine {
 	userService := service.NewUserService(userRepo)
 	categoryService := service.NewCategoryService(categoryRepo)
 	resourceService := service.NewResourceService(resourceRepo)
+	behaviorService := service.NewUserBehaviorService(behaviorRepo, resourceRepo)
 	authHandler := handler.NewAuthHandler(authService, userService)
 	userHandler := handler.NewUserHandler(userService)
 	categoryHandler := handler.NewCategoryHandler(categoryService)
 	resourceHandler := handler.NewResourceHandler(resourceService)
+	behaviorHandler := handler.NewUserBehaviorHandler(behaviorService)
 
 	r := gin.New()
 	r.Use(gin.Logger())
@@ -59,6 +62,8 @@ func New(cfg *config.Config, db *gorm.DB, rdb *redis.Client) *gin.Engine {
 	protected.POST("/resources", middleware.AdminRequired(userRepo), resourceHandler.Create)
 	protected.PUT("/resources/:id", middleware.AdminRequired(userRepo), resourceHandler.Update)
 	protected.DELETE("/resources/:id", middleware.AdminRequired(userRepo), resourceHandler.Delete)
+	protected.POST("/resources/:id/behaviors", behaviorHandler.Record)
+	protected.GET("/users/me/behaviors", behaviorHandler.List)
 
 	return r
 }

@@ -21,6 +21,7 @@ func New(cfg *config.Config, db *gorm.DB, rdb *redis.Client) *gin.Engine {
 	resourceRepo := repository.NewResourceRepository(db)
 	behaviorRepo := repository.NewUserBehaviorRepository(db)
 	ratingRepo := repository.NewRatingRepository(db)
+	adminRepo := repository.NewAdminRepository(db)
 	refreshTokenStore := repository.NewRedisRefreshTokenStore(rdb)
 	jwtManager := jwtutil.NewManager(cfg.JWT.AccessSecret)
 
@@ -33,12 +34,14 @@ func New(cfg *config.Config, db *gorm.DB, rdb *redis.Client) *gin.Engine {
 	resourceService := service.NewResourceService(resourceRepo)
 	behaviorService := service.NewUserBehaviorService(behaviorRepo, resourceRepo)
 	ratingService := service.NewRatingService(ratingRepo, resourceRepo)
+	adminService := service.NewAdminService(adminRepo)
 	authHandler := handler.NewAuthHandler(authService, userService)
 	userHandler := handler.NewUserHandler(userService)
 	categoryHandler := handler.NewCategoryHandler(categoryService)
 	resourceHandler := handler.NewResourceHandler(resourceService)
 	behaviorHandler := handler.NewUserBehaviorHandler(behaviorService)
 	ratingHandler := handler.NewRatingHandler(ratingService)
+	adminHandler := handler.NewAdminHandler(adminService)
 
 	r := gin.New()
 	r.Use(gin.Logger())
@@ -69,6 +72,8 @@ func New(cfg *config.Config, db *gorm.DB, rdb *redis.Client) *gin.Engine {
 	protected.GET("/users/me/behaviors", behaviorHandler.List)
 	protected.GET("/resources/:id/ratings", ratingHandler.List)
 	protected.POST("/resources/:id/ratings", ratingHandler.Upsert)
+	protected.GET("/admin/users", middleware.AdminRequired(userRepo), adminHandler.ListUsers)
+	protected.GET("/admin/resources", middleware.AdminRequired(userRepo), adminHandler.ListResources)
 
 	return r
 }

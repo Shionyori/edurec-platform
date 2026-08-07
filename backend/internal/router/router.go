@@ -63,6 +63,7 @@ func New(cfg *config.Config, db *gorm.DB, rdb *redis.Client) *gin.Engine {
 	protected.PUT("/resources/:id", middleware.AdminRequired(userRepo), resourceHandler.Update)
 	protected.DELETE("/resources/:id", middleware.AdminRequired(userRepo), resourceHandler.Delete)
 	protected.POST("/resources/:id/behaviors", behaviorHandler.Record)
+	protected.GET("/users/me/behaviors", behaviorHandler.List)
 
 	return r
 }

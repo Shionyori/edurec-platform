@@ -15,8 +15,6 @@ const routes = [
     component: FrontLayout,
     children: [
       { path: '', name: 'home', component: HomePage, meta: { requiresAuth: true } },
-      { path: 'login', name: 'login', component: LoginPage, meta: { guestOnly: true } },
-      { path: 'register', name: 'register', component: RegisterPage, meta: { guestOnly: true } },
       { path: 'search', name: 'search', component: PlaceholderPage, meta: { requiresAuth: true } },
       { path: 'resources/:id', name: 'resource-detail', component: PlaceholderPage, meta: { requiresAuth: true } },
       { path: 'user/me', name: 'user-me', component: PlaceholderPage, meta: { requiresAuth: true } },
@@ -27,6 +25,18 @@ const routes = [
         meta: { requiresAuth: true, requiresAdmin: true },
       },
     ],
+  },
+  {
+    path: '/login',
+    name: 'login',
+    component: LoginPage,
+    meta: { guestOnly: true },
+  },
+  {
+    path: '/register',
+    name: 'register',
+    component: RegisterPage,
+    meta: { guestOnly: true },
   },
   {
     path: '/admin',

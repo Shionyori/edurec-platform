@@ -1,6 +1,9 @@
+<script setup lang="ts">
+import AuthShell from '@/components/auth/AuthShell.vue'
+</script>
+
 <template>
-  <div class="mx-auto max-w-md px-6 py-16 text-center">
-    <h1 class="text-2xl font-bold">注册</h1>
-    <p class="mt-2 text-sm text-ink-secondary">注册页面将在后续子项目实现</p>
-  </div>
+  <AuthShell>
+    <p class="text-sm text-ink-secondary">注册页面将在 Task 3 实现</p>
+  </AuthShell>
 </template>

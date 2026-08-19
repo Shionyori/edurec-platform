@@ -57,7 +57,10 @@ client.interceptors.response.use(
   (resp) => resp,
   async (error) => {
     const original = error.config as (InternalAxiosRequestConfig & { _retried?: boolean }) | undefined
-    if (error.response?.status === 401 && original && !original._retried) {
+    // 认证类接口的 401 是凭证错误（而非 access token 过期），不应触发 token 续期与整页跳转
+    const url = original?.url ?? ''
+    const isAuthRequest = url.includes('/auth/login') || url.includes('/auth/register') || url.includes('/auth/refresh')
+    if (error.response?.status === 401 && original && !original._retried && !isAuthRequest) {
       const ok = await refreshToken()
       if (ok) {
         // 请求拦截器会在重试时自动附带最新 access token

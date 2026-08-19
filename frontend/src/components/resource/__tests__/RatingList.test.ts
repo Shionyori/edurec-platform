@@ -16,7 +16,7 @@ const ratings: Rating[] = [
   },
 ]
 
-function mountList(props: Record<string, unknown>) {
+function mountList(props: { ratings: Rating[]; total: number; page: number; loading?: boolean }) {
   return mount(RatingList, { props, global: { plugins: [ElementPlus] } })
 }
 

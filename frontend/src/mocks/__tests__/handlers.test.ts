@@ -3,10 +3,11 @@ import { setupServer } from 'msw/node'
 import { handlers } from '../handlers'
 import { client } from '@/api/client'
 import { tokenStorage } from '@/utils/token'
-import { listResources } from '@/api/resource'
+import { listResources, getResource } from '@/api/resource'
 import { login } from '@/api/auth'
 import { listCategories } from '@/api/category'
 import { getMe } from '@/api/user'
+import { upsertRating } from '@/api/rating'
 
 const server = setupServer(...handlers)
 
@@ -51,5 +52,15 @@ describe('MSW handlers', () => {
     await loginAsAdmin()
     const categories = await listCategories()
     expect(categories.length).toBeGreaterThan(0)
+  })
+
+  it('评分 upsert 后重算 avg_rating', async () => {
+    await loginAsAdmin()
+    const before = await getResource(1)
+    await upsertRating(1, { score: 1 })
+    const after = await getResource(1)
+    expect(after.avg_rating).not.toBe(before.avg_rating)
+    expect(after.avg_rating).toBeGreaterThan(0)
+    expect(after.avg_rating).toBeLessThanOrEqual(5)
   })
 })

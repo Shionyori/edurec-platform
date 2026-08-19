@@ -60,6 +60,19 @@ function toPublicResource(r: DbResource) {
   }
 }
 
+// 评分 upsert 后按后端行为重算资源平均分（保留一位小数）
+function recomputeResourceAverage(resourceId: number) {
+  const list = db.ratings.filter((r) => r.resource_id === resourceId)
+  const resource = db.resources.find((r) => r.id === resourceId)
+  if (!resource) return
+  if (list.length === 0) {
+    resource.avg_rating = 0
+    return
+  }
+  const avg = list.reduce((sum, r) => sum + r.score, 0) / list.length
+  resource.avg_rating = Math.round(avg * 10) / 10
+}
+
 export const handlers = [
   // 认证
   http.post(`${BASE}/auth/register`, async ({ request }) => {
@@ -272,6 +285,7 @@ export const handlers = [
     if (existing) {
       existing.score = body.score
       existing.comment = body.comment ?? existing.comment
+      recomputeResourceAverage(resourceId)
       return ok({ id: existing.id, score: existing.score, comment: existing.comment, created_at: existing.created_at })
     }
     const rating = {
@@ -283,6 +297,7 @@ export const handlers = [
       created_at: new Date().toISOString(),
     }
     db.ratings.push(rating)
+    recomputeResourceAverage(resourceId)
     return ok({ id: rating.id, score: rating.score, comment: rating.comment, created_at: rating.created_at })
   }),
 

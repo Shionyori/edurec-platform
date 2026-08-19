@@ -6,6 +6,7 @@ import AdminLayout from '@/components/layout/AdminLayout.vue'
 import HomePage from '@/pages/home/index.vue'
 import LoginPage from '@/pages/auth/LoginPage.vue'
 import RegisterPage from '@/pages/auth/RegisterPage.vue'
+import ResourceDetailPage from '@/pages/resource/ResourceDetailPage.vue'
 import PlaceholderPage from '@/pages/placeholder/PlaceholderPage.vue'
 import NotFoundPage from '@/pages/not-found/NotFound.vue'
 
@@ -16,7 +17,7 @@ const routes = [
     children: [
       { path: '', name: 'home', component: HomePage, meta: { requiresAuth: true } },
       { path: 'search', name: 'search', component: PlaceholderPage, meta: { requiresAuth: true } },
-      { path: 'resources/:id', name: 'resource-detail', component: PlaceholderPage, meta: { requiresAuth: true } },
+      { path: 'resources/:id', name: 'resource-detail', component: ResourceDetailPage, meta: { requiresAuth: true } },
       { path: 'user/me', name: 'user-me', component: PlaceholderPage, meta: { requiresAuth: true } },
       {
         path: 'resources/upload',

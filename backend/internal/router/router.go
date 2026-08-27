@@ -36,6 +36,9 @@ func New(cfg *config.Config, db *gorm.DB, rdb *redis.Client) *gin.Engine {
 	behaviorService := service.NewUserBehaviorService(behaviorRepo, resourceRepo)
 	ratingService := service.NewRatingService(ratingRepo, resourceRepo)
 	recommendationService := service.NewRecommendationService(recommendationRepo, resourceRepo)
+	recommendationImportService := service.NewRecommendationImportService(
+		recommendationRepo, userRepo, resourceRepo, cfg.Engine.RecommendationsFile,
+	)
 	adminService := service.NewAdminService(adminRepo)
 	authHandler := handler.NewAuthHandler(authService, userService)
 	userHandler := handler.NewUserHandler(userService)
@@ -43,7 +46,7 @@ func New(cfg *config.Config, db *gorm.DB, rdb *redis.Client) *gin.Engine {
 	resourceHandler := handler.NewResourceHandler(resourceService)
 	behaviorHandler := handler.NewUserBehaviorHandler(behaviorService)
 	ratingHandler := handler.NewRatingHandler(ratingService)
-	recommendationHandler := handler.NewRecommendationHandler(recommendationService)
+	recommendationHandler := handler.NewRecommendationHandler(recommendationService, recommendationImportService)
 	adminHandler := handler.NewAdminHandler(adminService)
 
 	r := gin.New()
@@ -78,6 +81,7 @@ func New(cfg *config.Config, db *gorm.DB, rdb *redis.Client) *gin.Engine {
 	protected.GET("/recommendations", recommendationHandler.Get)
 	protected.GET("/admin/users", middleware.AdminRequired(userRepo), adminHandler.ListUsers)
 	protected.GET("/admin/resources", middleware.AdminRequired(userRepo), adminHandler.ListResources)
+	protected.POST("/admin/recommendations/import", middleware.AdminRequired(userRepo), recommendationHandler.Import)
 
 	return r
 }

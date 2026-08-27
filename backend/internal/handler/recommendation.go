@@ -12,10 +12,14 @@ import (
 
 type RecommendationHandler struct {
 	recommendations *service.RecommendationService
+	importer        *service.RecommendationImportService
 }
 
-func NewRecommendationHandler(recommendations *service.RecommendationService) *RecommendationHandler {
-	return &RecommendationHandler{recommendations: recommendations}
+func NewRecommendationHandler(
+	recommendations *service.RecommendationService,
+	importer *service.RecommendationImportService,
+) *RecommendationHandler {
+	return &RecommendationHandler{recommendations: recommendations, importer: importer}
 }
 
 // Get 获取个性化推荐（GET /api/v1/recommendations）
@@ -53,4 +57,14 @@ func (h *RecommendationHandler) Get(c *gin.Context) {
 		"list":       items,
 		"updated_at": time.Unix(result.UpdatedAt, 0).UTC().Format(time.RFC3339),
 	})
+}
+
+// Import 从 engine 输出文件导入推荐缓存（POST /api/v1/admin/recommendations/import，管理员）
+func (h *RecommendationHandler) Import(c *gin.Context) {
+	result, err := h.importer.Import()
+	if err != nil {
+		handleError(c, err)
+		return
+	}
+	response.OK(c, result)
 }

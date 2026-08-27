@@ -24,3 +24,7 @@ jwt:
   refresh_secret: "change-me-in-production-too"
   access_expire: 15
   refresh_expire: 10080
+
+engine:
+  # edurec-engine 输出的推荐结果 JSON 路径（路线 B 导入用）
+  recommendations_file: "/mnt/d/Project/edurec-engine/model/recommendations.json"

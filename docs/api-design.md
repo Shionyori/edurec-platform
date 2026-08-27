@@ -1,7 +1,7 @@
 # edurec-platform API 设计文档
 
-> 版本：0.1.0 | 基础 URL：`/api/v1`
-> 实现状态：认证、用户、分类、资源、行为、评分与管理模块已实现（2026-08-07）
+> 版本：0.2.0 | 基础 URL：`/api/v1`
+> 实现状态：认证、用户、分类、资源、行为、评分、管理、推荐模块均已实现，含 engine 推荐结果导入接口（2026-08-27）
 
 ## 规范约定
 
@@ -623,7 +623,43 @@ GET /api/v1/recommendations
 }
 ```
 
-> 后端先查缓存，缓存未命中则调用 edurec-engine 获取推荐，结果写入缓存。
+> 后端先查缓存，命中即返回；未命中时兜底按评分降序取热门资源并写入缓存。engine 接入当前为路线 B：通过管理接口将 engine 输出导入缓存表（见 6.2），engine 仓库零改动。
+
+---
+
+#### 6.2 导入 engine 推荐结果（管理员）
+
+```
+POST /api/v1/admin/recommendations/import
+```
+
+**需要认证：是（管理员）**
+
+**Request Body**：无
+
+**Response (200)**
+
+```json
+{
+  "code": 0,
+  "message": "ok",
+  "data": {
+    "imported_users": 100,
+    "skipped_users": 1865,
+    "imported_resources": 1200,
+    "skipped_resources": 800
+  }
+}
+```
+
+| 字段 | 说明 |
+|------|------|
+| imported_users | 成功写入缓存的用户数 |
+| skipped_users | 被跳过的用户数（平台库中不存在，或无有效资源） |
+| imported_resources | 写入缓存的资源 ID 总数 |
+| skipped_resources | 被过滤掉的资源 ID 数（平台库中不存在） |
+
+> 读取配置 `engine.recommendations_file` 指向的 engine 输出 JSON（格式 `{ "<user_id>": [<resource_id>, ...] }`）。engine 基于其模拟数据集训练，ID 与平台库不一一对应，导入时仅匹配数值 ID 相同的用户与资源，其余跳过。详见 `docs/engine-integration.md`。
 
 ---
 
@@ -817,3 +853,4 @@ GET /api/v1/admin/resources
 | 17 | GET | `/api/v1/users/me/behaviors` | 是 | — | 行为历史 |
 | 18 | GET | `/api/v1/admin/users` | 是 | 是 | 用户管理 |
 | 19 | GET | `/api/v1/admin/resources` | 是 | 是 | 资源管理 |
+| 20 | POST | `/api/v1/admin/recommendations/import` | 是 | 是 | 导入 engine 推荐结果 |

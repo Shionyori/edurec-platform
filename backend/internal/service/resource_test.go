@@ -12,18 +12,20 @@ import (
 )
 
 type fakeResourceRepository struct {
-	result       *repository.ResourceListResult
-	err          error
-	lastQuery    repository.ResourceListQuery
-	findResult   *model.Resource
-	findErr      error
-	lastFindID   uint
-	lastCreated  *model.Resource
-	createErr    error
-	lastUpdated  *model.Resource
-	updateErr    error
-	lastDeleteID uint
-	deleteErr    error
+	result          *repository.ResourceListResult
+	err             error
+	lastQuery       repository.ResourceListQuery
+	findResult      *model.Resource
+	findErr         error
+	lastFindID      uint
+	findByIDsResult []model.Resource
+	findByIDsErr    error
+	lastCreated     *model.Resource
+	createErr       error
+	lastUpdated     *model.Resource
+	updateErr       error
+	lastDeleteID    uint
+	deleteErr       error
 }
 
 func (f *fakeResourceRepository) Create(resource *model.Resource) error {
@@ -49,6 +51,13 @@ func (f *fakeResourceRepository) FindByID(id uint) (*model.Resource, error) {
 		return nil, f.findErr
 	}
 	return f.findResult, nil
+}
+
+func (f *fakeResourceRepository) FindByIDs(ids []uint) ([]model.Resource, error) {
+	if f.findByIDsErr != nil {
+		return nil, f.findByIDsErr
+	}
+	return f.findByIDsResult, nil
 }
 
 func (f *fakeResourceRepository) Update(resource *model.Resource) error {

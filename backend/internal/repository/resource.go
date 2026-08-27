@@ -15,6 +15,7 @@ type ResourceRepository interface {
 	Create(resource *model.Resource) error
 	List(query ResourceListQuery) (*ResourceListResult, error)
 	FindByID(id uint) (*model.Resource, error)
+	FindByIDs(ids []uint) ([]model.Resource, error)
 	Update(resource *model.Resource) error
 	Delete(id uint) error
 }
@@ -119,6 +120,17 @@ func (r *ResourceRepo) FindByID(id uint) (*model.Resource, error) {
 		return nil, fmt.Errorf("按 ID 查询资源失败: %w", err)
 	}
 	return resource, nil
+}
+
+func (r *ResourceRepo) FindByIDs(ids []uint) ([]model.Resource, error) {
+	if len(ids) == 0 {
+		return []model.Resource{}, nil
+	}
+	items := make([]model.Resource, 0)
+	if err := r.db.Preload("Category").Where("id IN ?", ids).Find(&items).Error; err != nil {
+		return nil, fmt.Errorf("按 ID 批量查询资源失败: %w", err)
+	}
+	return items, nil
 }
 
 func (r *ResourceRepo) Update(resource *model.Resource) error {

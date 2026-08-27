@@ -21,6 +21,7 @@ func New(cfg *config.Config, db *gorm.DB, rdb *redis.Client) *gin.Engine {
 	resourceRepo := repository.NewResourceRepository(db)
 	behaviorRepo := repository.NewUserBehaviorRepository(db)
 	ratingRepo := repository.NewRatingRepository(db)
+	recommendationRepo := repository.NewRecommendationRepository(db)
 	adminRepo := repository.NewAdminRepository(db)
 	refreshTokenStore := repository.NewRedisRefreshTokenStore(rdb)
 	jwtManager := jwtutil.NewManager(cfg.JWT.AccessSecret)
@@ -34,6 +35,7 @@ func New(cfg *config.Config, db *gorm.DB, rdb *redis.Client) *gin.Engine {
 	resourceService := service.NewResourceService(resourceRepo)
 	behaviorService := service.NewUserBehaviorService(behaviorRepo, resourceRepo)
 	ratingService := service.NewRatingService(ratingRepo, resourceRepo)
+	recommendationService := service.NewRecommendationService(recommendationRepo, resourceRepo)
 	adminService := service.NewAdminService(adminRepo)
 	authHandler := handler.NewAuthHandler(authService, userService)
 	userHandler := handler.NewUserHandler(userService)
@@ -41,6 +43,7 @@ func New(cfg *config.Config, db *gorm.DB, rdb *redis.Client) *gin.Engine {
 	resourceHandler := handler.NewResourceHandler(resourceService)
 	behaviorHandler := handler.NewUserBehaviorHandler(behaviorService)
 	ratingHandler := handler.NewRatingHandler(ratingService)
+	recommendationHandler := handler.NewRecommendationHandler(recommendationService)
 	adminHandler := handler.NewAdminHandler(adminService)
 
 	r := gin.New()
@@ -72,6 +75,7 @@ func New(cfg *config.Config, db *gorm.DB, rdb *redis.Client) *gin.Engine {
 	protected.GET("/users/me/behaviors", behaviorHandler.List)
 	protected.GET("/resources/:id/ratings", ratingHandler.List)
 	protected.POST("/resources/:id/ratings", ratingHandler.Upsert)
+	protected.GET("/recommendations", recommendationHandler.Get)
 	protected.GET("/admin/users", middleware.AdminRequired(userRepo), adminHandler.ListUsers)
 	protected.GET("/admin/resources", middleware.AdminRequired(userRepo), adminHandler.ListResources)
 

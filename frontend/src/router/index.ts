@@ -9,6 +9,10 @@ import RegisterPage from '@/pages/auth/RegisterPage.vue'
 import ResourceDetailPage from '@/pages/resource/ResourceDetailPage.vue'
 import SearchPage from '@/pages/search/SearchPage.vue'
 import ProfilePage from '@/pages/user/ProfilePage.vue'
+import AdminDashboard from '@/pages/admin/AdminDashboard.vue'
+import AdminUsers from '@/pages/admin/AdminUsers.vue'
+import AdminResources from '@/pages/admin/AdminResources.vue'
+import AdminCategories from '@/pages/admin/AdminCategories.vue'
 import PlaceholderPage from '@/pages/placeholder/PlaceholderPage.vue'
 import NotFoundPage from '@/pages/not-found/NotFound.vue'
 
@@ -48,25 +52,25 @@ const routes = [
       {
         path: '',
         name: 'admin-dashboard',
-        component: PlaceholderPage,
+        component: AdminDashboard,
         meta: { requiresAuth: true, requiresAdmin: true },
       },
       {
         path: 'users',
         name: 'admin-users',
-        component: PlaceholderPage,
+        component: AdminUsers,
         meta: { requiresAuth: true, requiresAdmin: true },
       },
       {
         path: 'resources',
         name: 'admin-resources',
-        component: PlaceholderPage,
+        component: AdminResources,
         meta: { requiresAuth: true, requiresAdmin: true },
       },
       {
         path: 'categories',
         name: 'admin-categories',
-        component: PlaceholderPage,
+        component: AdminCategories,
         meta: { requiresAuth: true, requiresAdmin: true },
       },
     ],

@@ -20,6 +20,7 @@ type UserRepository interface {
 	FindByUsername(username string) (*model.User, error)
 	FindByEmail(email string) (*model.User, error)
 	FindByID(id uint) (*model.User, error)
+	FindByIDs(ids []uint) ([]model.User, error)
 	Update(user *model.User) error
 	IsAdmin(userID uint) (bool, error)
 }
@@ -77,6 +78,17 @@ func (r *UserRepo) FindByID(id uint) (*model.User, error) {
 		return nil, fmt.Errorf("按 ID 查询用户失败: %w", err)
 	}
 	return user, nil
+}
+
+func (r *UserRepo) FindByIDs(ids []uint) ([]model.User, error) {
+	if len(ids) == 0 {
+		return []model.User{}, nil
+	}
+	users := make([]model.User, 0)
+	if err := r.db.Where("id IN ?", ids).Find(&users).Error; err != nil {
+		return nil, fmt.Errorf("按 ID 批量查询用户失败: %w", err)
+	}
+	return users, nil
 }
 
 func (r *UserRepo) Update(user *model.User) error {

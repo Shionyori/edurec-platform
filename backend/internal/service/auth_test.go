@@ -49,6 +49,20 @@ func (f *fakeUserRepository) FindByEmail(email string) (*model.User, error) {
 	return nil, repository.ErrNotFound
 }
 
+func (f *fakeUserRepository) FindByIDs(ids []uint) ([]model.User, error) {
+	byID := make(map[uint]bool, len(ids))
+	for _, id := range ids {
+		byID[id] = true
+	}
+	result := make([]model.User, 0)
+	for _, u := range f.users {
+		if byID[u.ID] {
+			result = append(result, *u)
+		}
+	}
+	return result, nil
+}
+
 func (f *fakeUserRepository) FindByID(id uint) (*model.User, error) {
 	for _, user := range f.users {
 		if user.ID == id {

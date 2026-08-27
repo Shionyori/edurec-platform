@@ -32,6 +32,10 @@ func (s *stubUserRepository) FindByID(_ uint) (*model.User, error) {
 	return nil, nil
 }
 
+func (s *stubUserRepository) FindByIDs(_ []uint) ([]model.User, error) {
+	return nil, nil
+}
+
 func (s *stubUserRepository) Update(_ *model.User) error {
 	return nil
 }

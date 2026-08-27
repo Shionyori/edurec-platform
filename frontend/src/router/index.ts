@@ -11,6 +11,7 @@ import SearchPage from '@/pages/search/SearchPage.vue'
 import ProfilePage from '@/pages/user/ProfilePage.vue'
 import AdminDashboard from '@/pages/admin/AdminDashboard.vue'
 import AdminUsers from '@/pages/admin/AdminUsers.vue'
+import AdminResources from '@/pages/admin/AdminResources.vue'
 import PlaceholderPage from '@/pages/placeholder/PlaceholderPage.vue'
 import NotFoundPage from '@/pages/not-found/NotFound.vue'
 
@@ -62,7 +63,7 @@ const routes = [
       {
         path: 'resources',
         name: 'admin-resources',
-        component: PlaceholderPage,
+        component: AdminResources,
         meta: { requiresAuth: true, requiresAdmin: true },
       },
       {

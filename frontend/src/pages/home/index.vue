@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
 import { getRecommendations } from '@/api/recommendation'
+import ResourceCard from '@/components/resource/ResourceCard.vue'
 import type { Resource } from '@/types'
 
 const resources = ref<Resource[]>([])
@@ -35,24 +36,7 @@ onMounted(async () => {
     <div v-if="loading" class="py-24 text-center text-sm text-ink-muted">加载中…</div>
     <div v-else-if="error" class="py-24 text-center text-sm text-red-500">{{ error }}</div>
     <div v-else class="mt-8 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-      <div
-        v-for="r in resources"
-        :key="r.id"
-        class="group rounded-lg border border-border bg-surface p-5 shadow-sm transition hover:shadow-md"
-      >
-        <div class="flex items-center justify-between text-xs text-ink-muted">
-          <el-tag size="small" :type="r.type === 'course' ? 'primary' : r.type === 'video' ? 'success' : 'warning'">
-            {{ r.type }}
-          </el-tag>
-          <span>{{ r.category?.name }}</span>
-        </div>
-        <h3 class="mt-3 text-lg font-semibold text-ink">{{ r.title }}</h3>
-        <p class="mt-1 line-clamp-2 text-sm text-ink-secondary">{{ r.description }}</p>
-        <div class="mt-4 flex items-center justify-between border-t border-border pt-3 text-sm">
-          <span class="text-amber-500">★ {{ r.avg_rating.toFixed(1) }}</span>
-          <span class="text-xs text-ink-muted">{{ r.view_count }} 次浏览</span>
-        </div>
-      </div>
+      <ResourceCard v-for="r in resources" :key="r.id" :resource="r" />
     </div>
   </div>
 </template>

@@ -12,6 +12,7 @@ import ProfilePage from '@/pages/user/ProfilePage.vue'
 import AdminDashboard from '@/pages/admin/AdminDashboard.vue'
 import AdminUsers from '@/pages/admin/AdminUsers.vue'
 import AdminResources from '@/pages/admin/AdminResources.vue'
+import AdminCategories from '@/pages/admin/AdminCategories.vue'
 import PlaceholderPage from '@/pages/placeholder/PlaceholderPage.vue'
 import NotFoundPage from '@/pages/not-found/NotFound.vue'
 
@@ -69,7 +70,7 @@ const routes = [
       {
         path: 'categories',
         name: 'admin-categories',
-        component: PlaceholderPage,
+        component: AdminCategories,
         meta: { requiresAuth: true, requiresAdmin: true },
       },
     ],

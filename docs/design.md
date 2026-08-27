@@ -94,6 +94,7 @@ chore: 更新 docker-compose 配置
 
 - **Frontend ↔ Backend**：REST API (HTTP + JSON)，JWT 认证
 - **Backend ↔ edurec-engine**：独立微服务，通过 REST 调用（engine 具体设计待定，platform 侧定义 engine client 接口即可）
+  - 当前阶段落地方式见「决策记录 #12」：路线 B（batch + 落库），engine 接入延后到 platform 收尾之后
 - 所有接口遵循统一响应格式和错误码规范
 
 ### 4.2 后端分层架构
@@ -330,6 +331,7 @@ services:
 | 1 | 与 edurec-engine 集成方式 | 独立微服务 |
 | 2 | 与 engine 通信协议 | REST (HTTP + JSON) |
 | 3 | engine 具体设计 | 暂后置，platform 侧定义 engine client 接口 |
+| 12 | engine 接入落地（当前阶段） | 路线 B：batch + 落库 —— engine 零改动（消费其输出的 `model/recommendations.json`），platform 侧将结果写入 `Recommendation` 缓存表，推荐接口查表返回；等 platform 收尾后再补路线 A（engine HTTP 服务层 + platform engine client） |
 | 4 | 后端分层架构 | Handler → Service → Repository |
 | 5 | 认证方案 | JWT Access + Refresh Token |
 | 6 | API 设计规范 | 混合（CRUD RESTful + 操作 RPC），统一规范 |

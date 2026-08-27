@@ -13,6 +13,12 @@ type Config struct {
 	Database DatabaseConfig `mapstructure:"database"`
 	Redis    RedisConfig    `mapstructure:"redis"`
 	JWT      JWTConfig      `mapstructure:"jwt"`
+	Engine   EngineConfig   `mapstructure:"engine"`
+}
+
+// EngineConfig edurec-engine 接入配置
+type EngineConfig struct {
+	RecommendationsFile string `mapstructure:"recommendations_file"` // engine 输出的推荐结果 JSON 路径
 }
 
 // ServerConfig HTTP 服务器配置

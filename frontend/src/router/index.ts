@@ -8,6 +8,7 @@ import LoginPage from '@/pages/auth/LoginPage.vue'
 import RegisterPage from '@/pages/auth/RegisterPage.vue'
 import ResourceDetailPage from '@/pages/resource/ResourceDetailPage.vue'
 import SearchPage from '@/pages/search/SearchPage.vue'
+import ProfilePage from '@/pages/user/ProfilePage.vue'
 import PlaceholderPage from '@/pages/placeholder/PlaceholderPage.vue'
 import NotFoundPage from '@/pages/not-found/NotFound.vue'
 
@@ -19,7 +20,7 @@ const routes = [
       { path: '', name: 'home', component: HomePage, meta: { requiresAuth: true } },
       { path: 'search', name: 'search', component: SearchPage, meta: { requiresAuth: true } },
       { path: 'resources/:id', name: 'resource-detail', component: ResourceDetailPage, meta: { requiresAuth: true } },
-      { path: 'user/me', name: 'user-me', component: PlaceholderPage, meta: { requiresAuth: true } },
+      { path: 'user/me', name: 'user-me', component: ProfilePage, meta: { requiresAuth: true } },
       {
         path: 'resources/upload',
         name: 'resource-upload',

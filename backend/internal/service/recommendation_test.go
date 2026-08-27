@@ -11,6 +11,12 @@ import (
 	"gorm.io/gorm"
 )
 
+// replaceCall 记录一次 Replace 调用（map 遍历顺序不定，断言需按集合核对）
+type replaceCall struct {
+	userID uint
+	ids    string
+}
+
 type fakeRecommendationRepository struct {
 	found         *model.Recommendation
 	findErr       error
@@ -18,6 +24,7 @@ type fakeRecommendationRepository struct {
 	replaceIDs    string
 	replaceErr    error
 	saved         *model.Recommendation
+	replaceCalls  []replaceCall
 }
 
 func (f *fakeRecommendationRepository) FindByUserID(userID uint) (*model.Recommendation, error) {
@@ -33,6 +40,7 @@ func (f *fakeRecommendationRepository) Replace(userID uint, resourceIDs string, 
 	}
 	f.replaceUserID = userID
 	f.replaceIDs = resourceIDs
+	f.replaceCalls = append(f.replaceCalls, replaceCall{userID: userID, ids: resourceIDs})
 	f.saved = &model.Recommendation{
 		ID:          1,
 		UserID:      userID,

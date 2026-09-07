@@ -75,7 +75,8 @@ func main() {
 	// 资源（保留原始 ID）
 	resOut := make([][]any, 0, len(resRows))
 	for _, r := range resRows {
-		tags := strings.Split(r["tags"], ",")
+		// engine 的 sim 数据集多标签以 "|" 分隔（与 io.save_bundle 一致）
+		tags := strings.Split(strings.TrimSpace(r["tags"]), "|")
 		tagJSON, _ := json.Marshal(tags)
 		resOut = append(resOut, []any{
 			mustInt(r["resource_id"]), "模拟资源" + r["resource_id"], r["type"],

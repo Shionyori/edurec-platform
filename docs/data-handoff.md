@@ -1,11 +1,45 @@
-# 数据交接（engine ↔ platform，手动拷贝）
+# 数据交接（engine ↔ platform）
 
-两仓库目录互不读写，产物统一手动拷贝。下方 `<engine>`、`<platform>` 为两仓库根目录。
+两仓库目录互不读写，交接通过文件完成。下方 `<engine>`、`<platform>` 为两仓库根目录，
+platform 交接目录为 `backend/data/`（快照、推荐结果、演示数据）。
 
-| 交接 | 命令 |
-|---|---|
-| 推荐结果 engine → platform（推理后） | `cp <engine>/model/recommendations.json <platform>/backend/data/recommendations.json` |
-| 模拟数据 engine → platform（播种用） | `cp -r <engine>/dataset/sim <platform>/backend/data/sim`，随后 `demo_seed` |
-| 数据快照 platform → engine（导出后） | `cp -r <platform>/backend/data/snapshots/<run_id> <engine>/dataset/platform_snapshot/<run_id>/` |
+## 交接物一览
 
-快照拷给 engine 后，训练/推理命令见 engine README（`ENGINE_SNAPSHOT_DIR=dataset/platform_snapshot/<run_id>` + `--data-source platform`）。
+| 交接 | 方向 | 命令 |
+|---|---|---|
+| 数据快照（engine 训练/推理输入） | platform → engine | `cp -r <platform>/backend/data/snapshots/<run_id> <engine>/dataset/platform_snapshot/<run_id>/` |
+| 推荐结果（engine 推理输出） | engine → platform | `cp <engine>/model/recommendations.json <platform>/backend/data/recommendations.json` |
+| 模拟数据（演示播种用） | engine → platform | `cp -r <engine>/dataset/sim <platform>/backend/data/sim`，随后 `demo_seed` |
+
+> 交接物是**推荐结果列表**（`{用户ID: [资源ID,…]}`），不是模型权重——platform 不做模型推理，
+> 模型文件只保留在 engine，供下一次推理使用。
+
+## 一轮推荐刷新（完整流程）
+
+推荐反映「截至导出时刻」的快照：完成一次「导出 → engine 训练/推理 → 导入」后，
+`GET /recommendations` 才会返回新结果。
+
+```bash
+# ① platform：导出平台真实数据快照
+cd <platform>/backend && CONFIG_PATH=configs/config.yaml go run ./cmd/export_snapshot
+#                                          → data/snapshots/<run_id>/
+
+# ② 快照交给 engine（拷入 engine 的快照目录）
+cp -r data/snapshots/<run_id> <engine>/dataset/platform_snapshot/<run_id>/
+
+# ③ engine：训练 + 全量推理（同一快照目录，保证训练/推理口径一致）
+cd <engine> && python -m scripts.train_all       --data-source platform --snapshot-dir dataset/platform_snapshot/<run_id>
+cd <engine> && python -m scripts.run_batch_infer --data-source platform --snapshot-dir dataset/platform_snapshot/<run_id>
+
+# ④ 推理结果放回 platform
+cp <engine>/model/recommendations.json <platform>/backend/data/recommendations.json
+
+# ⑤ platform：导入缓存表（管理员登录后 POST /api/v1/admin/recommendations/import）
+```
+
+说明：
+
+- ③ 中 engine 输出为**平台原始 ID**、覆盖快照全量用户；无行为的冷启动用户走热门兜底。
+- 单用户结果为空或用户不在平台库 → 导入跳过该用户、保留其旧缓存行；
+  整份文件为空/导入失败 → 缓存不变。服务始终有返回（旧结果或热门兜底），不会出现空推荐。
+- 用户新行为/新资源在下一次完整刷新后生效（batch 时效口径）。

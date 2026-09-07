@@ -18,21 +18,23 @@ cd backend && go run ./cmd/server
 cd frontend && pnpm install && pnpm dev
 ```
 
-## 推荐闭环（路线 B：batch + 手动交接）
+## 推荐闭环（engine 离线批量训练 → 结果落库）
+
+platform 侧不做模型推理：engine 离线完成「训练 + 全量推理」，产出每个用户的推荐结果列表；
+platform 通过导入接口将其写入 `Recommendation` 缓存表，`GET /api/v1/recommendations` 读缓存返回，
+未命中用户按评分降序热门兜底（空/缺失缓存不会导致无推荐，详见 [docs/engine-integration.md](docs/engine-integration.md)）。
 
 ```bash
 cd backend
-# 演示数据播种（用户/资源 ID 与 engine 一致；账号 demo<id>/demo123456，管理员 demo_admin/demo123456）
+# （演示环境首次使用前播种：账号 demo<id>/demo123456，管理员 demo_admin/demo123456）
 CONFIG_PATH=configs/config.yaml go run ./cmd/demo_seed -with-behaviors
-# engine 推理结果拷入后由管理员导入 → 首页个性化推荐
-#   cp <engine>/model/recommendations.json data/recommendations.json
-#   demo_admin 登录 → POST /api/v1/admin/recommendations/import
-
-# 平台真实数据导出（供 engine 训练）
+# ① 平台真实数据导出为快照（供 engine 训练；engine 侧训练/推理见 docs/data-handoff.md）
 CONFIG_PATH=configs/config.yaml go run ./cmd/export_snapshot   # → data/snapshots/<run_id>/
+# ② engine 推理结果放至 data/recommendations.json 后，管理员导入 → 首页个性化推荐
+#    demo_admin 登录 → POST /api/v1/admin/recommendations/import
 ```
 
-engine 与平台目录隔离、产物手动拷贝交接，详见 [docs/data-handoff.md](docs/data-handoff.md)。
+engine 与平台目录隔离，交接物为数据快照与推荐结果文件，经 `backend/data/` 目录传递，详见 [docs/data-handoff.md](docs/data-handoff.md)。
 
 ## 测试
 
@@ -48,11 +50,13 @@ cd frontend && pnpm test && pnpm type-check && pnpm lint
 ## 数据流
 
 ```
-platform 导出快照 → 手动拷给 engine 训练/推理 → 结果拷回 platform 导入
+platform export_snapshot（真实数据 → data/snapshots/<run_id>/）
+→ engine 训练 + 全量推理（读该快照）
+→ 推荐结果放至 data/recommendations.json → 管理员导入
 → Recommendation 缓存表 → GET /api/v1/recommendations → 前端首页
 ```
 
 ## 文档
 
 - [docs/design.md](docs/design.md) · [docs/api-design.md](docs/api-design.md) · [docs/engine-integration.md](docs/engine-integration.md)
-- [docs/data-handoff.md](docs/data-handoff.md) —— 目录隔离与手动交接
+- [docs/data-handoff.md](docs/data-handoff.md) —— 数据交接与一轮刷新流程

@@ -2,18 +2,31 @@
 
 ## 背景
 
-edurec-engine 是独立仓库（`github.com/Shionyori/edurec-engine`），离线完成「双塔 DSSM 召回 → 多任务 DeepFM 精排 → MMR 重排」，批量推理后输出 `model/recommendations.json`。platform 与 engine 按「独立微服务 + REST」为远期设计，当前先以**路线 B（batch + 落库）**接入，engine 仓库零改动。
+edurec-engine 是独立仓库（`github.com/Shionyori/edurec-engine`），离线完成「双塔 DSSM 召回 → 多任务 DeepFM 精排 → MMR 重排」。
+platform 与 engine 的接入形态为**离线批量训练 + 结果物化落库**：engine 消费平台导出的数据快照完成训练与全量推理，
+产出每个用户的推荐结果列表；platform 将结果导入 `Recommendation` 缓存表，推荐接口读缓存返回。
+**platform 侧不运行模型、不做推理**——个性化结果完全来自 engine 离线产出，模型权重只保留在 engine。
 
-## 路线 B：batch + 落库（已实现）
+该形态对齐真实推荐系统的离线 batch 链路：训练与全量推理代价高，按周期批量执行；serving 只消费预计算结果。
+batch 形态为本项目**既定接入方式**，不以实时服务化为前提。
+
+两仓之间的**交叉接口即 platform 的 MySQL**：engine 的训练输入是业务表（users/resources/behaviors/ratings）的快照导出，
+serving 输出落在 `Recommendation` 缓存表；快照与推荐结果文件只是该库数据的序列化载体（见 [data-handoff.md](./data-handoff.md)）。
+
+## 接入形态：离线批量 + 结果落库
 
 ### 数据流
 
 ```
-edurec-engine 离线推理 → model/recommendations.json
-   ↓  POST /api/v1/admin/recommendations/import（管理员触发）
+platform 导出快照（export_snapshot，平台真实数据）
+   ↓ 拷至 engine dataset/platform_snapshot/<run_id>/
+engine 训练 + 全量推理（train_all / run_batch_infer，同一快照目录）
+   ↓ model/recommendations.json（平台原始 ID，覆盖全量用户，冷启动走热门兜底）
+拷回 platform data/ 后，POST /api/v1/admin/recommendations/import（管理员）
+   ↓
 Recommendation 缓存表（每个用户一条）
-   ↓  GET /api/v1/recommendations
-前端首页展示个性化推荐（缓存未命中时兜底按评分降序取热门）
+   ↓
+GET /api/v1/recommendations → 命中缓存按序返回；未命中按评分降序热门兜底并写缓存
 ```
 
 ### 配置文件
@@ -22,41 +35,59 @@ Recommendation 缓存表（每个用户一条）
 
 ```yaml
 engine:
-  recommendations_file: "/mnt/d/Project/edurec-engine/model/recommendations.json"
+  # 推荐结果文件：engine 生成后放至此处（见 docs/data-handoff.md）
+  recommendations_file: "data/recommendations.json"
+  # 演示/模拟数据集：engine dataset/sim 拷至此处（demo_seed 播种用）
+  dataset_dir: "data/sim"
+  # 数据快照导出目录（export_snapshot 输出；交由 engine 训练）
+  snapshot_dir: "data/snapshots"
 ```
 
-### 导入接口
+### 数据快照（platform → engine）
+
+`CONFIG_PATH=configs/config.yaml go run ./cmd/export_snapshot` 将平台真实数据导出到 `data/snapshots/<run_id>/`
+（`meta.json` + `users/resources/categories/behaviors/ratings.csv` + sha256）。快照拷给 engine 后：
+
+```bash
+python -m scripts.train_all       --data-source platform --snapshot-dir dataset/platform_snapshot/<run_id>
+python -m scripts.run_batch_infer --data-source platform --snapshot-dir dataset/platform_snapshot/<run_id>
+```
+
+### 导入接口（engine → platform）
 
 `POST /api/v1/admin/recommendations/import`（需管理员），无参数。
 
 - 读取 `engine.recommendations_file` 指向的 JSON，格式为 `{ "<user_id>": [<resource_id>, ...] }`（每用户 top-N）
-- 一次性查询平台库用户与资源存在性，仅导入**数值 ID 相同**的用户与资源
-- 写入/覆盖该用户的 `Recommendation` 缓存行，返回统计：`imported_users / skipped_users / imported_resources / skipped_resources`
+- 按平台库中实际存在的用户/资源过滤后，覆盖写入该用户的 `Recommendation` 缓存行
+- 返回统计：`imported_users / skipped_users / imported_resources / skipped_resources`
 
-### ID 映射限制（重要）
+### ID 与覆盖口径
 
-engine 基于其模拟数据集（`dataset/sim`，1965 用户、494 资源，ID 从 0 开始）训练，推荐中的 ID 是**模拟数据的内部编号**，与 platform 数据库的真实 ID（MySQL auto-increment）**不是同一套**。因此：
+- platform 数据源下 engine 全程使用**平台原始 ID**：快照导出全量用户（含冷启动）；engine 的清洗过滤只作用于训练集，
+  推理对快照全量用户产出并在出口回映射为平台 ID——导入可全量命中，不存在 ID 错位匹配。
+- sim / movielens 轨道仅用于演示与回归测试，其数据与平台 ID 无关，**不得**作为导入真实平台的来源。
 
-- 导入时只匹配数值 ID 相同的用户与资源，其余跳过（安全但不产生真实个性化效果）
-- 当前 engine（sim 数据）导入到真实平台时，匹配量可能很少
+### 服务语义：空 / 缺失 / 陈旧
 
-**要让推荐真正个性化，需要 engine 改为消费 platform 真实数据**（用户、行为、资源）并输出平台侧 ID——这是 engine 侧的数据管线工作，超出 platform 收尾范围，留作后续。
+- 用户无缓存行（新注册、未被覆盖）→ `GET` 按评分热门兜底并写缓存，不会无推荐。
+- 单用户结果为空或用户不在平台库 → 导入跳过该用户，保留其旧缓存行。
+- 整份文件为空或导入失败 → 缓存不变，服务继续返回旧结果或兜底（陈旧但可用）。
 
-### 触发方式
+### 刷新节奏与时效口径
 
-- 当前为管理员手动调用导入接口
-- 后续可扩展为定时任务 / 发布流程中自动触发
+- 结果反映「截至导出时刻」的快照；用户新行为/新资源在下一轮「导出 → 训练/推理 → 导入」后生效。
+- 一轮完整刷新见 [data-handoff.md](./data-handoff.md)；由人工或后续定时任务驱动。
 
-## 路线 A 展望（后续）
+## 演进方向（可选）
 
-远期按设计文档回到「独立微服务 + REST」：
+batch 形态为既定选择，以下作为可选演进，不改变主链路：
 
-1. engine 增加 HTTP serving 层（如 FastAPI），加载训练好的模型，暴露推荐接口
-2. platform 后端定义 engine client，`GET /recommendations` 缓存未命中时实时调用 engine
-3. 引擎侧接入 platform 真实数据管线，使推荐基于真实用户行为
+1. **在线服务化**：engine 增加 HTTP serving 层（如 FastAPI + ANN），缓存未命中时实时调用——属于实时推理，成本高，仅在场景确需时引入。
+2. **近线增强**：请求时过滤「最近已看」、为新上架资源提供曝光通道、曝光打点与效果指标——在 batch 之外补时效与反馈。
 
 ## 相关文档
 
 - [design.md](./design.md) —— 决策记录 #12
 - [api-design.md](./api-design.md) —— 6.1 推荐接口、6.2 导入接口
+- [data-handoff.md](./data-handoff.md) —— 数据交接与一轮刷新流程
 - [README.md](../README.md) —— 推荐数据流速览

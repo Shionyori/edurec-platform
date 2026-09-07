@@ -18,21 +18,28 @@ cd backend && go run ./cmd/server
 cd frontend && pnpm install && pnpm dev
 ```
 
-## 推荐闭环（路线 B：batch + 手动交接）
+## 推荐闭环（engine 离线批量训练 → 结果落库）
+
+两仓的交叉接口是 platform 的 **MySQL 数据库**——engine 与 platform 不直接调用，数据经数据库衔接：
+
+- 数据下链：`export_snapshot` 将业务表（用户/资源/行为/评分）导出为快照目录 → engine 据此训练 + 全量推理
+- 结果上链：engine 产出的推荐列表（平台原始 ID）经导入接口写入 `Recommendation` 缓存表
+- 读侧：`GET /api/v1/recommendations` 读缓存表返回；未命中用户按评分降序热门兜底并写缓存（空/缺失缓存不会导致无推荐）
+
+platform 不做模型推理、engine 不做在线服务：首页是否个性化，取决于 `Recommendation` 缓存表是否被 engine 结果填充——
+已导入则返回导入列表，从未导入/新用户则走热门兜底。交接文件只是 MySQL 数据的序列化载体，
+详见 [docs/engine-integration.md](docs/engine-integration.md)。
 
 ```bash
 cd backend
-# 演示数据播种（用户/资源 ID 与 engine 一致；账号 demo<id>/demo123456，管理员 demo_admin/demo123456）
+# （可选）播种演示数据（管理员 demo_admin/demo123456）
 CONFIG_PATH=configs/config.yaml go run ./cmd/demo_seed -with-behaviors
-# engine 推理结果拷入后由管理员导入 → 首页个性化推荐
-#   cp <engine>/model/recommendations.json data/recommendations.json
-#   demo_admin 登录 → POST /api/v1/admin/recommendations/import
-
-# 平台真实数据导出（供 engine 训练）
+# ① 导出平台数据快照 → engine 据此训练/推理（见 docs/data-handoff.md）
 CONFIG_PATH=configs/config.yaml go run ./cmd/export_snapshot   # → data/snapshots/<run_id>/
+# ② 管理员导入 engine 推荐结果 → 个性化生效（文件须先置于 data/recommendations.json）
 ```
 
-engine 与平台目录隔离、产物手动拷贝交接，详见 [docs/data-handoff.md](docs/data-handoff.md)。
+engine 与平台目录隔离，交接物为数据快照与推荐结果文件，经 `backend/data/` 目录传递，详见 [docs/data-handoff.md](docs/data-handoff.md)。
 
 ## 测试
 
@@ -48,11 +55,15 @@ cd frontend && pnpm test && pnpm type-check && pnpm lint
 ## 数据流
 
 ```
-platform 导出快照 → 手动拷给 engine 训练/推理 → 结果拷回 platform 导入
+platform export_snapshot（真实数据 → data/snapshots/<run_id>/）
+→ engine 训练 + 全量推理（读该快照）
+→ 推荐结果放至 data/recommendations.json → 管理员导入
 → Recommendation 缓存表 → GET /api/v1/recommendations → 前端首页
 ```
 
 ## 文档
 
-- [docs/design.md](docs/design.md) · [docs/api-design.md](docs/api-design.md) · [docs/engine-integration.md](docs/engine-integration.md)
-- [docs/data-handoff.md](docs/data-handoff.md) —— 目录隔离与手动交接
+- [docs/design.md](docs/design.md) —— 平台架构设计与决策记录
+- [docs/api-design.md](docs/api-design.md) —— REST API 设计（推荐模块：读缓存 + 导入）
+- [docs/engine-integration.md](docs/engine-integration.md) —— edurec-engine 接入说明（离线批量 + 结果落库）
+- [docs/data-handoff.md](docs/data-handoff.md) —— 数据交接与一轮刷新流程

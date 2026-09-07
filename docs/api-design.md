@@ -623,7 +623,7 @@ GET /api/v1/recommendations
 }
 ```
 
-> 后端先查缓存，命中即返回；未命中时兜底按评分降序取热门资源并写入缓存。engine 接入当前为路线 B：通过管理接口将 engine 输出导入缓存表（见 6.2），engine 仓库零改动。
+> 后端先查缓存，命中即返回；未命中时兜底按评分降序取热门资源并写入缓存。个性化结果由 engine 离线批量训练/推理产出（平台原始 ID），经 6.2 导入接口写入缓存表——platform 侧不做模型推理。
 
 ---
 
@@ -659,7 +659,7 @@ POST /api/v1/admin/recommendations/import
 | imported_resources | 写入缓存的资源 ID 总数 |
 | skipped_resources | 被过滤掉的资源 ID 数（平台库中不存在） |
 
-> 读取配置 `engine.recommendations_file` 指向的 engine 输出 JSON（格式 `{ "<user_id>": [<resource_id>, ...] }`）。engine 基于其模拟数据集训练，ID 与平台库不一一对应，导入时仅匹配数值 ID 相同的用户与资源，其余跳过。详见 `docs/engine-integration.md`。
+> 读取配置 `engine.recommendations_file` 指向的 engine 输出 JSON（格式 `{ "<user_id>": [<resource_id>, ...] }`）。platform 数据源下 engine 输出平台原始 ID；导入时按平台库中实际存在的用户/资源过滤、跳过不存在的，并覆盖写入缓存行。详见 `docs/engine-integration.md`。
 
 ---
 

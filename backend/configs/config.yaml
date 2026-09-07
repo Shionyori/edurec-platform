@@ -26,9 +26,9 @@ jwt:
   refresh_expire: 10080
 
 engine:
-  # edurec-engine 输出的推荐结果 JSON 路径（路线 B 导入用）
-  recommendations_file: "/mnt/d/Project/edurec-engine/model/recommendations.json"
-  # edurec-engine 演示/模拟数据集目录（demo_seed 播种用）
-  dataset_dir: "/mnt/d/Project/edurec-engine/dataset/sim"
-  # 平台数据快照导出目录（export_snapshot 输出，供 engine data_source=platform 训练）
-  snapshot_dir: "/mnt/d/Project/edurec-engine/dataset/platform_snapshot"
+  # 推荐结果文件：engine 侧生成后【手动拷贝】到这里（见 docs/data-handoff.md）
+  recommendations_file: "data/recommendations.json"
+  # 演示/模拟数据集：engine 侧 dataset/sim【手动拷贝】到这里（demo_seed 播种用）
+  dataset_dir: "data/sim"
+  # 数据快照导出目录（export_snapshot 输出，平台本地；再手动拷给 engine 训练）
+  snapshot_dir: "data/snapshots"

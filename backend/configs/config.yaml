@@ -28,3 +28,7 @@ jwt:
 engine:
   # edurec-engine 输出的推荐结果 JSON 路径（路线 B 导入用）
   recommendations_file: "/mnt/d/Project/edurec-engine/model/recommendations.json"
+  # edurec-engine 演示/模拟数据集目录（demo_seed 播种用）
+  dataset_dir: "/mnt/d/Project/edurec-engine/dataset/sim"
+  # 平台数据快照导出目录（export_snapshot 输出，供 engine data_source=platform 训练）
+  snapshot_dir: "/mnt/d/Project/edurec-engine/dataset/platform_snapshot"

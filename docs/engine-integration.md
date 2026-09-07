@@ -10,6 +10,9 @@ platform 与 engine 的接入形态为**离线批量训练 + 结果物化落库*
 该形态对齐真实推荐系统的离线 batch 链路：训练与全量推理代价高，按周期批量执行；serving 只消费预计算结果。
 batch 形态为本项目**既定接入方式**，不以实时服务化为前提。
 
+两仓之间的**交叉接口即 platform 的 MySQL**：engine 的训练输入是业务表（users/resources/behaviors/ratings）的快照导出，
+serving 输出落在 `Recommendation` 缓存表；快照与推荐结果文件只是该库数据的序列化载体（见 [data-handoff.md](./data-handoff.md)）。
+
 ## 接入形态：离线批量 + 结果落库
 
 ### 数据流

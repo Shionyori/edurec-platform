@@ -18,7 +18,9 @@ type Config struct {
 
 // EngineConfig edurec-engine 接入配置
 type EngineConfig struct {
-	RecommendationsFile string `mapstructure:"recommendations_file"` // engine 输出的推荐结果 JSON 路径
+	RecommendationsFile string `mapstructure:"recommendations_file"` // engine 输出的推荐结果 JSON 路径（路线 B 导入用）
+	DatasetDir          string `mapstructure:"dataset_dir"`          // engine 演示/模拟数据集目录（demo_seed 播种用）
+	SnapshotDir         string `mapstructure:"snapshot_dir"`         // 数据快照导出目录（export_snapshot 输出，engine 训练输入）
 }
 
 // ServerConfig HTTP 服务器配置

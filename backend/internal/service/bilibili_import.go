@@ -86,15 +86,24 @@ type bilibiliRecord struct {
 
 // Import 读取爬虫输出文件并落库
 func (s *BilibiliImportService) Import() (*BilibiliImportResult, error) {
-	return s.run(true)
+	items, err := s.readFileItems()
+	if err != nil {
+		return nil, err
+	}
+	return s.ImportItems(items, true)
 }
 
 // Preview 走与 Import 完全相同的解析、判重与分类逻辑，但不写库，用于 -dry-run
 func (s *BilibiliImportService) Preview() (*BilibiliImportResult, error) {
-	return s.run(false)
+	items, err := s.readFileItems()
+	if err != nil {
+		return nil, err
+	}
+	return s.ImportItems(items, false)
 }
 
-func (s *BilibiliImportService) run(write bool) (*BilibiliImportResult, error) {
+// readFileItems 读取爬虫输出文件并反序列化为 item 列表
+func (s *BilibiliImportService) readFileItems() ([]bilibiliItem, error) {
 	data, err := os.ReadFile(s.filePath)
 	if err != nil {
 		return nil, apperror.Internal(err)
@@ -104,10 +113,15 @@ func (s *BilibiliImportService) run(write bool) (*BilibiliImportResult, error) {
 	if err := json.Unmarshal(data, &file); err != nil {
 		return nil, apperror.Internal(err)
 	}
+	return file.Items, nil
+}
 
+// ImportItems 把已解析的 B 站 item 落库（write=false 时只统计不写库）。
+// 供离线导入（Import/Preview）与在线搜索爬取（BilibiliOnlineService）复用。
+func (s *BilibiliImportService) ImportItems(items []bilibiliItem, write bool) (*BilibiliImportResult, error) {
 	result := &BilibiliImportResult{}
-	records := make([]bilibiliRecord, 0, len(file.Items))
-	for _, item := range file.Items {
+	records := make([]bilibiliRecord, 0, len(items))
+	for _, item := range items {
 		record, ok := newBilibiliRecord(item)
 		if !ok {
 			result.SkippedResources++

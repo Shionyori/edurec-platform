@@ -9,11 +9,12 @@ import (
 
 // Config 是应用的顶层配置
 type Config struct {
-	Server   ServerConfig   `mapstructure:"server"`
-	Database DatabaseConfig `mapstructure:"database"`
-	Redis    RedisConfig    `mapstructure:"redis"`
-	JWT      JWTConfig      `mapstructure:"jwt"`
-	Engine   EngineConfig   `mapstructure:"engine"`
+	Server    ServerConfig    `mapstructure:"server"`
+	Database  DatabaseConfig  `mapstructure:"database"`
+	Redis     RedisConfig     `mapstructure:"redis"`
+	JWT       JWTConfig       `mapstructure:"jwt"`
+	Engine    EngineConfig    `mapstructure:"engine"`
+	Bilibili  BilibiliConfig  `mapstructure:"bilibili"`
 }
 
 // EngineConfig edurec-engine 接入配置
@@ -21,6 +22,15 @@ type EngineConfig struct {
 	RecommendationsFile string `mapstructure:"recommendations_file"` // engine 输出的推荐结果 JSON 路径（路线 B 导入用）
 	DatasetDir          string `mapstructure:"dataset_dir"`          // engine 演示/模拟数据集目录（demo_seed 播种用）
 	SnapshotDir         string `mapstructure:"snapshot_dir"`         // 数据快照导出目录（export_snapshot 输出，engine 训练输入）
+}
+
+// BilibiliConfig 在线 B 站采集配置（搜索/评论实时爬取，见 backend/crawler/online.py）
+type BilibiliConfig struct {
+	PythonPath   string `mapstructure:"python_path"`   // Python 解释器，默认 "python"
+	CrawlerDir   string `mapstructure:"crawler_dir"`   // backend/crawler 目录（online.py 所在，相对 server 运行目录 backend/）
+	Category     string `mapstructure:"category"`      // 搜索落库分类名
+	SearchLimit  int    `mapstructure:"search_limit"`  // 单次搜索导入条数
+	CommentLimit int    `mapstructure:"comment_limit"` // 单次评论抓取条数
 }
 
 // ServerConfig HTTP 服务器配置

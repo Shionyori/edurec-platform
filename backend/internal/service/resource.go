@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"log/slog"
 	"strings"
 
 	"github.com/Shionyori/edurec-platform/backend/internal/apperror"
@@ -13,6 +14,7 @@ import (
 
 type ResourceService struct {
 	resources repository.ResourceRepository
+	online    *BilibiliOnlineService
 }
 
 type CreateResourceInput struct {
@@ -44,6 +46,11 @@ func NewResourceService(resources repository.ResourceRepository) *ResourceServic
 	return &ResourceService{resources: resources}
 }
 
+// SetBilibiliOnline 注入在线 B 站采集服务（nil 表示禁用在线搜索爬取，测试用）
+func (s *ResourceService) SetBilibiliOnline(online *BilibiliOnlineService) {
+	s.online = online
+}
+
 func (s *ResourceService) List(ctx context.Context, query repository.ResourceListQuery) (*repository.ResourceListResult, error) {
 	query.Keyword = strings.TrimSpace(query.Keyword)
 	query.Type = strings.TrimSpace(query.Type)
@@ -58,6 +65,20 @@ func (s *ResourceService) List(ctx context.Context, query repository.ResourceLis
 	if err != nil {
 		return nil, apperror.Internal(err)
 	}
+
+	// 本地无结果且为纯关键词搜索时，实时爬取 B 站补充结果后重查
+	pureKeywordSearch := query.CategoryID == 0 && query.Type == "" && len(query.Tags) == 0
+	if s.online != nil && result.Total == 0 && query.Keyword != "" && pureKeywordSearch {
+		if _, err := s.online.SearchAndImport(query.Keyword); err != nil {
+			slog.Warn("B站搜索爬取失败", "keyword", query.Keyword, "error", err)
+			return result, nil
+		}
+		result, err = s.resources.List(query)
+		if err != nil {
+			return nil, apperror.Internal(err)
+		}
+	}
+
 	return result, nil
 }
 

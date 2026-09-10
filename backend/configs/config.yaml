@@ -32,3 +32,11 @@ engine:
   dataset_dir: "data/sim"
   # 数据快照导出目录（export_snapshot 输出，平台本地；再手动拷给 engine 训练）
   snapshot_dir: "data/snapshots"
+
+bilibili:
+  # 在线搜索/评论实时爬取（后端 os/exec 调 backend/crawler/online.py）
+  python_path: "python"
+  crawler_dir: "crawler"
+  category: "B站视频"
+  search_limit: 10
+  comment_limit: 20

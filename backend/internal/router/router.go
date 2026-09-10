@@ -23,6 +23,7 @@ func New(cfg *config.Config, db *gorm.DB, rdb *redis.Client) *gin.Engine {
 	ratingRepo := repository.NewRatingRepository(db)
 	recommendationRepo := repository.NewRecommendationRepository(db)
 	adminRepo := repository.NewAdminRepository(db)
+	commentRepo := repository.NewCommentRepository(db)
 	refreshTokenStore := repository.NewRedisRefreshTokenStore(rdb)
 	jwtManager := jwtutil.NewManager(cfg.JWT.AccessSecret)
 
@@ -35,6 +36,12 @@ func New(cfg *config.Config, db *gorm.DB, rdb *redis.Client) *gin.Engine {
 	resourceService := service.NewResourceService(resourceRepo)
 	behaviorService := service.NewUserBehaviorService(behaviorRepo, resourceRepo)
 	ratingService := service.NewRatingService(ratingRepo, resourceRepo)
+
+	// 在线 B 站采集：搜索落库 + 评论抓取（复用离线导入服务，filePath 仅离线导入用）
+	bilibiliImportService := service.NewBilibiliImportService(resourceRepo, categoryRepo, "")
+	bilibiliOnlineService := service.NewBilibiliOnlineService(bilibiliImportService, cfg.Bilibili)
+	resourceService.SetBilibiliOnline(bilibiliOnlineService)
+	commentService := service.NewCommentService(commentRepo, bilibiliOnlineService, cfg.Bilibili.CommentLimit)
 	recommendationService := service.NewRecommendationService(recommendationRepo, resourceRepo)
 	recommendationImportService := service.NewRecommendationImportService(
 		recommendationRepo, userRepo, resourceRepo, cfg.Engine.RecommendationsFile,
@@ -46,6 +53,7 @@ func New(cfg *config.Config, db *gorm.DB, rdb *redis.Client) *gin.Engine {
 	resourceHandler := handler.NewResourceHandler(resourceService)
 	behaviorHandler := handler.NewUserBehaviorHandler(behaviorService)
 	ratingHandler := handler.NewRatingHandler(ratingService)
+	commentHandler := handler.NewCommentHandler(resourceService, commentService)
 	recommendationHandler := handler.NewRecommendationHandler(recommendationService, recommendationImportService)
 	adminHandler := handler.NewAdminHandler(adminService)
 
@@ -78,6 +86,7 @@ func New(cfg *config.Config, db *gorm.DB, rdb *redis.Client) *gin.Engine {
 	protected.GET("/users/me/behaviors", behaviorHandler.List)
 	protected.GET("/resources/:id/ratings", ratingHandler.List)
 	protected.POST("/resources/:id/ratings", ratingHandler.Upsert)
+	protected.GET("/resources/:id/comments", commentHandler.List)
 	protected.GET("/recommendations", recommendationHandler.Get)
 	protected.GET("/admin/users", middleware.AdminRequired(userRepo), adminHandler.ListUsers)
 	protected.GET("/admin/resources", middleware.AdminRequired(userRepo), adminHandler.ListResources)

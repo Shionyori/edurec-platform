@@ -172,6 +172,12 @@ export const handlers = [
     const categoryId = url.searchParams.get('category_id')
     const type = url.searchParams.get('type')
     const sort = url.searchParams.get('sort') ?? 'latest'
+    const onlinePage = url.searchParams.get('online_page')
+
+    // 在线翻页：mock 不真正爬 B 站，直接返回空并标记无更多
+    if (onlinePage) {
+      return ok({ list: [], total: 0, page: Number(onlinePage), page_size: pageSize, has_more: false })
+    }
 
     let list = db.resources.filter((r) => {
       if (keyword && !(r.title.includes(keyword) || r.description.includes(keyword))) return false

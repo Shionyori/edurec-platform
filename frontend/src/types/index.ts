@@ -65,6 +65,7 @@ export interface Page<T> {
   total: number
   page: number
   page_size: number
+  has_more?: boolean
 }
 
 export interface LoginResult {

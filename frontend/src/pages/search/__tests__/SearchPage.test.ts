@@ -12,6 +12,22 @@ vi.mock('@/api/resource', () => ({ listResources: vi.fn() }))
 const mockedListCategories = vi.mocked(listCategories)
 const mockedListResources = vi.mocked(listResources)
 
+type ObserverCallback = (entries: IntersectionObserverEntry[], observer: IntersectionObserver) => void
+
+let observerCallback: ObserverCallback | null = null
+
+class MockIntersectionObserver {
+  constructor(cb: ObserverCallback) {
+    observerCallback = cb
+  }
+  observe() {}
+  unobserve() {}
+  disconnect() {}
+  takeRecords() {
+    return []
+  }
+}
+
 const categories: Category[] = [{ id: 1, name: '人工智能', description: '' }]
 
 const resource: Resource = {
@@ -36,9 +52,22 @@ async function mountPage() {
   return wrapper
 }
 
+async function searchKeyword(wrapper: ReturnType<typeof mount>, keyword: string) {
+  const input = wrapper.find('input[placeholder="输入关键词…"]')
+  await input.setValue(keyword)
+  await input.trigger('keyup.enter')
+  await flushPromises()
+}
+
+function triggerLoadMore() {
+  observerCallback!([{ isIntersecting: true } as IntersectionObserverEntry], {} as IntersectionObserver)
+}
+
 describe('SearchPage', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    observerCallback = null
+    vi.stubGlobal('IntersectionObserver', MockIntersectionObserver)
     mockedListCategories.mockResolvedValue(categories)
     mockedListResources.mockResolvedValue(pageResult())
   })
@@ -53,10 +82,7 @@ describe('SearchPage', () => {
   it('输入关键词搜索会携带筛选条件并重置页码', async () => {
     const wrapper = await mountPage()
     mockedListResources.mockClear()
-    const input = wrapper.find('input[placeholder="输入关键词…"]')
-    await input.setValue('Python')
-    await input.trigger('keyup.enter')
-    await flushPromises()
+    await searchKeyword(wrapper, 'Python')
     expect(mockedListResources).toHaveBeenLastCalledWith(expect.objectContaining({ keyword: 'Python', page: 1 }))
   })
 
@@ -66,14 +92,67 @@ describe('SearchPage', () => {
     expect(wrapper.text()).toContain('没有符合条件的资源')
   })
 
-  it('切页重新拉取对应页码', async () => {
-    mockedListResources.mockResolvedValue(pageResult(13))
+  it('纯关键词搜索本地翻完后，滚到底自动爬取 B 站', async () => {
+    mockedListResources.mockImplementation(async (params = {}) => {
+      if (params.online_page) {
+        return { list: [resource], total: 0, page: params.online_page, page_size: 12, has_more: true }
+      }
+      return { list: [resource], total: 1, page: 1, page_size: 12 }
+    })
     const wrapper = await mountPage()
+    await searchKeyword(wrapper, '机器学习')
     mockedListResources.mockClear()
-    const pagination = wrapper.findComponent({ name: 'ElPagination' })
-    pagination.vm.$emit('current-change', 2)
+
+    triggerLoadMore()
     await flushPromises()
-    expect(mockedListResources).toHaveBeenLastCalledWith(expect.objectContaining({ page: 2 }))
+
+    expect(mockedListResources).toHaveBeenLastCalledWith(
+      expect.objectContaining({ online_page: 1, keyword: '机器学习' }),
+    )
+    // 追加不覆盖：本地 1 条 + B 站 1 条
+    expect(wrapper.findAllComponents({ name: 'ResourceCard' }).length).toBe(2)
+  })
+
+  it('B 站无更多时停止拉取', async () => {
+    let onlineCalls = 0
+    mockedListResources.mockImplementation(async (params = {}) => {
+      if (params.online_page) {
+        onlineCalls += 1
+        return { list: [], total: 0, page: params.online_page, page_size: 12, has_more: false }
+      }
+      return { list: [resource], total: 1, page: 1, page_size: 12 }
+    })
+    const wrapper = await mountPage()
+    await searchKeyword(wrapper, '机器学习')
+
+    triggerLoadMore()
+    await flushPromises()
+    expect(onlineCalls).toBe(1)
+    expect(wrapper.text()).toContain('没有更多内容')
+
+    triggerLoadMore()
+    await flushPromises()
+    expect(onlineCalls).toBe(1)
+  })
+
+  it('带筛选时本地翻完即停，不爬 B 站', async () => {
+    mockedListResources.mockImplementation(async (params) => {
+      return { list: [resource], total: 1, page: 1, page_size: 12 }
+    })
+    const wrapper = await mountPage()
+    await searchKeyword(wrapper, '机器学习')
+    // 选择类型筛选，触发带筛选的搜索
+    const typeSelect = wrapper.findAllComponents({ name: 'ElSelect' })[1]
+    typeSelect.vm.$emit('update:modelValue', 'video')
+    typeSelect.vm.$emit('change', 'video')
+    await flushPromises()
+    mockedListResources.mockClear()
+
+    triggerLoadMore()
+    await flushPromises()
+
+    // 不会再请求 online_page
+    expect(mockedListResources).not.toHaveBeenCalledWith(expect.objectContaining({ online_page: expect.anything() }))
   })
 
   it('接口失败时展示错误态', async () => {

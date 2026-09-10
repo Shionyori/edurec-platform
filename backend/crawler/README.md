@@ -102,6 +102,30 @@ tasks:
 }
 ```
 
+## 在线单次入口（online.py）
+
+平台后端在**搜索无本地结果**与**打开 B 站视频详情页**时，会通过 `os/exec` 调用 `online.py` 做实时单次抓取。
+`online.py` 每次运行独立 `bootstrap`（重新拉取 `buvid3` 与 WBI 密钥），**stdout 只输出单行 UTF-8 JSON**，日志与错误走 stderr。
+
+```bash
+cd backend/crawler
+
+# 搜索：输出 {"items":[<bilibiliItem>...]}
+python online.py search --keyword "机器学习" --limit 5 [--category "人工智能"]
+
+# 评论：输出 {"comments":[<comment>...]}
+python online.py comments --bvid BV1DgxCzREbM --limit 20
+```
+
+| 参数 | 说明 |
+|---|---|
+| `--keyword` | 搜索关键词（`search` 子命令） |
+| `--bvid` | 视频 BV 号（`comments` 子命令） |
+| `--limit` | 返回条数上限 |
+| `--category` | 可选，目标平台分类名（`search` 子命令） |
+
+评论每条形如 `{"author_name": ..., "content": ..., "like_count": ..., "floor": ..., "published_at": ...}`。
+
 ## 实现说明
 
 ### 走的接口
@@ -112,6 +136,7 @@ tasks:
 |---|---|---|
 | 关键词搜索 | `/x/web-interface/wbi/search/type` | 需要 WBI 签名 + `buvid3`，**不需要登录** |
 | BV 详情 | `/x/web-interface/view` | **完全免登录** |
+| 评论列表 | `/x/v2/reply/main` | 需要 WBI 签名，参数 `type=1&oid=aid&mode=3` |
 | UP 主投稿 | `/x/space/wbi/arc/search` | 需要 WBI 签名，且**风控较严** |
 
 ### 关于 buvid3 与 WBI 签名
@@ -136,6 +161,6 @@ tasks:
 
 ## 合规声明
 
-- 只采集**公开的视频元数据**（标题、简介、封面、UP 主名、公开播放量），不下载视频内容、不采集评论、不绕过登录墙
+- 只采集**公开的视频元数据**（标题、简介、封面、UP 主名、公开播放量）与**公开热门评论 top N**（作者昵称、正文、楼层、点赞、发布时间），不下载视频内容、不采集评论中的个人信息、不绕过登录墙
 - 不伪造设备指纹、不使用代理池、不实现验证码绕过
 - 采集结果仅用于学习研究，页面展示时回链原始视频；请遵守 B 站用户协议，不要高频、大规模采集

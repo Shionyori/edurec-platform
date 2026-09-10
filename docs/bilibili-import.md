@@ -3,10 +3,17 @@
 平台的第二条内容来源：用 Python 采集 B 站公开视频元数据 → 输出 JSON → Go 命令导入 `resources` 表 →
 前端资源列表自然展示。视频以 `type=video` 的普通资源身份**混入现有列表**，不新增专区、不改动推荐链路。
 
+链路分两种模式，**离线批量 + 在线实时并存**：
+
 ```
-backend/crawler/  ──JSON──►  backend/data/bilibili/latest.json  ──►  cmd/import_bilibili  ──►  resources 表
-   (Python 采集)                          (gitignore)                    (Go 导入)              type=video
+离线批量：backend/crawler/ ──JSON──► backend/data/bilibili/latest.json ──► cmd/import_bilibili ──► resources 表
+            (Python 采集)                    (gitignore)                     (Go 导入)              type=video
+
+在线实时：GET /resources?keyword=X（本地无结果）─► exec python online.py search ─► ImportItems 落库 ─► 重新查询返回
+          GET /resources/:id/comments（无缓存）──► exec python online.py comments ─► 落库 resource_comments ─► 返回评论
 ```
+
+在线实时部分见下文「在线搜索 + 评论（实时）」，离线批量链路见「全流程」。
 
 ## 全流程
 
@@ -132,9 +139,28 @@ go run ./cmd/import_bilibili [-file data/bilibili/latest.json] [-dry-run]
   去掉 Referer 即可正常加载。外链仍可能失效，故 `@error` 时降级为占位块。
 - **元信息**：详情页「元信息」直接渲染 `metadata` 键值表；`pubdate`（Unix 秒）按 key 特判格式化为 `YYYY-MM-DD`。
 
+## 在线搜索 + 评论（实时）
+
+除离线批量链路外，后端还支持**在线实时**调用爬虫，把「纯离线」扩展为「离线批量 + 在线实时」并存：
+
+1. **搜索时自动爬取**：`GET /resources?keyword=X` 在本地 `resources` 表**无结果**时（`total==0` 且只带 keyword、未加分类/类型/标签筛选）自动 `exec` 调用 `crawler/online.py search` 实时抓取 B 站搜索结果，复用 `ImportItems` 落库后重新查询返回。搜索页 loading 文案会提示「本地无结果时会自动检索 B 站」。
+2. **打开详情页自动爬评论**：`GET /resources/:id/comments` 先查 `resource_comments` 缓存；无缓存且 `source_url` 含 `bilibili.com` 时，`exec` 调用 `crawler/online.py comments` 抓取该视频评论并落库，后续请求直接读缓存。
+
+```text
+搜索：GET /resources?keyword=X（本地无结果）→ exec python online.py search → ImportItems 落库 → 重新查询返回
+评论：GET /resources/:id/comments（无缓存）→ exec python online.py comments → 落库 resource_comments → 返回
+```
+
+约定：
+
+- Python 子进程 **stdout 只输出单行 UTF-8 JSON**，日志与错误走 stderr；Go 侧 `exec.CommandContext` 带 30s 超时，按 UTF-8 解析，规避 Windows GBK 编码问题。
+- 评论落独立的 `resource_comments` 表，**不污染站内 `Rating` 评分**；每条存作者昵称、内容、点赞、楼层、发布时间。
+- 评论默认只抓公开热门 top N（`comment_limit`，默认 20）；命中风控（`-352` / `-412`）不重试，前端展示「评论暂不可用」空态，不阻塞页面主体。
+- 相关配置见 `configs/config.yaml` 的 `bilibili:` 段（`python_path` / `crawler_dir` / `category` / `search_limit` / `comment_limit`）。
+
 ## 合规边界
 
-- 只采集**公开的视频元数据**（标题/简介/封面/UP 主名/公开播放量）：不下载视频内容、不采集评论、不绕过登录墙
+- 只采集**公开的视频元数据**（标题/简介/封面/UP 主名/公开播放量）与**公开热门评论 top N**（作者昵称、正文、楼层、点赞、发布时间）：不下载视频内容、不采集评论中的个人信息、不绕过登录墙
 - 不伪造设备指纹、不使用代理池、**不实现验证码 / 风控绕过**
 - 请求间强制随机间隔（默认 1.5–3.0 秒），风控错误（`-352` / `-412`）不重试，直接中止
 - 采集产物落在已被 `.gitignore` 忽略的 `backend/data/`，不入库

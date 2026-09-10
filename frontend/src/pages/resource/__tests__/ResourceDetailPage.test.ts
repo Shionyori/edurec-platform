@@ -4,6 +4,7 @@ import ElementPlus from 'element-plus'
 import type { Rating, Resource } from '@/types'
 import { getResource } from '@/api/resource'
 import { listRatings, upsertRating } from '@/api/rating'
+import { listComments } from '@/api/comment'
 import { recordBehavior } from '@/api/behavior'
 import * as vueRouterMock from 'vue-router'
 import ResourceDetailPage from '../ResourceDetailPage.vue'
@@ -23,12 +24,14 @@ vi.mock('vue-router', async () => {
 const route = (vueRouterMock as unknown as { route: { params: { id: string } } }).route
 vi.mock('@/api/resource', () => ({ getResource: vi.fn() }))
 vi.mock('@/api/rating', () => ({ listRatings: vi.fn(), upsertRating: vi.fn() }))
+vi.mock('@/api/comment', () => ({ listComments: vi.fn() }))
 vi.mock('@/api/behavior', () => ({ recordBehavior: vi.fn() }))
 vi.mock('@/stores/auth', () => ({ useAuthStore: () => ({ user: { id: 2, username: 'user' } }) }))
 
 const mockedGetResource = vi.mocked(getResource)
 const mockedListRatings = vi.mocked(listRatings)
 const mockedUpsertRating = vi.mocked(upsertRating)
+const mockedListComments = vi.mocked(listComments)
 const mockedRecordBehavior = vi.mocked(recordBehavior)
 
 const resource: Resource = {
@@ -55,6 +58,7 @@ describe('ResourceDetailPage', () => {
     route.params.id = '1'
     mockedGetResource.mockResolvedValue(resource)
     mockedListRatings.mockResolvedValue(emptyPage)
+    mockedListComments.mockResolvedValue({ list: [] })
     mockedRecordBehavior.mockResolvedValue(null)
   })
 
@@ -144,5 +148,31 @@ describe('ResourceDetailPage', () => {
     list.vm.$emit('page-change', 2)
     await flushPromises()
     expect(mockedListRatings).toHaveBeenCalledWith(1, { page: 2, page_size: 10 })
+  })
+
+  it('B 站视频加载评论并渲染评论栏，非 B 站资源不拉取', async () => {
+    const biliResource: Resource = {
+      ...resource,
+      type: 'video',
+      source_url: 'https://www.bilibili.com/video/BV1DgxCzREbM',
+    }
+    mockedGetResource.mockResolvedValue(biliResource)
+    mockedListComments.mockResolvedValue({
+      list: [
+        { id: 1, author_name: '小明', content: '讲得清楚', like_count: 3, floor: 1, published_at: 1759990000 },
+      ],
+    })
+
+    const wrapper = await mountPage()
+
+    expect(mockedListComments).toHaveBeenCalledWith(1)
+    expect(wrapper.text()).toContain('B 站评论')
+    expect(wrapper.text()).toContain('讲得清楚')
+
+    // 普通资源（course）不触发评论拉取
+    mockedGetResource.mockResolvedValue(resource)
+    mockedListComments.mockClear()
+    await mountPage()
+    expect(mockedListComments).not.toHaveBeenCalled()
   })
 })

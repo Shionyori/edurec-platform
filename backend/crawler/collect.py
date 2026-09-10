@@ -158,6 +158,26 @@ def normalize_view_item(raw: dict, category: str, tags: list[str] | None = None)
     return item
 
 
+def normalize_comment(raw: dict) -> dict | None:
+    """评论接口 /x/v2/reply/main 的单条回复 → 评论 dict。
+
+    字段与 Go 侧 model.ResourceComment 对齐（JSON snake_case）。
+    """
+    member = raw.get("member") or {}
+    content = raw.get("content") or {}
+    author = _clean_text(member.get("uname"))
+    message = _clean_text(content.get("message"))
+    if not author and not message:
+        return None
+    return {
+        "author_name": author,
+        "content": message,
+        "like_count": _to_int(raw.get("like")),
+        "floor": _to_int(raw.get("floor")),
+        "published_at": _to_int(raw.get("ctime")),
+    }
+
+
 class Collector:
     """按配置执行采集任务，返回去重后的 item 列表。"""
 

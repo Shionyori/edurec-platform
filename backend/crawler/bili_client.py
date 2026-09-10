@@ -40,6 +40,7 @@ NAV_URL = "https://api.bilibili.com/x/web-interface/nav"
 SEARCH_URL = "https://api.bilibili.com/x/web-interface/wbi/search/type"
 VIEW_URL = "https://api.bilibili.com/x/web-interface/view"
 SPACE_URL = "https://api.bilibili.com/x/space/wbi/arc/search"
+REPLY_URL = "https://api.bilibili.com/x/v2/reply/main"
 
 
 class BiliError(RuntimeError):
@@ -213,6 +214,23 @@ class BiliClient:
         """按 BV 号取视频详情。该接口无需登录、无需签名。"""
         body = self._request(VIEW_URL, {"bvid": bvid})
         return body.get("data") or {}
+
+    def get_comments(self, bvid: str, limit: int = 20) -> list[dict]:
+        """取视频主评论区评论（mode=3 热门+时间混合）。
+
+        需先取详情拿到 aid，再按 oid 拉评论列表；返回 data.replies 原始列表，
+        每条含 member / content / like / ctime / floor，由上层归一化。
+        """
+        detail = self.video_detail(bvid)
+        aid = detail.get("aid")
+        if not aid:
+            raise BiliError(0, "视频详情未返回 aid，无法取评论", VIEW_URL)
+        body = self._request(
+            REPLY_URL,
+            {"type": 1, "oid": aid, "mode": 3, "ps": limit, "pn": 1},
+            signed=True,
+        )
+        return (body.get("data") or {}).get("replies") or []
 
     def space_videos(self, mid: int, page: int = 1, page_size: int = 30) -> list[dict]:
         """取 UP 主投稿列表。

@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/Shionyori/edurec-platform/backend/internal/model"
@@ -11,6 +12,7 @@ import (
 type CategoryRepository interface {
 	List() ([]model.Category, error)
 	Create(category *model.Category) error
+	FindByName(name string) (*model.Category, error)
 }
 
 type CategoryRepo struct {
@@ -34,4 +36,16 @@ func (r *CategoryRepo) Create(category *model.Category) error {
 		return fmt.Errorf("创建分类失败: %w", err)
 	}
 	return nil
+}
+
+func (r *CategoryRepo) FindByName(name string) (*model.Category, error) {
+	category := &model.Category{}
+	err := r.db.Where("name = ?", name).First(category).Error
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, ErrNotFound
+	}
+	if err != nil {
+		return nil, fmt.Errorf("按名称查询分类失败: %w", err)
+	}
+	return category, nil
 }

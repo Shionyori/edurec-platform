@@ -1,0 +1,7 @@
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# 用户自己的任务配置（由 config.example.yaml 复制而来），不入库
+config.yaml

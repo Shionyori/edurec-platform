@@ -50,6 +50,7 @@ def parse_args() -> argparse.Namespace:
     search = sub.add_parser("search", help="按关键词搜索视频")
     search.add_argument("--keyword", required=True, help="搜索关键词")
     search.add_argument("--limit", type=int, default=20, help="返回条数，默认 20")
+    search.add_argument("--page", type=int, default=1, help="搜索结果页码，默认 1")
     search.add_argument("--category", default=DEFAULT_CATEGORY, help="落库分类名")
 
     comments = sub.add_parser("comments", help="取视频评论")
@@ -71,7 +72,7 @@ def _make_client(args: argparse.Namespace) -> BiliClient:
 
 
 def _do_search(client: BiliClient, args: argparse.Namespace) -> dict:
-    results = client.search_videos(args.keyword, page=1, page_size=args.limit)
+    results = client.search_videos(args.keyword, page=args.page, page_size=args.limit)
     items: list[dict] = []
     for raw in results:
         item = normalize_search_item(raw, args.category)

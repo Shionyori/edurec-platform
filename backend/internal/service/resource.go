@@ -12,9 +12,15 @@ import (
 	"github.com/Shionyori/edurec-platform/backend/internal/repository"
 )
 
+// onlineSearcher 在线搜索 B 站并落库的依赖；*BilibiliOnlineService 实现了它。
+// 抽象成接口以便在单测里注入 fake，避免真实 os/exec 调用。
+type onlineSearcher interface {
+	SearchAndImport(keyword string, page int) ([]model.Resource, bool, error)
+}
+
 type ResourceService struct {
 	resources repository.ResourceRepository
-	online    *BilibiliOnlineService
+	online    onlineSearcher
 }
 
 type CreateResourceInput struct {
@@ -47,7 +53,7 @@ func NewResourceService(resources repository.ResourceRepository) *ResourceServic
 }
 
 // SetBilibiliOnline 注入在线 B 站采集服务（nil 表示禁用在线搜索爬取，测试用）
-func (s *ResourceService) SetBilibiliOnline(online *BilibiliOnlineService) {
+func (s *ResourceService) SetBilibiliOnline(online onlineSearcher) {
 	s.online = online
 }
 
@@ -61,22 +67,20 @@ func (s *ResourceService) List(ctx context.Context, query repository.ResourceLis
 		query.Sort = "latest"
 	}
 
+	// 在线翻页：本地结果耗尽后，前端用 online_page 逐页拉 B 站，返回本次新导入资源
+	pureKeywordSearch := query.CategoryID == 0 && query.Type == "" && len(query.Tags) == 0
+	if s.online != nil && query.OnlinePage > 0 && query.Keyword != "" && pureKeywordSearch {
+		resources, hasMore, err := s.online.SearchAndImport(query.Keyword, query.OnlinePage)
+		if err != nil {
+			slog.Warn("B站搜索爬取失败", "keyword", query.Keyword, "online_page", query.OnlinePage, "error", err)
+			return &repository.ResourceListResult{Items: []model.Resource{}, HasMore: false}, nil
+		}
+		return &repository.ResourceListResult{Items: resources, HasMore: hasMore}, nil
+	}
+
 	result, err := s.resources.List(query)
 	if err != nil {
 		return nil, apperror.Internal(err)
-	}
-
-	// 本地无结果且为纯关键词搜索时，实时爬取 B 站补充结果后重查
-	pureKeywordSearch := query.CategoryID == 0 && query.Type == "" && len(query.Tags) == 0
-	if s.online != nil && result.Total == 0 && query.Keyword != "" && pureKeywordSearch {
-		if _, err := s.online.SearchAndImport(query.Keyword); err != nil {
-			slog.Warn("B站搜索爬取失败", "keyword", query.Keyword, "error", err)
-			return result, nil
-		}
-		result, err = s.resources.List(query)
-		if err != nil {
-			return nil, apperror.Internal(err)
-		}
 	}
 
 	return result, nil

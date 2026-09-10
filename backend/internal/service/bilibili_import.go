@@ -90,7 +90,8 @@ func (s *BilibiliImportService) Import() (*BilibiliImportResult, error) {
 	if err != nil {
 		return nil, err
 	}
-	return s.ImportItems(items, true)
+	result, _, err := s.ImportItems(items, true)
+	return result, err
 }
 
 // Preview 走与 Import 完全相同的解析、判重与分类逻辑，但不写库，用于 -dry-run
@@ -99,7 +100,8 @@ func (s *BilibiliImportService) Preview() (*BilibiliImportResult, error) {
 	if err != nil {
 		return nil, err
 	}
-	return s.ImportItems(items, false)
+	result, _, err := s.ImportItems(items, false)
+	return result, err
 }
 
 // readFileItems 读取爬虫输出文件并反序列化为 item 列表
@@ -118,7 +120,9 @@ func (s *BilibiliImportService) readFileItems() ([]bilibiliItem, error) {
 
 // ImportItems 把已解析的 B 站 item 落库（write=false 时只统计不写库）。
 // 供离线导入（Import/Preview）与在线搜索爬取（BilibiliOnlineService）复用。
-func (s *BilibiliImportService) ImportItems(items []bilibiliItem, write bool) (*BilibiliImportResult, error) {
+// 返回的 resources 按输入顺序给出已落库的资源行（created 经 Create 后已有 ID；updated 为判重命中行），
+// 供在线搜索把新内容回传给前端追加展示；离线导入可忽略。
+func (s *BilibiliImportService) ImportItems(items []bilibiliItem, write bool) (*BilibiliImportResult, []model.Resource, error) {
 	result := &BilibiliImportResult{}
 	records := make([]bilibiliRecord, 0, len(items))
 	for _, item := range items {
@@ -130,7 +134,7 @@ func (s *BilibiliImportService) ImportItems(items []bilibiliItem, write bool) (*
 		records = append(records, record)
 	}
 	if len(records) == 0 {
-		return result, nil
+		return result, nil, nil
 	}
 
 	// 一次性查出已存在的来源链接，避免逐条查询
@@ -140,7 +144,7 @@ func (s *BilibiliImportService) ImportItems(items []bilibiliItem, write bool) (*
 	}
 	existing, err := s.resources.FindBySourceURLs(urls)
 	if err != nil {
-		return nil, apperror.Internal(err)
+		return nil, nil, apperror.Internal(err)
 	}
 	existingByURL := make(map[string]*model.Resource, len(existing))
 	for i := range existing {
@@ -148,12 +152,13 @@ func (s *BilibiliImportService) ImportItems(items []bilibiliItem, write bool) (*
 	}
 
 	categoryIDs := map[string]uint{}
+	imported := make([]model.Resource, 0, len(records))
 	for i := range records {
 		record := &records[i]
 
 		categoryID, err := s.resolveCategory(record.category, categoryIDs, result, write)
 		if err != nil {
-			return nil, err
+			return nil, nil, err
 		}
 
 		if current, ok := existingByURL[record.sourceURL]; ok {
@@ -162,25 +167,27 @@ func (s *BilibiliImportService) ImportItems(items []bilibiliItem, write bool) (*
 			current.Metadata = record.metadataJSON
 			if write {
 				if err := s.resources.Update(current); err != nil {
-					return nil, apperror.Internal(err)
+					return nil, nil, apperror.Internal(err)
 				}
 			}
 			result.UpdatedResources++
+			imported = append(imported, *current)
 			continue
 		}
 
 		resource := record.toResource(categoryID)
 		if write {
 			if err := s.resources.Create(resource); err != nil {
-				return nil, apperror.Internal(err)
+				return nil, nil, apperror.Internal(err)
 			}
 		}
 		// 文件内若出现重复的 source_url，后续条目按「已存在」处理
 		existingByURL[record.sourceURL] = resource
 		result.CreatedResources++
+		imported = append(imported, *resource)
 	}
 
-	return result, nil
+	return result, imported, nil
 }
 
 // resolveCategory 按名称取分类 ID，不存在则创建；同名分类在单次导入内只查一次

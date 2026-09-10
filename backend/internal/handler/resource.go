@@ -134,6 +134,11 @@ func (h *ResourceHandler) List(c *gin.Context) {
 		response.Error(c, 400, apperror.CodeBadRequest, "请求参数错误")
 		return
 	}
+	onlinePage, ok := queryPositiveInt(c, "online_page", 0)
+	if !ok {
+		response.Error(c, 400, apperror.CodeBadRequest, "请求参数错误")
+		return
+	}
 
 	query := repository.ResourceListQuery{
 		Page:       page,
@@ -143,6 +148,7 @@ func (h *ResourceHandler) List(c *gin.Context) {
 		Type:       c.Query("type"),
 		Tags:       parseCommaList(c.Query("tags")),
 		Sort:       c.Query("sort"),
+		OnlinePage: onlinePage,
 	}
 
 	result, err := h.resources.List(c.Request.Context(), query)
@@ -156,11 +162,18 @@ func (h *ResourceHandler) List(c *gin.Context) {
 		items = append(items, toResourceListItem(&result.Items[i]))
 	}
 
+	// 在线翻页时响应里的页码用 online_page 表达，语义更清晰
+	respPage := page
+	if onlinePage > 0 {
+		respPage = onlinePage
+	}
+
 	response.OK(c, response.Page{
 		List:     items,
 		Total:    result.Total,
-		Page:     page,
+		Page:     respPage,
 		PageSize: pageSize,
+		HasMore:  result.HasMore,
 	})
 }
 

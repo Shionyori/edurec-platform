@@ -30,12 +30,14 @@ type ResourceListQuery struct {
 	Type       string
 	Tags       []string
 	Sort       string
+	OnlinePage int // >0 表示在线翻页：爬 B 站第 OnlinePage 页并返回新导入资源（不参与 SQL）
 }
 
 // ResourceListResult 资源列表分页结果
 type ResourceListResult struct {
-	Items []model.Resource
-	Total int64
+	Items   []model.Resource
+	Total   int64
+	HasMore bool // 在线翻页时表示 B 站是否还有下一页
 }
 
 type ResourceRepo struct {

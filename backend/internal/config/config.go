@@ -26,11 +26,12 @@ type EngineConfig struct {
 
 // BilibiliConfig 在线 B 站采集配置（搜索/评论实时爬取，见 backend/crawler/online.py）
 type BilibiliConfig struct {
-	PythonPath   string `mapstructure:"python_path"`   // Python 解释器，默认 "python"
-	CrawlerDir   string `mapstructure:"crawler_dir"`   // backend/crawler 目录（online.py 所在，相对 server 运行目录 backend/）
-	Category     string `mapstructure:"category"`      // 搜索落库分类名
-	SearchLimit  int    `mapstructure:"search_limit"`  // 单次搜索导入条数
-	CommentLimit int    `mapstructure:"comment_limit"` // 单次评论抓取条数
+	PythonPath     string `mapstructure:"python_path"`      // Python 解释器，默认 "python"
+	CrawlerDir     string `mapstructure:"crawler_dir"`      // backend/crawler 目录（online.py 所在，相对 server 运行目录 backend/）
+	Category       string `mapstructure:"category"`         // 搜索落库分类名
+	SearchLimit    int    `mapstructure:"search_limit"`     // 单次搜索导入条数
+	SearchMaxPages int    `mapstructure:"search_max_pages"` // 无限滚动时最多翻 B 站页数，防无界爬取
+	CommentLimit   int    `mapstructure:"comment_limit"`    // 单次评论抓取条数
 }
 
 // ServerConfig HTTP 服务器配置

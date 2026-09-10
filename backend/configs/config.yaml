@@ -39,4 +39,6 @@ bilibili:
   crawler_dir: "crawler"
   category: "B站视频"
   search_limit: 10
+  # 无限滚动时最多翻多少页 B 站结果，防无界爬取
+  search_max_pages: 5
   comment_limit: 20

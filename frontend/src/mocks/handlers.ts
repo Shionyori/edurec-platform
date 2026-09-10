@@ -301,6 +301,23 @@ export const handlers = [
     return ok({ id: rating.id, score: rating.score, comment: rating.comment, created_at: rating.created_at })
   }),
 
+  // 评论（B 站）
+  http.get(`${BASE}/resources/:id/comments`, ({ request, params }) => {
+    const user = requireUser(request)
+    if (!user) return bizError(10002, '未认证', 401)
+    const list = db.comments.filter((c) => c.resource_id === Number(params.id))
+    return ok({
+      list: list.map((c) => ({
+        id: c.id,
+        author_name: c.author_name,
+        content: c.content,
+        like_count: c.like_count,
+        floor: c.floor,
+        published_at: c.published_at,
+      })),
+    })
+  }),
+
   // 推荐
   http.get(`${BASE}/recommendations`, ({ request }) => {
     const user = requireUser(request)

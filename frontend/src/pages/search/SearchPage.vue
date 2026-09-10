@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { listCategories } from '@/api/category'
 import { listResources } from '@/api/resource'
 import ResourceCard from '@/components/resource/ResourceCard.vue'
@@ -19,6 +19,11 @@ const tags = ref('')
 
 const page = ref(1)
 const pageSize = 12
+
+// 带关键词的搜索在本地无结果时会同步触发 B 站爬取，耗时数秒，用文案提示
+const loadingText = computed(() =>
+  keyword.value.trim() ? '正在搜索，本地无结果时会自动检索 B 站，请稍候…' : '加载中…',
+)
 
 async function fetchList() {
   loading.value = true
@@ -86,7 +91,7 @@ onMounted(async () => {
       <el-button type="primary" @click="handleSearch">搜索</el-button>
     </div>
 
-    <div v-if="loading" class="py-24 text-center text-sm text-ink-muted">加载中…</div>
+    <div v-if="loading" class="py-24 text-center text-sm text-ink-muted">{{ loadingText }}</div>
     <div v-else-if="error" class="py-24 text-center text-sm text-red-500">{{ error }}</div>
     <div v-else-if="resources.length === 0" class="py-24 text-center text-sm text-ink-muted">没有符合条件的资源</div>
     <div v-else class="mt-6 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">

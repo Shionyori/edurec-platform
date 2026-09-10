@@ -4,12 +4,14 @@ import { useRoute } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { getResource } from '@/api/resource'
 import { listRatings, upsertRating } from '@/api/rating'
+import { listComments } from '@/api/comment'
 import { recordBehavior } from '@/api/behavior'
 import { useAuthStore } from '@/stores/auth'
 import { formatDate, formatUnixDate } from '@/utils/format'
-import type { Rating, Resource } from '@/types'
+import type { BilibiliComment, Rating, Resource } from '@/types'
 import RatingForm from '@/components/resource/RatingForm.vue'
 import RatingList from '@/components/resource/RatingList.vue'
+import CommentList from '@/components/resource/CommentList.vue'
 
 const PAGE_SIZE = 10
 
@@ -29,10 +31,18 @@ const total = ref(0)
 const page = ref(1)
 const ratingsLoading = ref(false)
 
+const comments = ref<BilibiliComment[]>([])
+const commentsLoading = ref(false)
+
 const submitting = ref(false)
 const initialScore = ref(0)
 const initialComment = ref('')
 let prefilled = false
+
+// 只有 B 站视频才有可爬取的评论
+const isBilibiliVideo = computed(
+  () => resource.value?.type === 'video' && !!resource.value.source_url?.includes('bilibili.com'),
+)
 
 async function loadResource() {
   resourceLoading.value = true
@@ -41,10 +51,26 @@ async function loadResource() {
     resource.value = await getResource(resourceId.value)
     // 资源加载成功才上报 view（404 时不产生行为记录）
     recordBehavior(resourceId.value, 'view').catch(() => {})
+    if (isBilibiliVideo.value) {
+      loadComments()
+    }
   } catch (e) {
     resourceError.value = e instanceof Error ? e.message : '加载失败'
   } finally {
     resourceLoading.value = false
+  }
+}
+
+async function loadComments() {
+  comments.value = []
+  commentsLoading.value = true
+  try {
+    const data = await listComments(resourceId.value)
+    comments.value = data.list
+  } catch {
+    // 评论抓取失败不阻塞页面主体，展示空态即可
+  } finally {
+    commentsLoading.value = false
   }
 }
 
@@ -116,6 +142,7 @@ watch(resourceId, () => {
   ratings.value = []
   total.value = 0
   page.value = 1
+  comments.value = []
   loadResource()
   loadRatings(1)
 })
@@ -196,6 +223,11 @@ onMounted(() => {
               :loading="ratingsLoading"
               @page-change="handlePageChange"
             />
+          </div>
+
+          <div v-if="isBilibiliVideo" class="mt-8">
+            <h2 class="text-base font-semibold text-ink">B 站评论</h2>
+            <CommentList :comments="comments" :loading="commentsLoading" />
           </div>
         </div>
 

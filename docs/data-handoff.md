@@ -19,6 +19,22 @@ platform 交接目录为 `backend/data/`（快照、推荐结果、演示数据�
 推荐反映「截至导出时刻」的快照：完成一次「导出 → engine 训练/推理 → 导入」后，
 `GET /recommendations` 才会返回新结果。
 
+### 一键刷新（推荐）
+
+下方手动步骤已固化为 [`scripts/handoff.sh`](../scripts/handoff.sh)，一条命令跑完整轮：
+
+```bash
+# 在 platform 仓库根目录执行（engine 默认取 ../edurec-engine）
+bash scripts/handoff.sh               # 导出 + 训练 + 推理 + 导入
+bash scripts/handoff.sh --infer-only  # 复用已有 model/models.pt，只导出 + 推理 + 导入
+```
+
+脚本与手动步骤一一对应；engine 根目录、后端配置、管理员账号等可用环境变量覆盖
+（`ENGINE_ROOT` / `CONFIG_PATH` / `SNAPSHOT_DIR` / `BASE_URL` / `ADMIN_USER` / `ADMIN_PASS`），详见脚本头注释。
+第 ⑥ 步经 HTTP 导入，需先启动后端服务器。
+
+### 手动步骤（等价参考）
+
 ```bash
 # ① platform：导出平台真实数据快照
 cd <platform>/backend && CONFIG_PATH=configs/config.yaml go run ./cmd/export_snapshot

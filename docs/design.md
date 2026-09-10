@@ -94,7 +94,7 @@ chore: 更新 docker-compose 配置
 
 - **Frontend ↔ Backend**：REST API (HTTP + JSON)，JWT 认证
 - **Backend ↔ edurec-engine**：离线批量协作（见「决策记录 #12」）：engine 消费平台导出的数据快照完成训练与全量推理；platform 通过管理接口将 engine 产出的推荐结果导入缓存表，推荐接口读缓存返回、未命中按评分兜底。platform 侧无模型推理，实时服务化留作可选演进
-- **Backend ↔ B 站**：`backend/crawler`（Python）采集 B 站公开视频元数据。**离线链路**：JSON 落到 `backend/data/bilibili/` → `cmd/import_bilibili` 导入 `resources` 表（`type=video`）；**在线链路**：搜索无本地结果、或打开 B 站视频详情页时，后端 `exec` 调用 `crawler/online.py` 实时抓取搜索结果与评论并落库（见「决策记录 #28 / #29 / #30」，详见 [bilibili-import.md](bilibili-import.md)）
+- **Backend ↔ B 站**：`backend/crawler`（Python）采集 B 站公开视频元数据。**离线链路**：JSON 落到 `backend/data/bilibili/` → `cmd/import_bilibili` 导入 `resources` 表（`type=video`）；**在线链路**：搜索本地结果耗尽后逐页爬取、或打开 B 站视频详情页时，后端 `exec` 调用 `crawler/online.py` 实时抓取搜索结果与评论并落库（见「决策记录 #28 / #29 / #30」，详见 [bilibili-import.md](bilibili-import.md)）
 - 所有接口遵循统一响应格式和错误码规范
 
 ### 4.2 后端分层架构
@@ -379,4 +379,4 @@ services:
 | 27 | CSS 方案 | Tailwind CSS + Element Plus |
 | 28 | 外部内容来源 | 爬虫采集 + 命令导入（落地）：B 站公开视频元数据由 `backend/crawler`（Python）采集为 JSON，经 `cmd/import_bilibili` 落 `resources` 表。与 engine 链路同构——离线产出 + 命令导入，platform 不参与在线抓取 |
 | 29 | 采集内容建模 | 以 `type=video` 的**普通资源**混入现有资源列表，不新增专区、不改推荐链路；按 `source_url` 判重，命中只刷新 `view_count` / `metadata`，不覆盖平台侧字段（保证幂等、不冲掉人工编辑） |
-| 30 | 在线搜索 + 评论爬取 | 在线实时（落地）：搜索在本地无结果（`total==0` 且只有 keyword）时 `exec` 调用 `crawler/online.py search` 实时抓取并复用导入落库；打开 B 站视频详情页时 `GET /resources/:id/comments` 无缓存则 `exec` 调用 `online.py comments` 抓评论，落独立 `resource_comments` 表。评论独立建模不污染站内评分；子进程 stdout 只输出 UTF-8 JSON、30s 超时、风控（-352/-412）不重试 |
+| 30 | 在线搜索 + 评论爬取 | 在线实时（落地）：搜索在本地无结果（`total==0` 且只有 keyword）时 `exec` 调用 `crawler/online.py search` 实时抓取并复用导入落库；打开 B 站视频详情页时 `GET /resources/:id/comments` 无缓存则 `exec` 调用 `online.py comments` 抓评论，落独立 `resource_comments` 表。评论独立建模不污染站内评分；子进程 stdout 只输出 UTF-8 JSON、30s 超时、风控（-352/-412）不重试。搜索后演进为**无限滚动**：本地翻完（`resources.length >= total`）且纯关键词搜索时改带 `online_page=M` 逐页爬取，受 `search_max_pages` 上限约束 |

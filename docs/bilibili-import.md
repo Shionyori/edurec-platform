@@ -9,7 +9,7 @@
 离线批量：backend/crawler/ ──JSON──► backend/data/bilibili/latest.json ──► cmd/import_bilibili ──► resources 表
             (Python 采集)                    (gitignore)                     (Go 导入)              type=video
 
-在线实时：GET /resources?keyword=X（本地无结果）─► exec python online.py search ─► ImportItems 落库 ─► 重新查询返回
+在线实时：GET /resources?keyword=X（本地耗尽后 online_page=M）─► exec python online.py search --page M ─► ImportItems 落库 ─► 返回新导入资源
           GET /resources/:id/comments（无缓存）──► exec python online.py comments ─► 落库 resource_comments ─► 返回评论
 ```
 
@@ -143,11 +143,11 @@ go run ./cmd/import_bilibili [-file data/bilibili/latest.json] [-dry-run]
 
 除离线批量链路外，后端还支持**在线实时**调用爬虫，把「纯离线」扩展为「离线批量 + 在线实时」并存：
 
-1. **搜索时自动爬取**：`GET /resources?keyword=X` 在本地 `resources` 表**无结果**时（`total==0` 且只带 keyword、未加分类/类型/标签筛选）自动 `exec` 调用 `crawler/online.py search` 实时抓取 B 站搜索结果，复用 `ImportItems` 落库后重新查询返回。搜索页 loading 文案会提示「本地无结果时会自动检索 B 站」。
+1. **搜索时逐页爬取（无限滚动）**：`GET /resources?keyword=X&page=N` 先翻本地 `resources` 表；本地匹配结果翻完后（`resources.length >= total`），且是**纯关键词搜索**（只带 keyword、未加分类/类型/标签筛选），前端改带 `online_page=M` 请求，后端 `exec` 调用 `crawler/online.py search --page M` 实时抓取 B 站第 M 页，复用 `ImportItems` 落库后**返回本次新导入的资源**，并用 `has_more` 标记 B 站是否还有下一页。B 站翻页受 `search_max_pages` 上限约束，防无界爬取。
 2. **打开详情页自动爬评论**：`GET /resources/:id/comments` 先查 `resource_comments` 缓存；无缓存且 `source_url` 含 `bilibili.com` 时，`exec` 调用 `crawler/online.py comments` 抓取该视频评论并落库，后续请求直接读缓存。
 
 ```text
-搜索：GET /resources?keyword=X（本地无结果）→ exec python online.py search → ImportItems 落库 → 重新查询返回
+搜索：GET /resources?keyword=X&page=N →（本地耗尽）→ GET /resources?keyword=X&online_page=M → exec python online.py search --page M → ImportItems 落库 → 返回新导入资源 + has_more
 评论：GET /resources/:id/comments（无缓存）→ exec python online.py comments → 落库 resource_comments → 返回
 ```
 
@@ -156,7 +156,7 @@ go run ./cmd/import_bilibili [-file data/bilibili/latest.json] [-dry-run]
 - Python 子进程 **stdout 只输出单行 UTF-8 JSON**，日志与错误走 stderr；Go 侧 `exec.CommandContext` 带 30s 超时，按 UTF-8 解析，规避 Windows GBK 编码问题。
 - 评论落独立的 `resource_comments` 表，**不污染站内 `Rating` 评分**；每条存作者昵称、内容、点赞、楼层、发布时间。
 - 评论默认只抓公开热门 top N（`comment_limit`，默认 20）；命中风控（`-352` / `-412`）不重试，前端展示「评论暂不可用」空态，不阻塞页面主体。
-- 相关配置见 `configs/config.yaml` 的 `bilibili:` 段（`python_path` / `crawler_dir` / `category` / `search_limit` / `comment_limit`）。
+- 相关配置见 `configs/config.yaml` 的 `bilibili:` 段（`python_path` / `crawler_dir` / `category` / `search_limit` / `search_max_pages` / `comment_limit`）。
 
 ## 合规边界
 

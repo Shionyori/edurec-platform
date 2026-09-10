@@ -104,14 +104,14 @@ tasks:
 
 ## 在线单次入口（online.py）
 
-平台后端在**搜索无本地结果**与**打开 B 站视频详情页**时，会通过 `os/exec` 调用 `online.py` 做实时单次抓取。
+平台后端在**搜索翻页爬取 B 站**与**打开 B 站视频详情页**时，会通过 `os/exec` 调用 `online.py` 做实时单次抓取。
 `online.py` 每次运行独立 `bootstrap`（重新拉取 `buvid3` 与 WBI 密钥），**stdout 只输出单行 UTF-8 JSON**，日志与错误走 stderr。
 
 ```bash
 cd backend/crawler
 
 # 搜索：输出 {"items":[<bilibiliItem>...]}
-python online.py search --keyword "机器学习" --limit 5 [--category "人工智能"]
+python online.py search --keyword "机器学习" --limit 5 [--page 1] [--category "人工智能"]
 
 # 评论：输出 {"comments":[<comment>...]}
 python online.py comments --bvid BV1DgxCzREbM --limit 20
@@ -122,6 +122,7 @@ python online.py comments --bvid BV1DgxCzREbM --limit 20
 | `--keyword` | 搜索关键词（`search` 子命令） |
 | `--bvid` | 视频 BV 号（`comments` 子命令） |
 | `--limit` | 返回条数上限 |
+| `--page` | 搜索结果页码，默认 1（`search` 子命令，配合无限滚动逐页拉取） |
 | `--category` | 可选，目标平台分类名（`search` 子命令） |
 
 评论每条形如 `{"author_name": ..., "content": ..., "like_count": ..., "floor": ..., "published_at": ...}`。

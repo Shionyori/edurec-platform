@@ -123,6 +123,20 @@ describe('ResourceDetailPage', () => {
     expect(wrapper.text()).not.toContain('机器学习入门')
   })
 
+  it('metadata 里的 Unix 时间戳渲染为可读日期', async () => {
+    mockedGetResource.mockResolvedValue({
+      ...resource,
+      metadata: { pubdate: 1759988744, duration: '16:08' },
+    })
+
+    const wrapper = await mountPage()
+
+    expect(wrapper.text()).toContain('2025-10-09')
+    expect(wrapper.text()).not.toContain('1759988744')
+    // 其余字段原样渲染
+    expect(wrapper.text()).toContain('16:08')
+  })
+
   it('切页时重新拉取评分', async () => {
     const wrapper = await mountPage()
     mockedListRatings.mockClear()

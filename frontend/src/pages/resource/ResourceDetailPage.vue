@@ -6,7 +6,7 @@ import { getResource } from '@/api/resource'
 import { listRatings, upsertRating } from '@/api/rating'
 import { recordBehavior } from '@/api/behavior'
 import { useAuthStore } from '@/stores/auth'
-import { formatDate } from '@/utils/format'
+import { formatDate, formatUnixDate } from '@/utils/format'
 import type { Rating, Resource } from '@/types'
 import RatingForm from '@/components/resource/RatingForm.vue'
 import RatingList from '@/components/resource/RatingList.vue'
@@ -98,6 +98,14 @@ function openSource() {
   }
 }
 
+// metadata 是自由键值表：B 站视频的发布时间存的是 Unix 秒，直接渲染会是一长串数字
+function formatMetadataValue(key: string, value: unknown): string {
+  if (key === 'pubdate' && typeof value === 'number') {
+    return formatUnixDate(value)
+  }
+  return String(value)
+}
+
 // 同一路由记录（resources/:id）下切换 id 时，Vue Router 会复用组件实例而不重新挂载，
 // 因此必须手动重置并重拉，否则页面会一直停留在上一个资源的数据上
 watch(resourceId, () => {
@@ -170,7 +178,7 @@ onMounted(() => {
             <dl class="mt-2 grid grid-cols-2 gap-3 text-sm sm:grid-cols-3">
               <div v-for="(value, key) in resource.metadata" :key="key">
                 <dt class="text-ink-muted">{{ key }}</dt>
-                <dd class="text-ink">{{ value }}</dd>
+                <dd class="text-ink">{{ formatMetadataValue(key, value) }}</dd>
               </div>
             </dl>
           </div>

@@ -30,7 +30,6 @@ type RecommendationResult struct {
 }
 
 // Get 获取用户个性化推荐：优先命中缓存，未命中时兜底生成并写入缓存。
-// TODO(engine): engine 接入（路线 B/A）后，兜底生成改为消费 edurec-engine 的结果。
 func (s *RecommendationService) Get(userID uint, limit int) (*RecommendationResult, error) {
 	if limit <= 0 {
 		limit = defaultRecommendLimit

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { getResource } from '@/api/resource'
@@ -97,6 +97,20 @@ function openSource() {
     window.open(resource.value.source_url, '_blank')
   }
 }
+
+// 同一路由记录（resources/:id）下切换 id 时，Vue Router 会复用组件实例而不重新挂载，
+// 因此必须手动重置并重拉，否则页面会一直停留在上一个资源的数据上
+watch(resourceId, () => {
+  coverFailed.value = false
+  prefilled = false
+  initialScore.value = 0
+  initialComment.value = ''
+  ratings.value = []
+  total.value = 0
+  page.value = 1
+  loadResource()
+  loadRatings(1)
+})
 
 onMounted(() => {
   loadResource()

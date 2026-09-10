@@ -5,12 +5,22 @@ import type { Rating, Resource } from '@/types'
 import { getResource } from '@/api/resource'
 import { listRatings, upsertRating } from '@/api/rating'
 import { recordBehavior } from '@/api/behavior'
+import * as vueRouterMock from 'vue-router'
 import ResourceDetailPage from '../ResourceDetailPage.vue'
 
-vi.mock('vue-router', () => ({
-  useRoute: () => ({ params: { id: '1' } }),
-  RouterLink: { template: '<a><slot /></a>' },
-}))
+// route 用 reactive 包装并在 mock 里暴露出来，便于模拟「同一路由记录下切换 :id」——
+// 这时 Vue Router 复用组件实例而不重新挂载，是本次修复的核心场景
+vi.mock('vue-router', async () => {
+  const { reactive } = await import('vue')
+  const route = reactive({ params: { id: '1' } })
+  return {
+    route,
+    useRoute: () => route,
+    RouterLink: { template: '<a><slot /></a>' },
+  }
+})
+
+const route = (vueRouterMock as unknown as { route: { params: { id: string } } }).route
 vi.mock('@/api/resource', () => ({ getResource: vi.fn() }))
 vi.mock('@/api/rating', () => ({ listRatings: vi.fn(), upsertRating: vi.fn() }))
 vi.mock('@/api/behavior', () => ({ recordBehavior: vi.fn() }))
@@ -42,6 +52,7 @@ async function mountPage() {
 describe('ResourceDetailPage', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    route.params.id = '1'
     mockedGetResource.mockResolvedValue(resource)
     mockedListRatings.mockResolvedValue(emptyPage)
     mockedRecordBehavior.mockResolvedValue(null)
@@ -96,6 +107,20 @@ describe('ResourceDetailPage', () => {
     expect(mockedUpsertRating).toHaveBeenCalledWith(1, { score: 4, comment: '好' })
     expect(mockedGetResource).toHaveBeenCalledWith(1)
     expect(mockedListRatings).toHaveBeenCalledWith(1, { page: 1, page_size: 10 })
+  })
+
+  it('切换 :id 时重新拉取资源与评分，不残留上一个资源的数据', async () => {
+    const wrapper = await mountPage()
+    expect(wrapper.text()).toContain('机器学习入门')
+
+    mockedGetResource.mockResolvedValue({ ...resource, id: 2, title: 'Go 微服务实战' })
+    route.params.id = '2'
+    await flushPromises()
+
+    expect(mockedGetResource).toHaveBeenLastCalledWith(2)
+    expect(mockedListRatings).toHaveBeenLastCalledWith(2, { page: 1, page_size: 10 })
+    expect(wrapper.text()).toContain('Go 微服务实战')
+    expect(wrapper.text()).not.toContain('机器学习入门')
   })
 
   it('切页时重新拉取评分', async () => {

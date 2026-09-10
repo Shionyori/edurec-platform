@@ -94,6 +94,7 @@ chore: 更新 docker-compose 配置
 
 - **Frontend ↔ Backend**：REST API (HTTP + JSON)，JWT 认证
 - **Backend ↔ edurec-engine**：离线批量协作（见「决策记录 #12」）：engine 消费平台导出的数据快照完成训练与全量推理；platform 通过管理接口将 engine 产出的推荐结果导入缓存表，推荐接口读缓存返回、未命中按评分兜底。platform 侧无模型推理，实时服务化留作可选演进
+- **Backend ↔ B 站**：`backend/crawler`（Python）采集 B 站公开视频元数据 → JSON 落到 `backend/data/bilibili/` → `cmd/import_bilibili` 导入 `resources` 表（`type=video`）。与 engine 链路同为「离线产出 + 命令导入」，不参与在线请求（见「决策记录 #28 / #29」，详见 [bilibili-import.md](bilibili-import.md)）
 - 所有接口遵循统一响应格式和错误码规范
 
 ### 4.2 后端分层架构
@@ -101,7 +102,12 @@ chore: 更新 docker-compose 配置
 采用 **Handler → Service → Repository** 扁平三层：
 
 ```
-cmd/server/main.go          # 应用入口，初始化依赖
+cmd/                        # 可执行入口
+  server/                   # 应用入口，初始化依赖
+  export_snapshot/          # 导出平台数据快照供 engine 训练/推理
+  import_bilibili/          # 导入 B 站采集结果（见 docs/bilibili-import.md）
+  demo_seed/                # 播种演示数据
+crawler/                    # B 站元数据采集脚本（Python，与 Go 代码隔离）
 internal/
   handler/                   # HTTP handler — 参数校验、序列化、调用 service
   service/                   # 业务逻辑层
@@ -355,3 +361,5 @@ services:
 | 25 | 管理员 | 独立 admins 表（id, user_id） |
 | 26 | 前端 HTTP 客户端 | Axios |
 | 27 | CSS 方案 | Tailwind CSS + Element Plus |
+| 28 | 外部内容来源 | 爬虫采集 + 命令导入（落地）：B 站公开视频元数据由 `backend/crawler`（Python）采集为 JSON，经 `cmd/import_bilibili` 落 `resources` 表。与 engine 链路同构——离线产出 + 命令导入，platform 不参与在线抓取 |
+| 29 | 采集内容建模 | 以 `type=video` 的**普通资源**混入现有资源列表，不新增专区、不改推荐链路；按 `source_url` 判重，命中只刷新 `view_count` / `metadata`，不覆盖平台侧字段（保证幂等、不冲掉人工编辑） |

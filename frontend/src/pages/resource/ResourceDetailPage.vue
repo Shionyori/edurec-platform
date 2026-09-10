@@ -21,6 +21,9 @@ const resource = ref<Resource | null>(null)
 const resourceLoading = ref(true)
 const resourceError = ref('')
 
+// 外链封面（如 B 站）可能失效：no-referrer 已规避防盗链，但仍需对加载失败做降级
+const coverFailed = ref(false)
+
 const ratings = ref<Rating[]>([])
 const total = ref(0)
 const page = ref(1)
@@ -115,6 +118,16 @@ onMounted(() => {
       <div class="grid grid-cols-1 gap-8 lg:grid-cols-3">
         <!-- 主内容 -->
         <div class="lg:col-span-2">
+          <img
+            v-if="resource.cover_url && !coverFailed"
+            :src="resource.cover_url"
+            :alt="resource.title"
+            referrerpolicy="no-referrer"
+            loading="lazy"
+            class="mb-5 max-h-96 w-full rounded-lg border border-border object-cover"
+            @error="coverFailed = true"
+          />
+
           <div class="flex items-center gap-2">
             <el-tag
               size="small"

@@ -55,6 +55,23 @@ describe('ResourceDetailPage', () => {
     expect(mockedListRatings).toHaveBeenCalledWith(1, { page: 1, page_size: 10 })
   })
 
+  it('有封面时渲染封面，并禁用 Referer 以绕过外链防盗链', async () => {
+    const coverUrl = 'https://i1.hdslb.com/bfs/archive/cover.jpg'
+    mockedGetResource.mockResolvedValue({ ...resource, cover_url: coverUrl })
+
+    const wrapper = await mountPage()
+
+    const img = wrapper.find('img')
+    expect(img.exists()).toBe(true)
+    expect(img.attributes('src')).toBe(coverUrl)
+    expect(img.attributes('referrerpolicy')).toBe('no-referrer')
+  })
+
+  it('无封面时不渲染图片', async () => {
+    const wrapper = await mountPage()
+    expect(wrapper.find('img').exists()).toBe(false)
+  })
+
   it('资源 404 时展示错误态', async () => {
     mockedGetResource.mockRejectedValue(new Error('资源不存在'))
     const wrapper = await mountPage()

@@ -48,6 +48,9 @@ const onlineResource: Resource = {
   source_url: 'https://www.bilibili.com/video/BV1xx411c7mD',
 }
 
+// 本地第二页的资源
+const secondPageResource: Resource = { ...resource, id: 21, title: '第二页资源' }
+
 // 仅属于旧关键词的爬取结果，用于验证切换关键词后不会被追加
 const staleOnlineResource: Resource = {
   ...resource,
@@ -210,6 +213,34 @@ describe('SearchPage', () => {
     await flushPromises()
 
     expect(wrapper.text()).not.toContain('Python 专属视频')
+  })
+
+  it('本地翻页失败后重试仍请求同一页，不跳过结果', async () => {
+    let pageTwoCalls = 0
+    mockedListResources.mockImplementation(async (params = {}) => {
+      if (params.online_page) {
+        return { list: [], total: 0, page: params.online_page, page_size: 12, has_more: false }
+      }
+      if (params.page === 2) {
+        pageTwoCalls += 1
+        if (pageTwoCalls === 1) throw new Error('网络错误')
+        return { list: [secondPageResource], total: 30, page: 2, page_size: 12 }
+      }
+      return { list: [resource], total: 30, page: 1, page_size: 12 }
+    })
+
+    const wrapper = await mountPage()
+
+    // 第一次请求第 2 页失败
+    triggerLoadMore()
+    await flushPromises()
+    expect(pageTwoCalls).toBe(1)
+
+    // 重试时页码不应已前进，否则第 2 页的结果会被永久跳过
+    triggerLoadMore()
+    await flushPromises()
+    expect(mockedListResources).toHaveBeenLastCalledWith(expect.objectContaining({ page: 2 }))
+    expect(wrapper.text()).toContain('第二页资源')
   })
 
   it('B 站无更多时停止拉取', async () => {

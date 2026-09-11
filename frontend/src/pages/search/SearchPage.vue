@@ -90,11 +90,14 @@ function appendResources(list: Resource[]) {
 
 async function fetchMoreLocal() {
   const generation = requestGeneration
+  const nextPage = page.value + 1
   loadingMore.value = true
   loadFailed = false
   try {
-    const data = await listResources({ page: page.value, ...buildQuery() })
+    const data = await listResources({ page: nextPage, ...buildQuery() })
     if (isStale(generation)) return
+    // 页码只在请求成功后推进：失败时保持原页码，否则下次滚动会跳过这一页的结果
+    page.value = nextPage
     appendResources(data.list)
     total.value = data.total
     if (data.list.length === 0) exhausted.value = true
@@ -139,7 +142,6 @@ async function loadMore() {
   if (loading.value || loadingMore.value || exhausted.value) return
   // 本地还有下一页
   if (resources.value.length < total.value) {
-    page.value += 1
     await fetchMoreLocal()
     return
   }

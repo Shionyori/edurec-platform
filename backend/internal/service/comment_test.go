@@ -12,13 +12,17 @@ import (
 )
 
 type fakeCommentRepository struct {
-	has        bool
-	hasErr     error
-	list       []model.ResourceComment
-	listErr    error
-	lastListID uint
-	created    []model.ResourceComment
-	createErr  error
+	has           bool
+	hasErr        error
+	list          []model.ResourceComment
+	listErr       error
+	lastListID    uint
+	created       []model.ResourceComment
+	createErr     error
+	fetchState    bool
+	fetchStateErr error
+	marked        bool
+	markErr       error
 }
 
 func (f *fakeCommentRepository) HasByResourceID(resourceID uint) (bool, error) {
@@ -41,6 +45,21 @@ func (f *fakeCommentRepository) BatchCreate(comments []model.ResourceComment) er
 		return f.createErr
 	}
 	f.created = append(f.created, comments...)
+	return nil
+}
+
+func (f *fakeCommentRepository) HasFetchState(resourceID uint) (bool, error) {
+	if f.fetchStateErr != nil {
+		return false, f.fetchStateErr
+	}
+	return f.fetchState, nil
+}
+
+func (f *fakeCommentRepository) MarkFetched(resourceID uint) error {
+	if f.markErr != nil {
+		return f.markErr
+	}
+	f.marked = true
 	return nil
 }
 
@@ -157,6 +176,60 @@ func TestCommentListOrFetchSwallowsFetchError(t *testing.T) {
 
 func TestCommentListOrFetchMapsRepoError(t *testing.T) {
 	repo := &fakeCommentRepository{hasErr: errors.New("db error")}
+	svc := service.NewCommentService(repo, &fakeCommentFetcher{}, 20)
+
+	_, err := svc.ListOrFetch(context.Background(), bilibiliResource())
+	assertErrorCode(t, err, apperror.CodeInternal)
+}
+
+func TestCommentListOrFetchSkipsRefetchWhenFetchedEmptyBefore(t *testing.T) {
+	// 之前抓过、当时没有评论：不应再次起 python 进程爬 B 站
+	repo := &fakeCommentRepository{fetchState: true}
+	fetcher := &fakeCommentFetcher{}
+	svc := service.NewCommentService(repo, fetcher, 20)
+
+	comments, err := svc.ListOrFetch(context.Background(), bilibiliResource())
+
+	if err != nil {
+		t.Fatalf("ListOrFetch() error = %v", err)
+	}
+	if len(comments) != 0 {
+		t.Fatalf("comments = %+v, want 空", comments)
+	}
+	if fetcher.lastBvid != "" {
+		t.Fatal("已抓取过且当时无评论时，不应再次在线抓取")
+	}
+}
+
+func TestCommentListOrFetchMarksFetchedWhenNoComments(t *testing.T) {
+	// 抓到 0 条也要标记，否则该视频每次访问都重新抓取
+	repo := &fakeCommentRepository{}
+	svc := service.NewCommentService(repo, &fakeCommentFetcher{}, 20)
+
+	if _, err := svc.ListOrFetch(context.Background(), bilibiliResource()); err != nil {
+		t.Fatalf("ListOrFetch() error = %v", err)
+	}
+	if !repo.marked {
+		t.Fatal("抓到 0 条也应标记已抓取")
+	}
+}
+
+func TestCommentListOrFetchDoesNotMarkFetchedOnError(t *testing.T) {
+	// 抓取失败不能标记，否则该视频的评论将永远不再重试
+	repo := &fakeCommentRepository{}
+	fetcher := &fakeCommentFetcher{err: errors.New("risk control")}
+	svc := service.NewCommentService(repo, fetcher, 20)
+
+	if _, err := svc.ListOrFetch(context.Background(), bilibiliResource()); err != nil {
+		t.Fatalf("ListOrFetch() error = %v", err)
+	}
+	if repo.marked {
+		t.Fatal("抓取失败不应标记已抓取，否则不会再重试")
+	}
+}
+
+func TestCommentListOrFetchMapsFetchStateError(t *testing.T) {
+	repo := &fakeCommentRepository{fetchStateErr: errors.New("db error")}
 	svc := service.NewCommentService(repo, &fakeCommentFetcher{}, 20)
 
 	_, err := svc.ListOrFetch(context.Background(), bilibiliResource())

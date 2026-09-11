@@ -42,6 +42,16 @@ func (s *CommentService) ListOrFetch(ctx context.Context, resource *model.Resour
 		return s.comments.ListByResourceID(resource.ID, s.limit)
 	}
 
+	// 之前抓过但当时没有评论：直接返回空，不再重复爬取
+	// （评论被关闭/删除，或本来就没人评论的视频会命中这里）
+	fetchedBefore, err := s.comments.HasFetchState(resource.ID)
+	if err != nil {
+		return nil, apperror.Internal(err)
+	}
+	if fetchedBefore {
+		return []model.ResourceComment{}, nil
+	}
+
 	bvid := extractBvid(resource.SourceURL)
 	if bvid == "" {
 		// 非 B 站来源：没有可爬取的评论
@@ -50,18 +60,25 @@ func (s *CommentService) ListOrFetch(ctx context.Context, resource *model.Resour
 
 	fetched, err := s.fetcher.FetchComments(bvid, s.limit)
 	if err != nil {
+		// 抓取失败不标记，便于下次访问重试
 		slog.Warn("B站评论抓取失败", "resource_id", resource.ID, "bvid", bvid, "error", err)
 		return []model.ResourceComment{}, nil
 	}
+
+	if len(fetched) > 0 {
+		for i := range fetched {
+			fetched[i].ResourceID = resource.ID
+		}
+		if err := s.comments.BatchCreate(fetched); err != nil {
+			return nil, apperror.Internal(err)
+		}
+	}
+	// 抓到 0 条也要标记，否则无评论的视频每次访问都会重新起一个 python 进程
+	if err := s.comments.MarkFetched(resource.ID); err != nil {
+		return nil, apperror.Internal(err)
+	}
 	if len(fetched) == 0 {
 		return []model.ResourceComment{}, nil
-	}
-
-	for i := range fetched {
-		fetched[i].ResourceID = resource.ID
-	}
-	if err := s.comments.BatchCreate(fetched); err != nil {
-		return nil, apperror.Internal(err)
 	}
 	return fetched, nil
 }

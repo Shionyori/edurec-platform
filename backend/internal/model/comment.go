@@ -14,3 +14,11 @@ type ResourceComment struct {
 	Floor       int    `gorm:"default:0" json:"floor"`
 	PublishedAt int64  `gorm:"default:0" json:"published_at"` // B 站 ctime，Unix 秒
 }
+
+// CommentFetchState 标记某资源的 B 站评论已抓取过（即使当时抓到 0 条）。
+// 评论表只在真的抓到评论时才有行，仅凭它判断「未缓存」的话，评论被关闭、删除或
+// 本来就没人评论的视频，每次打开详情页都会重新起一个 python 进程去爬 B 站。
+type CommentFetchState struct {
+	gorm.Model
+	ResourceID uint `gorm:"uniqueIndex;not null" json:"resource_id"`
+}

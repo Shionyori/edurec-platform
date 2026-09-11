@@ -45,6 +45,17 @@ export interface DbRating {
   created_at: string
 }
 
+export interface DbComment {
+  id: number
+  resource_id: number
+  bvid: string
+  author_name: string
+  content: string
+  like_count: number
+  floor: number
+  published_at: number
+}
+
 export type DbBehaviorAction = 'view' | 'click' | 'favorite'
 
 export interface DbBehavior {
@@ -192,6 +203,23 @@ const coreResources: DbResource[] = [
     created_at: '2026-07-10T08:00:00Z',
     updated_at: '2026-07-12T08:00:00Z',
   },
+  {
+    // B 站视频：演示「打开详情页自动拉取 B 站评论」功能
+    id: 6,
+    title: '李宏毅机器学习 2024',
+    description: 'B 站搬运的李宏毅机器学习课程，从线性代数到 Transformer。',
+    cover_url: null,
+    type: 'video',
+    category_id: 1,
+    tags: ['机器学习', 'B站'],
+    metadata: { bvid: 'BV1DgxCzREbM', duration: '16:08', pubdate: 1759988744, typename: '知识' },
+    author: '李宏毅',
+    source_url: 'https://www.bilibili.com/video/BV1DgxCzREbM',
+    avg_rating: 4.9,
+    view_count: 12345,
+    created_at: '2026-08-01T08:00:00Z',
+    updated_at: '2026-08-10T10:00:00Z',
+  },
 ] as DbResource[]
 
 const generated = generateMockData({ users: coreUsers, resources: coreResources })
@@ -201,6 +229,38 @@ export const db = {
   categories: coreCategories,
   resources: [...coreResources, ...generated.resources],
   ratings: generated.ratings,
+  comments: [
+    {
+      id: 1,
+      resource_id: 6,
+      bvid: 'BV1DgxCzREbM',
+      author_name: '小明',
+      content: '讲得太清楚了，点赞',
+      like_count: 120,
+      floor: 1,
+      published_at: 1759990000,
+    },
+    {
+      id: 2,
+      resource_id: 6,
+      bvid: 'BV1DgxCzREbM',
+      author_name: '阿强',
+      content: '跟着学完了，收获很大',
+      like_count: 88,
+      floor: 2,
+      published_at: 1759991000,
+    },
+    {
+      id: 3,
+      resource_id: 6,
+      bvid: 'BV1DgxCzREbM',
+      author_name: '路人甲',
+      content: '第 3 章有点难，但值得',
+      like_count: 45,
+      floor: 3,
+      published_at: 1759992000,
+    },
+  ] as DbComment[],
   behaviors: [
     { id: 1, user_id: 2, resource_id: 1, action: 'view', created_at: now() },
     { id: 2, user_id: 2, resource_id: 2, action: 'click', created_at: now() },

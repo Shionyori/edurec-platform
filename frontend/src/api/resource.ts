@@ -9,6 +9,7 @@ export interface ResourceQuery {
   type?: string
   sort?: 'latest' | 'popular' | 'rating'
   tags?: string
+  online_page?: number
 }
 
 export function listResources(params: ResourceQuery = {}) {

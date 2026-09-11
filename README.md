@@ -41,6 +41,21 @@ CONFIG_PATH=configs/config.yaml go run ./cmd/export_snapshot   # → data/snapsh
 
 engine 与平台目录隔离，交接物为数据快照与推荐结果文件，经 `backend/data/` 目录传递，详见 [docs/data-handoff.md](docs/data-handoff.md)。
 
+## 内容来源（B 站教育视频采集 → 导入）
+
+除手工录入 / `demo_seed` 外，平台还有一条独立的内容渠道：Python 采集 B 站公开视频元数据 → 输出 JSON → Go 命令导入
+`resources` 表。视频以 `type=video` 的普通资源**混入现有资源列表**，不新增专区、不改动推荐链路。
+
+```bash
+# ① 采集（需 pip install -r backend/crawler/requirements.txt）
+cd backend/crawler && python run.py --config config.example.yaml
+# ② 导入（文件默认 data/bilibili/latest.json，加 -dry-run 可只统计不写库）
+cd backend && CONFIG_PATH=configs/config.yaml go run ./cmd/import_bilibili
+```
+
+按 `source_url` 判重：已存在的资源**不新增行**，只刷新播放量与 `metadata`，因此可反复执行。
+只采集公开元数据，不伪造设备指纹、不实现验证码绕过，详见 [docs/bilibili-import.md](docs/bilibili-import.md)。
+
 ## 测试
 
 ```bash
@@ -67,3 +82,4 @@ platform export_snapshot（真实数据 → data/snapshots/<run_id>/）
 - [docs/api-design.md](docs/api-design.md) —— REST API 设计（推荐模块：读缓存 + 导入）
 - [docs/engine-integration.md](docs/engine-integration.md) —— edurec-engine 接入说明（离线批量 + 结果落库）
 - [docs/data-handoff.md](docs/data-handoff.md) —— 数据交接与一轮刷新流程
+- [docs/bilibili-import.md](docs/bilibili-import.md) —— B 站教育视频采集与导入（字段映射、判重语义、合规边界）

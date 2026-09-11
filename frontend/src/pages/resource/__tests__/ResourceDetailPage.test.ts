@@ -4,21 +4,34 @@ import ElementPlus from 'element-plus'
 import type { Rating, Resource } from '@/types'
 import { getResource } from '@/api/resource'
 import { listRatings, upsertRating } from '@/api/rating'
+import { listComments } from '@/api/comment'
 import { recordBehavior } from '@/api/behavior'
+import * as vueRouterMock from 'vue-router'
 import ResourceDetailPage from '../ResourceDetailPage.vue'
 
-vi.mock('vue-router', () => ({
-  useRoute: () => ({ params: { id: '1' } }),
-  RouterLink: { template: '<a><slot /></a>' },
-}))
+// route 用 reactive 包装并在 mock 里暴露出来，便于模拟「同一路由记录下切换 :id」——
+// 这时 Vue Router 复用组件实例而不重新挂载，是本次修复的核心场景
+vi.mock('vue-router', async () => {
+  const { reactive } = await import('vue')
+  const route = reactive({ params: { id: '1' } })
+  return {
+    route,
+    useRoute: () => route,
+    RouterLink: { template: '<a><slot /></a>' },
+  }
+})
+
+const route = (vueRouterMock as unknown as { route: { params: { id: string } } }).route
 vi.mock('@/api/resource', () => ({ getResource: vi.fn() }))
 vi.mock('@/api/rating', () => ({ listRatings: vi.fn(), upsertRating: vi.fn() }))
+vi.mock('@/api/comment', () => ({ listComments: vi.fn() }))
 vi.mock('@/api/behavior', () => ({ recordBehavior: vi.fn() }))
 vi.mock('@/stores/auth', () => ({ useAuthStore: () => ({ user: { id: 2, username: 'user' } }) }))
 
 const mockedGetResource = vi.mocked(getResource)
 const mockedListRatings = vi.mocked(listRatings)
 const mockedUpsertRating = vi.mocked(upsertRating)
+const mockedListComments = vi.mocked(listComments)
 const mockedRecordBehavior = vi.mocked(recordBehavior)
 
 const resource: Resource = {
@@ -42,8 +55,10 @@ async function mountPage() {
 describe('ResourceDetailPage', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    route.params.id = '1'
     mockedGetResource.mockResolvedValue(resource)
     mockedListRatings.mockResolvedValue(emptyPage)
+    mockedListComments.mockResolvedValue({ list: [] })
     mockedRecordBehavior.mockResolvedValue(null)
   })
 
@@ -53,6 +68,23 @@ describe('ResourceDetailPage', () => {
     expect(wrapper.text()).toContain('面向零基础学习者')
     expect(mockedRecordBehavior).toHaveBeenCalledWith(1, 'view')
     expect(mockedListRatings).toHaveBeenCalledWith(1, { page: 1, page_size: 10 })
+  })
+
+  it('有封面时渲染封面，并禁用 Referer 以绕过外链防盗链', async () => {
+    const coverUrl = 'https://i1.hdslb.com/bfs/archive/cover.jpg'
+    mockedGetResource.mockResolvedValue({ ...resource, cover_url: coverUrl })
+
+    const wrapper = await mountPage()
+
+    const img = wrapper.find('img')
+    expect(img.exists()).toBe(true)
+    expect(img.attributes('src')).toBe(coverUrl)
+    expect(img.attributes('referrerpolicy')).toBe('no-referrer')
+  })
+
+  it('无封面时不渲染图片', async () => {
+    const wrapper = await mountPage()
+    expect(wrapper.find('img').exists()).toBe(false)
   })
 
   it('资源 404 时展示错误态', async () => {
@@ -81,6 +113,34 @@ describe('ResourceDetailPage', () => {
     expect(mockedListRatings).toHaveBeenCalledWith(1, { page: 1, page_size: 10 })
   })
 
+  it('切换 :id 时重新拉取资源与评分，不残留上一个资源的数据', async () => {
+    const wrapper = await mountPage()
+    expect(wrapper.text()).toContain('机器学习入门')
+
+    mockedGetResource.mockResolvedValue({ ...resource, id: 2, title: 'Go 微服务实战' })
+    route.params.id = '2'
+    await flushPromises()
+
+    expect(mockedGetResource).toHaveBeenLastCalledWith(2)
+    expect(mockedListRatings).toHaveBeenLastCalledWith(2, { page: 1, page_size: 10 })
+    expect(wrapper.text()).toContain('Go 微服务实战')
+    expect(wrapper.text()).not.toContain('机器学习入门')
+  })
+
+  it('metadata 里的 Unix 时间戳渲染为可读日期', async () => {
+    mockedGetResource.mockResolvedValue({
+      ...resource,
+      metadata: { pubdate: 1759988744, duration: '16:08' },
+    })
+
+    const wrapper = await mountPage()
+
+    expect(wrapper.text()).toContain('2025-10-09')
+    expect(wrapper.text()).not.toContain('1759988744')
+    // 其余字段原样渲染
+    expect(wrapper.text()).toContain('16:08')
+  })
+
   it('切页时重新拉取评分', async () => {
     const wrapper = await mountPage()
     mockedListRatings.mockClear()
@@ -88,5 +148,31 @@ describe('ResourceDetailPage', () => {
     list.vm.$emit('page-change', 2)
     await flushPromises()
     expect(mockedListRatings).toHaveBeenCalledWith(1, { page: 2, page_size: 10 })
+  })
+
+  it('B 站视频加载评论并渲染评论栏，非 B 站资源不拉取', async () => {
+    const biliResource: Resource = {
+      ...resource,
+      type: 'video',
+      source_url: 'https://www.bilibili.com/video/BV1DgxCzREbM',
+    }
+    mockedGetResource.mockResolvedValue(biliResource)
+    mockedListComments.mockResolvedValue({
+      list: [
+        { id: 1, author_name: '小明', content: '讲得清楚', like_count: 3, floor: 1, published_at: 1759990000 },
+      ],
+    })
+
+    const wrapper = await mountPage()
+
+    expect(mockedListComments).toHaveBeenCalledWith(1)
+    expect(wrapper.text()).toContain('B 站评论')
+    expect(wrapper.text()).toContain('讲得清楚')
+
+    // 普通资源（course）不触发评论拉取
+    mockedGetResource.mockResolvedValue(resource)
+    mockedListComments.mockClear()
+    await mountPage()
+    expect(mockedListComments).not.toHaveBeenCalled()
   })
 })

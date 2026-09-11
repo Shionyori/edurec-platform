@@ -1,15 +1,17 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { getResource } from '@/api/resource'
 import { listRatings, upsertRating } from '@/api/rating'
+import { listComments } from '@/api/comment'
 import { recordBehavior } from '@/api/behavior'
 import { useAuthStore } from '@/stores/auth'
-import { formatDate } from '@/utils/format'
-import type { Rating, Resource } from '@/types'
+import { formatDate, formatUnixDate } from '@/utils/format'
+import type { BilibiliComment, Rating, Resource } from '@/types'
 import RatingForm from '@/components/resource/RatingForm.vue'
 import RatingList from '@/components/resource/RatingList.vue'
+import CommentList from '@/components/resource/CommentList.vue'
 
 const PAGE_SIZE = 10
 
@@ -21,15 +23,26 @@ const resource = ref<Resource | null>(null)
 const resourceLoading = ref(true)
 const resourceError = ref('')
 
+// 外链封面（如 B 站）可能失效：no-referrer 已规避防盗链，但仍需对加载失败做降级
+const coverFailed = ref(false)
+
 const ratings = ref<Rating[]>([])
 const total = ref(0)
 const page = ref(1)
 const ratingsLoading = ref(false)
 
+const comments = ref<BilibiliComment[]>([])
+const commentsLoading = ref(false)
+
 const submitting = ref(false)
 const initialScore = ref(0)
 const initialComment = ref('')
 let prefilled = false
+
+// 只有 B 站视频才有可爬取的评论
+const isBilibiliVideo = computed(
+  () => resource.value?.type === 'video' && !!resource.value.source_url?.includes('bilibili.com'),
+)
 
 async function loadResource() {
   resourceLoading.value = true
@@ -38,10 +51,26 @@ async function loadResource() {
     resource.value = await getResource(resourceId.value)
     // 资源加载成功才上报 view（404 时不产生行为记录）
     recordBehavior(resourceId.value, 'view').catch(() => {})
+    if (isBilibiliVideo.value) {
+      loadComments()
+    }
   } catch (e) {
     resourceError.value = e instanceof Error ? e.message : '加载失败'
   } finally {
     resourceLoading.value = false
+  }
+}
+
+async function loadComments() {
+  comments.value = []
+  commentsLoading.value = true
+  try {
+    const data = await listComments(resourceId.value)
+    comments.value = data.list
+  } catch {
+    // 评论抓取失败不阻塞页面主体，展示空态即可
+  } finally {
+    commentsLoading.value = false
   }
 }
 
@@ -95,6 +124,29 @@ function openSource() {
   }
 }
 
+// metadata 是自由键值表：B 站视频的发布时间存的是 Unix 秒，直接渲染会是一长串数字
+function formatMetadataValue(key: string, value: unknown): string {
+  if (key === 'pubdate' && typeof value === 'number') {
+    return formatUnixDate(value)
+  }
+  return String(value)
+}
+
+// 同一路由记录（resources/:id）下切换 id 时，Vue Router 会复用组件实例而不重新挂载，
+// 因此必须手动重置并重拉，否则页面会一直停留在上一个资源的数据上
+watch(resourceId, () => {
+  coverFailed.value = false
+  prefilled = false
+  initialScore.value = 0
+  initialComment.value = ''
+  ratings.value = []
+  total.value = 0
+  page.value = 1
+  comments.value = []
+  loadResource()
+  loadRatings(1)
+})
+
 onMounted(() => {
   loadResource()
   loadRatings(1)
@@ -115,6 +167,16 @@ onMounted(() => {
       <div class="grid grid-cols-1 gap-8 lg:grid-cols-3">
         <!-- 主内容 -->
         <div class="lg:col-span-2">
+          <img
+            v-if="resource.cover_url && !coverFailed"
+            :src="resource.cover_url"
+            :alt="resource.title"
+            referrerpolicy="no-referrer"
+            loading="lazy"
+            class="mb-5 max-h-96 w-full rounded-lg border border-border object-cover"
+            @error="coverFailed = true"
+          />
+
           <div class="flex items-center gap-2">
             <el-tag
               size="small"
@@ -143,7 +205,7 @@ onMounted(() => {
             <dl class="mt-2 grid grid-cols-2 gap-3 text-sm sm:grid-cols-3">
               <div v-for="(value, key) in resource.metadata" :key="key">
                 <dt class="text-ink-muted">{{ key }}</dt>
-                <dd class="text-ink">{{ value }}</dd>
+                <dd class="text-ink">{{ formatMetadataValue(key, value) }}</dd>
               </div>
             </dl>
           </div>
@@ -161,6 +223,11 @@ onMounted(() => {
               :loading="ratingsLoading"
               @page-change="handlePageChange"
             />
+          </div>
+
+          <div v-if="isBilibiliVideo" class="mt-8">
+            <h2 class="text-base font-semibold text-ink">B 站评论</h2>
+            <CommentList :comments="comments" :loading="commentsLoading" />
           </div>
         </div>
 

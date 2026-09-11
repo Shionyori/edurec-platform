@@ -42,6 +42,15 @@ export interface Rating {
   created_at: string
 }
 
+export interface BilibiliComment {
+  id: number
+  author_name: string
+  content: string
+  like_count: number
+  floor: number
+  published_at: number
+}
+
 export type BehaviorAction = 'view' | 'click' | 'favorite'
 
 export interface Behavior {
@@ -56,6 +65,7 @@ export interface Page<T> {
   total: number
   page: number
   page_size: number
+  has_more?: boolean
 }
 
 export interface LoginResult {

@@ -6,6 +6,7 @@ import (
 
 	"github.com/Shionyori/edurec-platform/backend/internal/apperror"
 	"github.com/Shionyori/edurec-platform/backend/internal/model"
+	"github.com/Shionyori/edurec-platform/backend/internal/repository"
 	"github.com/Shionyori/edurec-platform/backend/internal/service"
 )
 
@@ -23,6 +24,15 @@ func (f *fakeCategoryRepository) Create(category *model.Category) error {
 	category.ID = f.nextID
 	f.categories = append(f.categories, *category)
 	return nil
+}
+
+func (f *fakeCategoryRepository) FindByName(name string) (*model.Category, error) {
+	for i := range f.categories {
+		if f.categories[i].Name == name {
+			return &f.categories[i], nil
+		}
+	}
+	return nil, repository.ErrNotFound
 }
 
 func TestCategoryListReturnsAllCategories(t *testing.T) {

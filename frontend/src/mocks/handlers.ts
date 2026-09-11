@@ -172,6 +172,12 @@ export const handlers = [
     const categoryId = url.searchParams.get('category_id')
     const type = url.searchParams.get('type')
     const sort = url.searchParams.get('sort') ?? 'latest'
+    const onlinePage = url.searchParams.get('online_page')
+
+    // 在线翻页：mock 不真正爬 B 站，直接返回空并标记无更多
+    if (onlinePage) {
+      return ok({ list: [], total: 0, page: Number(onlinePage), page_size: pageSize, has_more: false })
+    }
 
     let list = db.resources.filter((r) => {
       if (keyword && !(r.title.includes(keyword) || r.description.includes(keyword))) return false
@@ -299,6 +305,23 @@ export const handlers = [
     db.ratings.push(rating)
     recomputeResourceAverage(resourceId)
     return ok({ id: rating.id, score: rating.score, comment: rating.comment, created_at: rating.created_at })
+  }),
+
+  // 评论（B 站）
+  http.get(`${BASE}/resources/:id/comments`, ({ request, params }) => {
+    const user = requireUser(request)
+    if (!user) return bizError(10002, '未认证', 401)
+    const list = db.comments.filter((c) => c.resource_id === Number(params.id))
+    return ok({
+      list: list.map((c) => ({
+        id: c.id,
+        author_name: c.author_name,
+        content: c.content,
+        like_count: c.like_count,
+        floor: c.floor,
+        published_at: c.published_at,
+      })),
+    })
   }),
 
   // 推荐

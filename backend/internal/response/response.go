@@ -17,6 +17,7 @@ type Page struct {
 	Total    int64 `json:"total"`
 	Page     int   `json:"page"`
 	PageSize int   `json:"page_size"`
+	HasMore  bool  `json:"has_more"` // 无限滚动：是否还有下一页（本地耗尽后由在线爬取决定）
 }
 
 func OK(c *gin.Context, data any) {

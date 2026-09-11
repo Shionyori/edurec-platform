@@ -17,7 +17,7 @@ describe('mock db 种子数据', () => {
   })
 
   it('资源总数 = 精选 + 生成数量', () => {
-    expect(db.resources).toHaveLength(5 + DATA_CONFIG.extraResourceCount)
+    expect(db.resources).toHaveLength(6 + DATA_CONFIG.extraResourceCount)
   })
 
   it('热门资源 1 评分数达到分页演示阈值', () => {

@@ -1,0 +1,39 @@
+# B 站教育资源采集任务配置
+#
+# 每个任务都必须指定 category —— 它对应平台 resource 的分类名，
+# 导入时若该分类不存在会自动创建（find-or-create）。
+#
+# 三种任务类型互斥，一个任务只能写其中一种：
+#   keyword  —— 按关键词搜索视频（免登录可用）
+#   bvids    —— 指定一批 BV 号，逐个取详情（免登录可用）
+#   up_mid   —— 指定 UP 主投稿列表（⚠️ 风控较严，通常需要 --cookie）
+
+# 请求间隔（秒，在区间内随机取值）。B 站限流较紧，不建议低于 1.0
+delay_seconds: [1.5, 3.0]
+
+# 网络失败重试次数（风控错误不重试，直接中止）
+max_retries: 3
+
+tasks:
+  # ---- 关键词搜索 ----
+  - keyword: "机器学习入门"
+    category: "人工智能"
+    pages: 2          # 翻几页
+    page_size: 20     # 每页条数
+
+  - keyword: "Go 语言教程"
+    category: "后端开发"
+    pages: 1
+    page_size: 20
+
+  # ---- 指定 BV 号 ----
+  - bvids:
+      - "BV1DgxCzREbM"
+    category: "数据科学"
+    tags: ["示例"]     # 详情接口不返回标签，可在此手动补充
+
+  # ---- 指定 UP 主（默认注释掉：免登录会被 -352 风控拦截）----
+  # - up_mid: 946974
+  #   category: "软件工程"
+  #   pages: 1
+  #   page_size: 30

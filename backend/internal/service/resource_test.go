@@ -12,20 +12,22 @@ import (
 )
 
 type fakeResourceRepository struct {
-	result          *repository.ResourceListResult
-	err             error
-	lastQuery       repository.ResourceListQuery
-	findResult      *model.Resource
-	findErr         error
-	lastFindID      uint
-	findByIDsResult []model.Resource
-	findByIDsErr    error
-	lastCreated     *model.Resource
-	createErr       error
-	lastUpdated     *model.Resource
-	updateErr       error
-	lastDeleteID    uint
-	deleteErr       error
+	result           *repository.ResourceListResult
+	err              error
+	lastQuery        repository.ResourceListQuery
+	findResult       *model.Resource
+	findErr          error
+	lastFindID       uint
+	findByIDsResult  []model.Resource
+	findByIDsErr     error
+	findByURLsResult []model.Resource
+	findByURLsErr    error
+	lastCreated      *model.Resource
+	createErr        error
+	lastUpdated      *model.Resource
+	updateErr        error
+	lastDeleteID     uint
+	deleteErr        error
 }
 
 func (f *fakeResourceRepository) Create(resource *model.Resource) error {
@@ -60,6 +62,13 @@ func (f *fakeResourceRepository) FindByIDs(ids []uint) ([]model.Resource, error)
 	return f.findByIDsResult, nil
 }
 
+func (f *fakeResourceRepository) FindBySourceURLs([]string) ([]model.Resource, error) {
+	if f.findByURLsErr != nil {
+		return nil, f.findByURLsErr
+	}
+	return f.findByURLsResult, nil
+}
+
 func (f *fakeResourceRepository) Update(resource *model.Resource) error {
 	if f.updateErr != nil {
 		return f.updateErr
@@ -74,6 +83,20 @@ func (f *fakeResourceRepository) Delete(id uint) error {
 		return f.deleteErr
 	}
 	return nil
+}
+
+type fakeOnlineSearcher struct {
+	resources   []model.Resource
+	hasMore     bool
+	err         error
+	lastKeyword string
+	lastPage    int
+}
+
+func (f *fakeOnlineSearcher) SearchAndImport(keyword string, page int) ([]model.Resource, bool, error) {
+	f.lastKeyword = keyword
+	f.lastPage = page
+	return f.resources, f.hasMore, f.err
 }
 
 func TestResourceListPassesQuery(t *testing.T) {
@@ -142,6 +165,105 @@ func TestResourceListMapsRepositoryError(t *testing.T) {
 
 	_, err := svc.List(context.Background(), repository.ResourceListQuery{})
 	assertErrorCode(t, err, apperror.CodeInternal)
+}
+
+func TestResourceListOnlinePageCallsSearcher(t *testing.T) {
+	repo := &fakeResourceRepository{result: &repository.ResourceListResult{}}
+	online := &fakeOnlineSearcher{
+		resources: []model.Resource{{Title: "B站视频"}},
+		hasMore:   true,
+	}
+	svc := service.NewResourceService(repo)
+	svc.SetBilibiliOnline(online)
+
+	result, err := svc.List(context.Background(), repository.ResourceListQuery{
+		Keyword:    "机器学习",
+		OnlinePage: 2,
+	})
+
+	if err != nil {
+		t.Fatalf("List() error = %v", err)
+	}
+	if online.lastKeyword != "机器学习" || online.lastPage != 2 {
+		t.Fatalf("List() online args = %q/%d, want 机器学习/2", online.lastKeyword, online.lastPage)
+	}
+	if len(result.Items) != 1 || result.Items[0].Title != "B站视频" {
+		t.Fatalf("List() items = %v, want [B站视频]", result.Items)
+	}
+	if !result.HasMore {
+		t.Fatalf("List() has_more = false, want true")
+	}
+	if repo.lastQuery.Keyword != "" {
+		t.Fatalf("List() should not hit local repository in online branch")
+	}
+}
+
+func TestResourceListOnlinePageWithFiltersFallsThroughToLocal(t *testing.T) {
+	repo := &fakeResourceRepository{result: &repository.ResourceListResult{Items: []model.Resource{{Title: "本地课程"}}}}
+	online := &fakeOnlineSearcher{}
+	svc := service.NewResourceService(repo)
+	svc.SetBilibiliOnline(online)
+
+	result, err := svc.List(context.Background(), repository.ResourceListQuery{
+		Keyword:    "机器学习",
+		CategoryID: 3,
+		OnlinePage: 1,
+	})
+
+	if err != nil {
+		t.Fatalf("List() error = %v", err)
+	}
+	if online.lastKeyword != "" {
+		t.Fatalf("List() should not crawl B站 when filters are present")
+	}
+	if repo.lastQuery.CategoryID != 3 {
+		t.Fatalf("List() should fall through to local repository")
+	}
+	if result.Total != 0 || len(result.Items) != 1 || result.Items[0].Title != "本地课程" {
+		t.Fatalf("List() result = %+v, want local items", result)
+	}
+}
+
+func TestResourceListOnlinePageSearcherErrorDegrades(t *testing.T) {
+	repo := &fakeResourceRepository{result: &repository.ResourceListResult{}}
+	online := &fakeOnlineSearcher{err: errors.New("exec timeout")}
+	svc := service.NewResourceService(repo)
+	svc.SetBilibiliOnline(online)
+
+	result, err := svc.List(context.Background(), repository.ResourceListQuery{
+		Keyword:    "机器学习",
+		OnlinePage: 1,
+	})
+
+	if err != nil {
+		t.Fatalf("List() error = %v, want nil (degrade to empty)", err)
+	}
+	if result == nil || len(result.Items) != 0 {
+		t.Fatalf("List() items = %v, want empty", result)
+	}
+	if result.HasMore {
+		t.Fatalf("List() has_more = true, want false on failure")
+	}
+}
+
+func TestResourceListOnlinePageWithoutSearcherFallsThroughToLocal(t *testing.T) {
+	repo := &fakeResourceRepository{result: &repository.ResourceListResult{Items: []model.Resource{{Title: "本地资源"}}}}
+	svc := service.NewResourceService(repo) // 未注入 online
+
+	result, err := svc.List(context.Background(), repository.ResourceListQuery{
+		Keyword:    "机器学习",
+		OnlinePage: 1,
+	})
+
+	if err != nil {
+		t.Fatalf("List() error = %v", err)
+	}
+	if repo.lastQuery.Keyword != "机器学习" {
+		t.Fatalf("List() should fall through to local repository when online is nil")
+	}
+	if len(result.Items) != 1 || result.Items[0].Title != "本地资源" {
+		t.Fatalf("List() result = %+v, want local items", result)
+	}
 }
 
 func TestResourceGetByIDReturnsResource(t *testing.T) {

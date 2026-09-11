@@ -16,6 +16,7 @@ type ResourceRepository interface {
 	List(query ResourceListQuery) (*ResourceListResult, error)
 	FindByID(id uint) (*model.Resource, error)
 	FindByIDs(ids []uint) ([]model.Resource, error)
+	FindBySourceURLs(urls []string) ([]model.Resource, error)
 	Update(resource *model.Resource) error
 	Delete(id uint) error
 }
@@ -29,12 +30,14 @@ type ResourceListQuery struct {
 	Type       string
 	Tags       []string
 	Sort       string
+	OnlinePage int // >0 表示在线翻页：爬 B 站第 OnlinePage 页并返回新导入资源（不参与 SQL）
 }
 
 // ResourceListResult 资源列表分页结果
 type ResourceListResult struct {
-	Items []model.Resource
-	Total int64
+	Items   []model.Resource
+	Total   int64
+	HasMore bool // 在线翻页时表示 B 站是否还有下一页
 }
 
 type ResourceRepo struct {
@@ -129,6 +132,17 @@ func (r *ResourceRepo) FindByIDs(ids []uint) ([]model.Resource, error) {
 	items := make([]model.Resource, 0)
 	if err := r.db.Preload("Category").Where("id IN ?", ids).Find(&items).Error; err != nil {
 		return nil, fmt.Errorf("按 ID 批量查询资源失败: %w", err)
+	}
+	return items, nil
+}
+
+func (r *ResourceRepo) FindBySourceURLs(urls []string) ([]model.Resource, error) {
+	if len(urls) == 0 {
+		return []model.Resource{}, nil
+	}
+	items := make([]model.Resource, 0)
+	if err := r.db.Preload("Category").Where("source_url IN ?", urls).Find(&items).Error; err != nil {
+		return nil, fmt.Errorf("按来源链接批量查询资源失败: %w", err)
 	}
 	return items, nil
 }

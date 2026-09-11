@@ -14,9 +14,9 @@ const resource: Resource = {
   created_at: '2026-07-01T08:00:00Z', updated_at: '2026-07-15T10:00:00Z',
 }
 
-function mountCard() {
+function mountCard(overrides: Partial<Resource> = {}) {
   return mount(ResourceCard, {
-    props: { resource },
+    props: { resource: { ...resource, ...overrides } },
     global: {
       plugins: [ElementPlus],
       stubs: { RouterLink: RouterLinkStub },
@@ -39,5 +39,34 @@ describe('ResourceCard', () => {
     const link = wrapper.findComponent(RouterLinkStub)
     expect(link.exists()).toBe(true)
     expect(link.props('to')).toEqual({ name: 'resource-detail', params: { id: 1 } })
+  })
+})
+
+describe('ResourceCard 封面', () => {
+  const coverUrl = 'https://i1.hdslb.com/bfs/archive/cover.jpg'
+
+  it('有封面时渲染图片，并禁用 Referer 以绕过外链防盗链', () => {
+    const wrapper = mountCard({ cover_url: coverUrl })
+
+    const img = wrapper.find('img')
+    expect(img.exists()).toBe(true)
+    expect(img.attributes('src')).toBe(coverUrl)
+    expect(img.attributes('referrerpolicy')).toBe('no-referrer')
+    expect(img.attributes('loading')).toBe('lazy')
+  })
+
+  it('无封面时不渲染图片', () => {
+    const wrapper = mountCard({ cover_url: null })
+    expect(wrapper.find('img').exists()).toBe(false)
+  })
+
+  it('封面加载失败时降级为占位块', async () => {
+    const wrapper = mountCard({ cover_url: coverUrl })
+
+    await wrapper.find('img').trigger('error')
+
+    expect(wrapper.find('img').exists()).toBe(false)
+    const placeholder = wrapper.findAll('div').find((node) => node.classes().includes('aspect-video'))
+    expect(placeholder?.text()).toBe('机')
   })
 })

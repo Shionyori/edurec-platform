@@ -40,6 +40,14 @@ const resource: Resource = {
   created_at: '2026-07-01T08:00:00Z', updated_at: '2026-07-15T10:00:00Z',
 }
 
+// B 站爬回来的新资源，id 与本地结果不同
+const onlineResource: Resource = {
+  ...resource,
+  id: 2,
+  title: '机器学习实战（B 站视频）',
+  source_url: 'https://www.bilibili.com/video/BV1xx411c7mD',
+}
+
 function pageResult(total = 1) {
   return { list: [resource], total, page: 1, page_size: 12 }
 }
@@ -95,7 +103,7 @@ describe('SearchPage', () => {
   it('纯关键词搜索本地翻完后，滚到底自动爬取 B 站', async () => {
     mockedListResources.mockImplementation(async (params = {}) => {
       if (params.online_page) {
-        return { list: [resource], total: 0, page: params.online_page, page_size: 12, has_more: true }
+        return { list: [onlineResource], total: 0, page: params.online_page, page_size: 12, has_more: true }
       }
       return { list: [resource], total: 1, page: 1, page_size: 12 }
     })
@@ -111,6 +119,23 @@ describe('SearchPage', () => {
     )
     // 追加不覆盖：本地 1 条 + B 站 1 条
     expect(wrapper.findAllComponents({ name: 'ResourceCard' }).length).toBe(2)
+  })
+
+  it('B 站判重命中回传本地已有资源时不重复渲染', async () => {
+    mockedListResources.mockImplementation(async (params = {}) => {
+      if (params.online_page) {
+        // 后端 online 路径会把判重命中的行一并回传，这里回传的正是本地已展示的那条
+        return { list: [resource], total: 0, page: params.online_page, page_size: 12, has_more: true }
+      }
+      return { list: [resource], total: 1, page: 1, page_size: 12 }
+    })
+    const wrapper = await mountPage()
+    await searchKeyword(wrapper, '机器学习')
+
+    triggerLoadMore()
+    await flushPromises()
+
+    expect(wrapper.findAllComponents({ name: 'ResourceCard' }).length).toBe(1)
   })
 
   it('B 站无更多时停止拉取', async () => {

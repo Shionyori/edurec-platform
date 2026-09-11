@@ -63,11 +63,18 @@ async function fetchLocal() {
   }
 }
 
+// 追加结果按 id 去重：在线爬取会把判重命中的本地已有行一并回传，
+// 直接 concat 会产生重复 id，触发 v-for 重复 key 并把同一张卡片渲染两次
+function appendResources(list: Resource[]) {
+  const seen = new Set(resources.value.map((r) => r.id))
+  resources.value = resources.value.concat(list.filter((r) => !seen.has(r.id)))
+}
+
 async function fetchMoreLocal() {
   loadingMore.value = true
   try {
     const data = await listResources({ page: page.value, ...buildQuery() })
-    resources.value = resources.value.concat(data.list)
+    appendResources(data.list)
     total.value = data.total
     if (data.list.length === 0) exhausted.value = true
   } catch (e) {
@@ -81,7 +88,7 @@ async function fetchOnline() {
   loadingMore.value = true
   try {
     const data = await listResources({ online_page: onlinePage.value, ...buildQuery() })
-    resources.value = resources.value.concat(data.list)
+    appendResources(data.list)
     hasMore.value = !!data.has_more
     if (data.list.length === 0) exhausted.value = true
   } catch {

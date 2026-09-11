@@ -48,6 +48,14 @@ const onlineResource: Resource = {
   source_url: 'https://www.bilibili.com/video/BV1xx411c7mD',
 }
 
+// 仅属于旧关键词的爬取结果，用于验证切换关键词后不会被追加
+const staleOnlineResource: Resource = {
+  ...resource,
+  id: 99,
+  title: 'Python 专属视频',
+  source_url: 'https://www.bilibili.com/video/BV1py411c7mE',
+}
+
 function pageResult(total = 1) {
   return { list: [resource], total, page: 1, page_size: 12 }
 }
@@ -166,6 +174,42 @@ describe('SearchPage', () => {
 
     expect(mockedListResources).toHaveBeenCalledWith(expect.objectContaining({ online_page: 1 }))
     expect(wrapper.text()).toContain('机器学习实战（B 站视频）')
+  })
+
+  it('切换关键词后，旧关键词仍在飞行的爬取结果不会追加进新列表', async () => {
+    let releaseStale: () => void = () => {}
+    const staleGate = new Promise<void>((resolve) => {
+      releaseStale = resolve
+    })
+    mockedListResources.mockImplementation(async (params = {}) => {
+      if (params.online_page && params.keyword === 'Python') {
+        // 旧关键词的爬取挂起不返回，模拟 B 站爬取耗时数十秒
+        await staleGate
+        return { list: [staleOnlineResource], total: 0, page: 1, page_size: 12, has_more: true }
+      }
+      if (params.online_page) {
+        return { list: [onlineResource], total: 0, page: params.online_page, page_size: 12, has_more: false }
+      }
+      return { list: [resource], total: 1, page: 1, page_size: 12 }
+    })
+
+    const wrapper = await mountPage()
+    await searchKeyword(wrapper, 'Python')
+    triggerLoadMore()
+    await flushPromises()
+    // 旧关键词的爬取已在飞行中
+    expect(mockedListResources).toHaveBeenCalledWith(
+      expect.objectContaining({ online_page: 1, keyword: 'Python' }),
+    )
+
+    // 旧请求尚未返回时切换到新关键词
+    await searchKeyword(wrapper, '机器学习')
+
+    // 旧请求此刻才返回，其结果不得进入新关键词的列表
+    releaseStale()
+    await flushPromises()
+
+    expect(wrapper.text()).not.toContain('Python 专属视频')
   })
 
   it('B 站无更多时停止拉取', async () => {

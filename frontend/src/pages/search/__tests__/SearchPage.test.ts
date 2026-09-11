@@ -138,6 +138,36 @@ describe('SearchPage', () => {
     expect(wrapper.findAllComponents({ name: 'ResourceCard' }).length).toBe(1)
   })
 
+  it('首屏本地无结果时自动续拉 B 站，无需用户滚动', async () => {
+    // 真实 IntersectionObserver 会在 observe() 之后投递一次初始通知，
+    // 此处同步投递以模拟该时机（早于本地接口返回）
+    class AutoNotifyObserver {
+      constructor(private cb: ObserverCallback) {}
+      observe() {
+        this.cb([{ isIntersecting: true } as IntersectionObserverEntry], {} as IntersectionObserver)
+      }
+      unobserve() {}
+      disconnect() {}
+      takeRecords() {
+        return []
+      }
+    }
+    vi.stubGlobal('IntersectionObserver', AutoNotifyObserver)
+
+    mockedListResources.mockImplementation(async (params = {}) => {
+      if (params.online_page) {
+        return { list: [onlineResource], total: 0, page: params.online_page, page_size: 12, has_more: false }
+      }
+      return { list: [], total: 0, page: 1, page_size: 12 }
+    })
+
+    const wrapper = await mountPage()
+    await searchKeyword(wrapper, '机器学习')
+
+    expect(mockedListResources).toHaveBeenCalledWith(expect.objectContaining({ online_page: 1 }))
+    expect(wrapper.text()).toContain('机器学习实战（B 站视频）')
+  })
+
   it('B 站无更多时停止拉取', async () => {
     let onlineCalls = 0
     mockedListResources.mockImplementation(async (params = {}) => {

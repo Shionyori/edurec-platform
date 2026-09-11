@@ -37,6 +37,8 @@ const loadingText = computed(() =>
 
 const sentinel = ref<HTMLElement | null>(null)
 let observer: IntersectionObserver | null = null
+// 上一次加载是否失败：失败时不自动续拉，否则哨兵仍在视口内会立即重试同一页而成环
+let loadFailed = false
 
 function buildQuery() {
   return {
@@ -52,26 +54,33 @@ function buildQuery() {
 async function fetchLocal() {
   loading.value = true
   error.value = ''
+  loadFailed = false
   try {
     const data = await listResources({ page: page.value, ...buildQuery() })
     resources.value = data.list
     total.value = data.total
   } catch (e) {
     error.value = e instanceof Error ? e.message : '加载失败'
+    loadFailed = true
   } finally {
     loading.value = false
+    refreshObservation()
   }
 }
 
 // 追加结果按 id 去重：在线爬取会把判重命中的本地已有行一并回传，
-// 直接 concat 会产生重复 id，触发 v-for 重复 key 并把同一张卡片渲染两次
+// 直接 concat 会产生重复 id，触发 v-for 重复 key 并把同一张卡片渲染两次。
+// 返回本次真正新增的条数，供调用方判断是否还有进展
 function appendResources(list: Resource[]) {
   const seen = new Set(resources.value.map((r) => r.id))
-  resources.value = resources.value.concat(list.filter((r) => !seen.has(r.id)))
+  const fresh = list.filter((r) => !seen.has(r.id))
+  resources.value = resources.value.concat(fresh)
+  return fresh.length
 }
 
 async function fetchMoreLocal() {
   loadingMore.value = true
+  loadFailed = false
   try {
     const data = await listResources({ page: page.value, ...buildQuery() })
     appendResources(data.list)
@@ -79,23 +88,28 @@ async function fetchMoreLocal() {
     if (data.list.length === 0) exhausted.value = true
   } catch (e) {
     error.value = e instanceof Error ? e.message : '加载失败'
+    loadFailed = true
   } finally {
     loadingMore.value = false
+    refreshObservation()
   }
 }
 
 async function fetchOnline() {
   loadingMore.value = true
+  loadFailed = false
   try {
     const data = await listResources({ online_page: onlinePage.value, ...buildQuery() })
-    appendResources(data.list)
+    const added = appendResources(data.list)
     hasMore.value = !!data.has_more
-    if (data.list.length === 0) exhausted.value = true
+    // 没有新增（空页，或整页都是本地已有的判重命中）说明翻不出新内容，停止续拉
+    if (added === 0) exhausted.value = true
   } catch {
     // 在线爬取失败（风控/超时）不阻塞已加载内容，直接到底
     exhausted.value = true
   } finally {
     loadingMore.value = false
+    refreshObservation()
   }
 }
 
@@ -128,6 +142,15 @@ function resetAndSearch() {
 
 function handleSearch() {
   resetAndSearch()
+}
+
+// IntersectionObserver 只在交叉状态发生变化时回调：哨兵一直停在视口内（内容不足一屏）
+// 时不会再次触发，且 observe() 后的初始通知会被 loading 守卫挡掉。每次加载结束后重新
+// observe，让浏览器按当前状态重新投递一次通知，无限滚动与在线爬取才能自启动并继续续拉。
+function refreshObservation() {
+  if (!observer || !sentinel.value || loadFailed || exhausted.value) return
+  observer.unobserve(sentinel.value)
+  observer.observe(sentinel.value)
 }
 
 function setupObserver() {

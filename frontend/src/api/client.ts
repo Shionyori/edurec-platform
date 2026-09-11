@@ -19,6 +19,10 @@ export const client = axios.create({
   timeout: 10000,
 })
 
+// 触发实时爬 B 站的接口，后端单次调用上限 30s（bilibili_online.go 的 pythonTimeout）。
+// 客户端超时必须更宽：否则后端已爬完并落库，浏览器却先超时，前端还会把列表标记成已耗尽
+export const CRAWL_TIMEOUT = 35000
+
 client.interceptors.request.use((config) => {
   const token = tokenStorage.getAccess()
   if (token) {

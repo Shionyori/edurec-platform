@@ -37,6 +37,12 @@ const loadingText = computed(() =>
 
 const sentinel = ref<HTMLElement | null>(null)
 let observer: IntersectionObserver | null = null
+// 上一次加载是否失败：失败时不自动续拉，否则哨兵仍在视口内会立即重试同一页而成环
+let loadFailed = false
+// 请求代次：重置搜索时自增。B 站爬取可能长达数十秒，期间用户改了关键词的话，
+// 旧请求的返回不能再追加进新列表，也不能推进页码
+let requestGeneration = 0
+const isStale = (generation: number) => generation !== requestGeneration
 
 function buildQuery() {
   return {
@@ -50,45 +56,85 @@ function buildQuery() {
 }
 
 async function fetchLocal() {
+  const generation = requestGeneration
   loading.value = true
   error.value = ''
+  loadFailed = false
   try {
     const data = await listResources({ page: page.value, ...buildQuery() })
+    if (isStale(generation)) return
     resources.value = data.list
     total.value = data.total
   } catch (e) {
+    if (isStale(generation)) return
     error.value = e instanceof Error ? e.message : '加载失败'
+    loadFailed = true
   } finally {
-    loading.value = false
+    // 旧请求不清理加载标志，复位由 resetAndSearch 负责，避免覆盖新搜索的状态
+    if (!isStale(generation)) {
+      loading.value = false
+      refreshObservation()
+    }
   }
 }
 
+// 追加结果按 id 去重：在线爬取会把判重命中的本地已有行一并回传，
+// 直接 concat 会产生重复 id，触发 v-for 重复 key 并把同一张卡片渲染两次。
+// 返回本次真正新增的条数，供调用方判断是否还有进展
+function appendResources(list: Resource[]) {
+  const seen = new Set(resources.value.map((r) => r.id))
+  const fresh = list.filter((r) => !seen.has(r.id))
+  resources.value = resources.value.concat(fresh)
+  return fresh.length
+}
+
 async function fetchMoreLocal() {
+  const generation = requestGeneration
+  const nextPage = page.value + 1
   loadingMore.value = true
+  loadFailed = false
   try {
-    const data = await listResources({ page: page.value, ...buildQuery() })
-    resources.value = resources.value.concat(data.list)
+    const data = await listResources({ page: nextPage, ...buildQuery() })
+    if (isStale(generation)) return
+    // 页码只在请求成功后推进：失败时保持原页码，否则下次滚动会跳过这一页的结果
+    page.value = nextPage
+    appendResources(data.list)
     total.value = data.total
     if (data.list.length === 0) exhausted.value = true
   } catch (e) {
+    if (isStale(generation)) return
     error.value = e instanceof Error ? e.message : '加载失败'
+    loadFailed = true
   } finally {
-    loadingMore.value = false
+    if (!isStale(generation)) {
+      loadingMore.value = false
+      refreshObservation()
+    }
   }
 }
 
 async function fetchOnline() {
+  const generation = requestGeneration
   loadingMore.value = true
+  loadFailed = false
   try {
     const data = await listResources({ online_page: onlinePage.value, ...buildQuery() })
-    resources.value = resources.value.concat(data.list)
+    if (isStale(generation)) return
+    const added = appendResources(data.list)
     hasMore.value = !!data.has_more
-    if (data.list.length === 0) exhausted.value = true
+    // 只有本次请求仍然有效时才推进页码，否则会把新关键词的 B 站第 1 页跳过去
+    onlinePage.value += 1
+    // 没有新增（空页，或整页都是本地已有的判重命中）说明翻不出新内容，停止续拉
+    if (added === 0) exhausted.value = true
   } catch {
+    if (isStale(generation)) return
     // 在线爬取失败（风控/超时）不阻塞已加载内容，直接到底
     exhausted.value = true
   } finally {
-    loadingMore.value = false
+    if (!isStale(generation)) {
+      loadingMore.value = false
+      refreshObservation()
+    }
   }
 }
 
@@ -96,31 +142,41 @@ async function loadMore() {
   if (loading.value || loadingMore.value || exhausted.value) return
   // 本地还有下一页
   if (resources.value.length < total.value) {
-    page.value += 1
     await fetchMoreLocal()
     return
   }
   // 本地耗尽：纯关键词搜索且 B 站可能还有 → 逐页爬取
   if (canCrawlOnline.value && hasMore.value) {
     await fetchOnline()
-    onlinePage.value += 1
     return
   }
   exhausted.value = true
 }
 
 function resetAndSearch() {
+  // 旧请求的 finally 会因代次不符而跳过清理，故此处显式复位加载标志
+  requestGeneration += 1
   page.value = 1
   onlinePage.value = 1
   resources.value = []
   total.value = 0
   hasMore.value = true
   exhausted.value = false
+  loadingMore.value = false
   fetchLocal()
 }
 
 function handleSearch() {
   resetAndSearch()
+}
+
+// IntersectionObserver 只在交叉状态发生变化时回调：哨兵一直停在视口内（内容不足一屏）
+// 时不会再次触发，且 observe() 后的初始通知会被 loading 守卫挡掉。每次加载结束后重新
+// observe，让浏览器按当前状态重新投递一次通知，无限滚动与在线爬取才能自启动并继续续拉。
+function refreshObservation() {
+  if (!observer || !sentinel.value || loadFailed || exhausted.value) return
+  observer.unobserve(sentinel.value)
+  observer.observe(sentinel.value)
 }
 
 function setupObserver() {

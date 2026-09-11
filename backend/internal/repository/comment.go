@@ -5,6 +5,7 @@ import (
 
 	"github.com/Shionyori/edurec-platform/backend/internal/model"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 // CommentRepository B 站评论数据访问接口
@@ -12,6 +13,8 @@ type CommentRepository interface {
 	HasByResourceID(resourceID uint) (bool, error)
 	ListByResourceID(resourceID uint, limit int) ([]model.ResourceComment, error)
 	BatchCreate(comments []model.ResourceComment) error
+	HasFetchState(resourceID uint) (bool, error)
+	MarkFetched(resourceID uint) error
 }
 
 type CommentRepo struct {
@@ -55,6 +58,25 @@ func (r *CommentRepo) BatchCreate(comments []model.ResourceComment) error {
 	}
 	if err := r.db.Create(&comments).Error; err != nil {
 		return fmt.Errorf("批量写入评论失败: %w", err)
+	}
+	return nil
+}
+
+func (r *CommentRepo) HasFetchState(resourceID uint) (bool, error) {
+	var count int64
+	if err := r.db.Model(&model.CommentFetchState{}).
+		Where("resource_id = ?", resourceID).
+		Count(&count).Error; err != nil {
+		return false, fmt.Errorf("查询评论抓取状态失败: %w", err)
+	}
+	return count > 0, nil
+}
+
+func (r *CommentRepo) MarkFetched(resourceID uint) error {
+	state := model.CommentFetchState{ResourceID: resourceID}
+	// 并发下同一资源可能被重复标记，靠唯一索引 + 忽略冲突保证幂等
+	if err := r.db.Clauses(clause.OnConflict{DoNothing: true}).Create(&state).Error; err != nil {
+		return fmt.Errorf("记录评论抓取状态失败: %w", err)
 	}
 	return nil
 }

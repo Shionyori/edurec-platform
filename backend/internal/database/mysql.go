@@ -47,6 +47,7 @@ func autoMigrate(db *gorm.DB) error {
 		&model.UserBehavior{},
 		&model.Rating{},
 		&model.ResourceComment{},
+		&model.CommentFetchState{},
 		&model.Recommendation{},
 	)
 }

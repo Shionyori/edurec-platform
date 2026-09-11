@@ -14,7 +14,7 @@ type Resource struct {
 	Tags        string `gorm:"type:json" json:"tags"`     // JSON 数组字符串
 	Metadata    string `gorm:"type:json" json:"metadata"` // JSON 扩展字段
 	Author      string `gorm:"size:128" json:"author"`
-	SourceURL   string `gorm:"size:512" json:"source_url"`
+	SourceURL   string `gorm:"size:512;index" json:"source_url"`
 	AvgRating   float32 `gorm:"type:decimal(2,1);default:0" json:"avg_rating"`
 	ViewCount   uint `gorm:"default:0" json:"view_count"`
 }

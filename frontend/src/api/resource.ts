@@ -1,4 +1,4 @@
-import { del, get, post, put } from './client'
+import { CRAWL_TIMEOUT, del, get, post, put } from './client'
 import type { Page, Resource } from '@/types'
 
 export interface ResourceQuery {
@@ -13,6 +13,10 @@ export interface ResourceQuery {
 }
 
 export function listResources(params: ResourceQuery = {}) {
+  // 带 online_page 时会实时爬 B 站，需要放宽超时
+  if (params.online_page) {
+    return get<Page<Resource>>('/resources', { params, timeout: CRAWL_TIMEOUT })
+  }
   return get<Page<Resource>>('/resources', { params })
 }
 

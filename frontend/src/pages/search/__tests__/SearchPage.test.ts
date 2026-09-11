@@ -40,6 +40,25 @@ const resource: Resource = {
   created_at: '2026-07-01T08:00:00Z', updated_at: '2026-07-15T10:00:00Z',
 }
 
+// B 站爬回来的新资源，id 与本地结果不同
+const onlineResource: Resource = {
+  ...resource,
+  id: 2,
+  title: '机器学习实战（B 站视频）',
+  source_url: 'https://www.bilibili.com/video/BV1xx411c7mD',
+}
+
+// 本地第二页的资源
+const secondPageResource: Resource = { ...resource, id: 21, title: '第二页资源' }
+
+// 仅属于旧关键词的爬取结果，用于验证切换关键词后不会被追加
+const staleOnlineResource: Resource = {
+  ...resource,
+  id: 99,
+  title: 'Python 专属视频',
+  source_url: 'https://www.bilibili.com/video/BV1py411c7mE',
+}
+
 function pageResult(total = 1) {
   return { list: [resource], total, page: 1, page_size: 12 }
 }
@@ -95,7 +114,7 @@ describe('SearchPage', () => {
   it('纯关键词搜索本地翻完后，滚到底自动爬取 B 站', async () => {
     mockedListResources.mockImplementation(async (params = {}) => {
       if (params.online_page) {
-        return { list: [resource], total: 0, page: params.online_page, page_size: 12, has_more: true }
+        return { list: [onlineResource], total: 0, page: params.online_page, page_size: 12, has_more: true }
       }
       return { list: [resource], total: 1, page: 1, page_size: 12 }
     })
@@ -111,6 +130,117 @@ describe('SearchPage', () => {
     )
     // 追加不覆盖：本地 1 条 + B 站 1 条
     expect(wrapper.findAllComponents({ name: 'ResourceCard' }).length).toBe(2)
+  })
+
+  it('B 站判重命中回传本地已有资源时不重复渲染', async () => {
+    mockedListResources.mockImplementation(async (params = {}) => {
+      if (params.online_page) {
+        // 后端 online 路径会把判重命中的行一并回传，这里回传的正是本地已展示的那条
+        return { list: [resource], total: 0, page: params.online_page, page_size: 12, has_more: true }
+      }
+      return { list: [resource], total: 1, page: 1, page_size: 12 }
+    })
+    const wrapper = await mountPage()
+    await searchKeyword(wrapper, '机器学习')
+
+    triggerLoadMore()
+    await flushPromises()
+
+    expect(wrapper.findAllComponents({ name: 'ResourceCard' }).length).toBe(1)
+  })
+
+  it('首屏本地无结果时自动续拉 B 站，无需用户滚动', async () => {
+    // 真实 IntersectionObserver 会在 observe() 之后投递一次初始通知，
+    // 此处同步投递以模拟该时机（早于本地接口返回）
+    class AutoNotifyObserver {
+      constructor(private cb: ObserverCallback) {}
+      observe() {
+        this.cb([{ isIntersecting: true } as IntersectionObserverEntry], {} as IntersectionObserver)
+      }
+      unobserve() {}
+      disconnect() {}
+      takeRecords() {
+        return []
+      }
+    }
+    vi.stubGlobal('IntersectionObserver', AutoNotifyObserver)
+
+    mockedListResources.mockImplementation(async (params = {}) => {
+      if (params.online_page) {
+        return { list: [onlineResource], total: 0, page: params.online_page, page_size: 12, has_more: false }
+      }
+      return { list: [], total: 0, page: 1, page_size: 12 }
+    })
+
+    const wrapper = await mountPage()
+    await searchKeyword(wrapper, '机器学习')
+
+    expect(mockedListResources).toHaveBeenCalledWith(expect.objectContaining({ online_page: 1 }))
+    expect(wrapper.text()).toContain('机器学习实战（B 站视频）')
+  })
+
+  it('切换关键词后，旧关键词仍在飞行的爬取结果不会追加进新列表', async () => {
+    let releaseStale: () => void = () => {}
+    const staleGate = new Promise<void>((resolve) => {
+      releaseStale = resolve
+    })
+    mockedListResources.mockImplementation(async (params = {}) => {
+      if (params.online_page && params.keyword === 'Python') {
+        // 旧关键词的爬取挂起不返回，模拟 B 站爬取耗时数十秒
+        await staleGate
+        return { list: [staleOnlineResource], total: 0, page: 1, page_size: 12, has_more: true }
+      }
+      if (params.online_page) {
+        return { list: [onlineResource], total: 0, page: params.online_page, page_size: 12, has_more: false }
+      }
+      return { list: [resource], total: 1, page: 1, page_size: 12 }
+    })
+
+    const wrapper = await mountPage()
+    await searchKeyword(wrapper, 'Python')
+    triggerLoadMore()
+    await flushPromises()
+    // 旧关键词的爬取已在飞行中
+    expect(mockedListResources).toHaveBeenCalledWith(
+      expect.objectContaining({ online_page: 1, keyword: 'Python' }),
+    )
+
+    // 旧请求尚未返回时切换到新关键词
+    await searchKeyword(wrapper, '机器学习')
+
+    // 旧请求此刻才返回，其结果不得进入新关键词的列表
+    releaseStale()
+    await flushPromises()
+
+    expect(wrapper.text()).not.toContain('Python 专属视频')
+  })
+
+  it('本地翻页失败后重试仍请求同一页，不跳过结果', async () => {
+    let pageTwoCalls = 0
+    mockedListResources.mockImplementation(async (params = {}) => {
+      if (params.online_page) {
+        return { list: [], total: 0, page: params.online_page, page_size: 12, has_more: false }
+      }
+      if (params.page === 2) {
+        pageTwoCalls += 1
+        if (pageTwoCalls === 1) throw new Error('网络错误')
+        return { list: [secondPageResource], total: 30, page: 2, page_size: 12 }
+      }
+      return { list: [resource], total: 30, page: 1, page_size: 12 }
+    })
+
+    const wrapper = await mountPage()
+
+    // 第一次请求第 2 页失败
+    triggerLoadMore()
+    await flushPromises()
+    expect(pageTwoCalls).toBe(1)
+
+    // 重试时页码不应已前进，否则第 2 页的结果会被永久跳过
+    triggerLoadMore()
+    await flushPromises()
+    expect(mockedListResources).toHaveBeenLastCalledWith(expect.objectContaining({ page: 2 }))
+    expect(wrapper.text()).toContain('第二页资源')
   })
 
   it('B 站无更多时停止拉取', async () => {

@@ -1,11 +1,14 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { useRoute } from 'vue-router'
 import { listCategories } from '@/api/category'
 import { listResources } from '@/api/resource'
 import ResourceCard from '@/components/resource/ResourceCard.vue'
 import type { Category, Resource } from '@/types'
 
 const PAGE_SIZE = 12
+
+const route = useRoute()
 
 const categories = ref<Category[]>([])
 const resources = ref<Resource[]>([])
@@ -16,7 +19,14 @@ const total = ref(0)
 const hasMore = ref(true)
 const exhausted = ref(false)
 
-const keyword = ref('')
+// 支持从顶栏搜索框跳转：/search?keyword=xxx（query 可能是 string | string[] | null）
+function keywordFromQuery(): string {
+  const raw = route.query.keyword
+  const value = Array.isArray(raw) ? raw[0] : raw
+  return typeof value === 'string' ? value.trim() : ''
+}
+
+const keyword = ref(keywordFromQuery())
 const categoryId = ref<number | undefined>(undefined)
 const type = ref('')
 const sort = ref<'latest' | 'popular' | 'rating'>('latest')
@@ -30,9 +40,10 @@ const canCrawlOnline = computed(
   () => !!keyword.value.trim() && !categoryId.value && !type.value && !tags.value.trim(),
 )
 
-// 带关键词的搜索在本地无结果时会同步触发 B 站爬取，耗时数秒，用文案提示
+// 带关键词的搜索在本地无结果时会同步触发外部来源抓取（目前是 B 站），耗时数秒，用文案提示。
+// 不写死具体来源：将来接入别的在线来源时这里不用跟着改。
 const loadingText = computed(() =>
-  keyword.value.trim() ? '正在搜索，本地无结果时会自动检索 B 站，请稍候…' : '加载中…',
+  keyword.value.trim() ? '正在搜索，本地无结果时会自动检索外部内容，请稍候…' : '加载中…',
 )
 
 const sentinel = ref<HTMLElement | null>(null)
@@ -165,6 +176,18 @@ function resetAndSearch() {
   loadingMore.value = false
   fetchLocal()
 }
+
+// 顶栏搜索框再次提交（改写 query）时，同步关键词并重新搜索；
+// resetAndSearch 内部会自增 requestGeneration，在飞的旧请求返回后会被丢弃。
+watch(
+  () => route.query.keyword,
+  () => {
+    const kw = keywordFromQuery()
+    if (kw === keyword.value) return
+    keyword.value = kw
+    resetAndSearch()
+  },
+)
 
 function handleSearch() {
   resetAndSearch()

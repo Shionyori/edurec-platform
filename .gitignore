@@ -3,4 +3,9 @@ temp/
 data/
 backend/configs/config.local.yaml
 backend/configs/config.demo.yaml
+# 包管理器统一用 pnpm（pnpm-lock.yaml 已入库）；npm 误装产生的锁文件不入库
+frontend/package-lock.json
+# 本地 Go 构建缓存（GOCACHE 指向工作区时产生），不入库
+.gocache/
+# 一键启动/停止脚本运行时产生的 pid/日志
 scripts/.run/

@@ -2,6 +2,23 @@ package model
 
 import "gorm.io/gorm"
 
+// 资源类型的合法取值，与 resources.type 的枚举语义一致
+const (
+	ResourceTypeCourse  = "course"
+	ResourceTypeArticle = "article"
+	ResourceTypeVideo   = "video"
+)
+
+// IsValidResourceType 判断是否为合法资源类型。
+// 外部来源（爬虫、数据集配置）落库前用它校验，避免写入枚举外的值。
+func IsValidResourceType(resourceType string) bool {
+	switch resourceType {
+	case ResourceTypeCourse, ResourceTypeArticle, ResourceTypeVideo:
+		return true
+	}
+	return false
+}
+
 // Resource 教育资源（统一抽象，type 区分类型）
 type Resource struct {
 	gorm.Model

@@ -95,6 +95,7 @@ chore: 更新 docker-compose 配置
 - **Frontend ↔ Backend**：REST API (HTTP + JSON)，JWT 认证
 - **Backend ↔ edurec-engine**：离线批量协作（见「决策记录 #12」）：engine 消费平台导出的数据快照完成训练与全量推理；platform 通过管理接口将 engine 产出的推荐结果导入缓存表，推荐接口读缓存返回、未命中按评分兜底。platform 侧无模型推理，实时服务化留作可选演进
 - **Backend ↔ B 站**：`backend/crawler`（Python）采集 B 站公开视频元数据。**离线链路**：JSON 落到 `backend/data/bilibili/` → `cmd/import_bilibili` 导入 `resources` 表（`type=video`）；**在线链路**：搜索本地结果耗尽后逐页爬取、或打开 B 站视频详情页时，后端 `exec` 调用 `crawler/online.py` 实时抓取搜索结果与评论并落库（见「决策记录 #28 / #29 / #30」，详见 [bilibili-import.md](bilibili-import.md)）
+- **Backend ↔ 第三方数据集（慕课等）**：纯离线导入，无在线抓取。用户自行下载的数据集（json / jsonl / csv）经**配置驱动的字段映射**（`configs/config.yaml` 的 `datasets.<名称>`）解析为采集契约，再由 `cmd/import_dataset` 导入 `resources` 表（`type=course`），复用与 B 站完全相同的判重/分类/截断内核（见「决策记录 #31」，详见 [dataset-import.md](dataset-import.md)）
 - 所有接口遵循统一响应格式和错误码规范
 
 ### 4.2 后端分层架构
@@ -106,6 +107,7 @@ cmd/                        # 可执行入口
   server/                   # 应用入口，初始化依赖
   export_snapshot/          # 导出平台数据快照供 engine 训练/推理
   import_bilibili/          # 导入 B 站采集结果（见 docs/bilibili-import.md）
+  import_dataset/           # 导入第三方数据集（见 docs/dataset-import.md）
   demo_seed/                # 播种演示数据
 crawler/                    # B 站元数据采集脚本（Python，与 Go 代码隔离）
 internal/
@@ -380,3 +382,5 @@ services:
 | 28 | 外部内容来源 | 爬虫采集 + 命令导入（落地）：B 站公开视频元数据由 `backend/crawler`（Python）采集为 JSON，经 `cmd/import_bilibili` 落 `resources` 表。与 engine 链路同构——离线产出 + 命令导入，platform 不参与在线抓取 |
 | 29 | 采集内容建模 | 以 `type=video` 的**普通资源**混入现有资源列表，不新增专区、不改推荐链路；按 `source_url` 判重，命中只刷新 `view_count` / `metadata`，不覆盖平台侧字段（保证幂等、不冲掉人工编辑） |
 | 30 | 在线搜索 + 评论爬取 | 在线实时（落地）：搜索在本地无结果（`total==0` 且只有 keyword）时 `exec` 调用 `crawler/online.py search` 实时抓取并复用导入落库；打开 B 站视频详情页时 `GET /resources/:id/comments` 无缓存则 `exec` 调用 `online.py comments` 抓评论，落独立 `resource_comments` 表。评论独立建模不污染站内评分；子进程 stdout 只输出 UTF-8 JSON、30s 超时、风控（-352/-412）不重试。搜索后演进为**无限滚动**：本地翻完（`resources.length >= total`）且纯关键词搜索时改带 `online_page=M` 逐页爬取，受 `search_max_pages` 上限约束 |
+| 31 | 第三方数据集（慕课等）导入 | 纯离线导入（落地）：给慕课网做在线爬虫的方案**已验证不可行**——全站由腾讯 EdgeOne 机器人管理接管，对非浏览器客户端下发混淆 JS 挑战页，同机同 IP 同 UA 下 `curl` 拿到真 JSON 而 Python（requests/httpx/urllib）只拿到挑战页，换任何 UA 与 HTTP 头均无效，说明拦在 **TLS 指纹**层；打通只能解 JS 挑战或伪造指纹，违反合规红线，故放弃。改为导入用户自行下载的本地数据集：`DatasetConfig` 把「外部字段 → 平台采集契约」的映射外置到 YAML（`datasets.<名称>`，未知字段名在启动时硬报错），`cmd/import_dataset` 提供 `--preview`（不连库）/ `--dry-run`（连库不写）/ 真导入三步走。落库以 `type=course` 的普通资源身份混入，**复用与 B 站完全相同的 `ImportItems` 内核**（泛化见 #32），判重与幂等语义沿用 #29。据此不引入任何新的 Python 代码 |
+| 32 | 采集落库契约泛化 | 泛化（落地）：B 站导入的主体（`FindBySourceURLs` 判重、分类 find-or-create、`truncateRunes` 截断）本就通用，唯二的来源耦合是「`bvid` 为必填身份键」与「`toResource` 写死 `type=video`」，故抽为通用契约 `CrawlImportService.ImportItems(items, CrawlImportOptions{ResourceType, SourceURLTemplate}, write)`。身份键改为 `SourceID` 并保留 `bvid` 兼容别名（采集脚本仍只发 `bvid`）；校验口径由「必须有身份键」放宽为「`source_url` 必须能确定」——它才是判重依据。落库类型经 `model.IsValidResourceType` 在写库前校验，杜绝写入枚举外的值 |

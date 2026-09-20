@@ -38,7 +38,78 @@ bilibili:
   python_path: "python"
   crawler_dir: "crawler"
   category: "B站视频"
-  search_limit: 10
-  # 无限滚动时最多翻多少页 B 站结果，防无界爬取
-  search_max_pages: 5
+  # 单次搜索导入条数，也就是前端滚到底后续爬一次追加的条数
+  search_limit: 20
+  # 无限滚动时最多翻多少页 B 站结果，防无界爬取。
+  # 单个关键词的总上限 = search_limit × search_max_pages = 20 × 10 = 200 条
+  search_max_pages: 10
   comment_limit: 20
+  # 允许入库的 B 站分区白名单：B 站按关键词返回结果，影视/娱乐/游戏等非教育
+  # 分区会随关键词一起被抓进来，必须在落库前拦掉（在线抓取与离线导入共用同一套）。
+  # 不写这一项 → 使用代码内默认的教育分区白名单（config.DefaultEducationalTypenames）；
+  # 想放开某个分区就加进列表；写 [] 表示完全不过滤（不推荐）。
+  # allowed_typenames:
+  #   - 校园学习
+  #   - 计算机技术
+
+# 内容归类规则：判断 B 站内容是否算「长合集/系统课程」，导入时自动落库为 course（否则 video）。
+# 判定 = （命中 course_keywords 或 collection_markers 或标题形如「全N集/N讲」）且 时长 >= course_min_minutes。
+# 时长条件不可省：B 站大量「17分钟看完XX教程」的短片标题也带「教程/全集」，只看关键词会误判。
+# 留空/不写各项 → 用代码内默认值；改这里即可调整口径，不用改代码。
+content_rules:
+  # 判定为课程的最短时长（分钟）。B 站 duration 形如 "2809:53"，即 分钟:秒
+  course_min_minutes: 120
+  # 强关键词：命中且时长达标即判为课程（子串匹配）
+  course_keywords:
+    - 课程
+    - 精讲
+  # 合集/系列标记（同样子串匹配）
+  collection_markers:
+    - 合集
+    - 全集
+    - 全套
+    - 系列
+  # 弱关键词：「教程」「讲解」在短片标题里极常见，只有在时长达到 longform_min_minutes 时才算课程
+  longform_keywords:
+    - 教程
+    - 讲解
+  longform_min_minutes: 600
+
+# 第三方数据集导入（cmd/import_dataset）。各家数据集的字段名和格式都不一样，
+# 所以对应关系全部写在下面，换数据集只改这一段，不动代码。
+# 三步走：
+#   go run ./cmd/import_dataset --dataset mooc --preview   # 先核对映射对不对
+#   go run ./cmd/import_dataset --dataset mooc --dry-run   # 再看到底会新增/刷新多少条
+#   go run ./cmd/import_dataset --dataset mooc             # 确认无误后真导入
+datasets:
+  mooc:
+    # 数据集文件路径，相对 backend/ 运行目录。字段名先按慕课网搜索接口的形态预填，
+    # 拿到真实数据集后按实际列名改。
+    file: "data/mooc/courses.json"
+    # auto | json | jsonl | csv。auto 按扩展名判定，扩展名不认识时看首个非空字符
+    format: "auto"
+    # 记录数组在 JSON 里的位置，点号分隔；留空表示根节点就是数组
+    items_path: "data.list"
+    # 落库的 resources.type：course | article | video
+    resource_type: "course"
+    # 记录里取不到分类时用的兜底分类名
+    default_category: "慕课课程"
+    # 记录里取不到来源链接时用这个模板拼，{字段名} 是占位符。
+    # 二者都取不到的行会被跳过——source_url 是判重的唯一依据，拼不出来就会重复导入
+    source_url_template: ""
+    # tags 是字符串时的分隔符
+    tag_separator: ","
+    # 内部字段 → 外部字段候选。左边只能填固定词表里的名字，写错会直接报错：
+    #   title / description / cover_url / author / source_url / category / tags / view_count
+    # 右边是候选列表，按序取第一个非空值，支持点号路径（如 author.nickname）
+    fields:
+      title: ["title", "name"]
+      description: ["short_description", "description"]
+      cover_url: ["pic"]
+      author: ["author_nickname"]
+      source_url: ["target_url"]
+      category: ["category"]
+      tags: ["tags"]
+      view_count: ["numbers"]
+    # 原样收进 resources.metadata 的外部字段，换推荐模型时可能用得上
+    metadata: ["obj_id", "price"]

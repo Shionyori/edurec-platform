@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { flushPromises, mount, RouterLinkStub } from '@vue/test-utils'
 import ElementPlus from 'element-plus'
+import { createMemoryHistory, createRouter } from 'vue-router'
 import type { Category, Resource } from '@/types'
 import { listCategories } from '@/api/category'
 import { listResources } from '@/api/resource'
@@ -63,9 +64,26 @@ function pageResult(total = 1) {
   return { list: [resource], total, page: 1, page_size: 12 }
 }
 
-async function mountPage() {
+// SearchPage 通过 useRoute() 读取 ?keyword=（顶栏搜索框跳转用），
+// 因此挂载时必须提供真实 router，否则 useRoute() 返回 undefined。
+async function createTestRouter(query: Record<string, string> = {}) {
+  const router = createRouter({
+    history: createMemoryHistory(),
+    routes: [
+      { path: '/', name: 'home', component: { template: '<div />' } },
+      { path: '/search', name: 'search', component: SearchPage },
+    ],
+  })
+  await router.push({ path: '/search', query })
+  await router.isReady()
+  return router
+}
+
+/** mountPage 可选传入 query，用于验证「从顶栏带 keyword 进入」的场景 */
+async function mountPage(query: Record<string, string> = {}) {
+  const router = await createTestRouter(query)
   const wrapper = mount(SearchPage, {
-    global: { plugins: [ElementPlus], stubs: { RouterLink: RouterLinkStub } },
+    global: { plugins: [ElementPlus, router], stubs: { RouterLink: RouterLinkStub } },
   })
   await flushPromises()
   return wrapper
@@ -103,6 +121,17 @@ describe('SearchPage', () => {
     mockedListResources.mockClear()
     await searchKeyword(wrapper, 'Python')
     expect(mockedListResources).toHaveBeenLastCalledWith(expect.objectContaining({ keyword: 'Python', page: 1 }))
+  })
+
+  it('从 URL 带 keyword 进入时，直接用该关键词搜索（顶栏搜索框跳转）', async () => {
+    const wrapper = await mountPage({ keyword: '数据结构' })
+
+    // 挂载即按 URL 里的关键词请求，而不是先拉一次空列表
+    expect(mockedListResources).toHaveBeenCalledWith(
+      expect.objectContaining({ keyword: '数据结构', page: 1 }),
+    )
+    // 搜索页自己的输入框应回填该关键词，方便继续改
+    expect((wrapper.find('input[placeholder="输入关键词…"]').element as HTMLInputElement).value).toBe('数据结构')
   })
 
   it('没有结果时展示空态', async () => {

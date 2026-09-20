@@ -21,7 +21,7 @@ const pythonTimeout = 30 * time.Second
 // BilibiliOnlineService 在线实时采集 B 站内容：搜索落库 + 评论抓取。
 // 通过 os/exec 调用 backend/crawler/online.py，复用其 WBI 签名/搜索/风控逻辑。
 type BilibiliOnlineService struct {
-	importer     *BilibiliImportService
+	importer     *CrawlImportService
 	pythonPath   string
 	crawlerDir   string
 	category     string
@@ -30,7 +30,7 @@ type BilibiliOnlineService struct {
 	commentLimit int
 }
 
-func NewBilibiliOnlineService(importer *BilibiliImportService, cfg config.BilibiliConfig) *BilibiliOnlineService {
+func NewBilibiliOnlineService(importer *CrawlImportService, cfg config.BilibiliConfig) *BilibiliOnlineService {
 	pythonPath := strings.TrimSpace(cfg.PythonPath)
 	if pythonPath == "" {
 		pythonPath = "python"
@@ -64,7 +64,7 @@ func NewBilibiliOnlineService(importer *BilibiliImportService, cfg config.Bilibi
 
 // onlineSearchResponse 对应 online.py search 子命令的 stdout JSON
 type onlineSearchResponse struct {
-	Items []bilibiliItem `json:"items"`
+	Items []CrawlItem `json:"items"`
 }
 
 // onlineCommentsResponse 对应 online.py comments 子命令的 stdout JSON
@@ -112,7 +112,7 @@ func (s *BilibiliOnlineService) SearchAndImport(keyword string, page int) ([]mod
 		return nil, false, fmt.Errorf("解析在线搜索输出失败: %w", err)
 	}
 
-	_, imported, err := s.importer.ImportItems(resp.Items, true)
+	_, imported, err := s.importer.ImportItems(resp.Items, BilibiliImportOptions, true)
 	if err != nil {
 		return nil, false, err
 	}

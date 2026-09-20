@@ -1,9 +1,15 @@
 <script setup lang="ts">
-import { useRouter } from 'vue-router'
+import { ref } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 
 const router = useRouter()
+const route = useRoute()
 const auth = useAuthStore()
+
+// 顶栏搜索框：原先没有 v-model，输入的内容会被渲染清掉（看起来"打不进字"）。
+// 现在绑定 keyword 并回车跳搜索页；已在搜索页时改写 query，由页面 watch 触发重新搜索。
+const headerKeyword = ref('')
 
 function handleCommand(command: string) {
   if (command === 'logout') {
@@ -12,6 +18,15 @@ function handleCommand(command: string) {
   } else if (command === 'me') {
     router.push({ name: 'user-me' })
   }
+}
+
+function submitSearch() {
+  const kw = headerKeyword.value.trim()
+  if (!kw) return
+  const current = typeof route.query.keyword === 'string' ? route.query.keyword : ''
+  // 已在搜索页且关键词未变：不重复导航（输入框里的文字保留，方便继续改）
+  if (route.name === 'search' && current === kw) return
+  router.push({ name: 'search', query: { keyword: kw } })
 }
 </script>
 
@@ -24,10 +39,11 @@ function handleCommand(command: string) {
           edurec
         </RouterLink>
         <el-input
+          v-model="headerKeyword"
           placeholder="搜索课程、文章、视频…"
           class="max-w-sm"
           clearable
-          @keyup.enter="router.push({ name: 'search' })"
+          @keyup.enter="submitSearch"
         />
         <nav class="ml-4 hidden items-center gap-5 text-sm text-ink-secondary md:flex">
           <RouterLink to="/" class="hover:text-primary">首页</RouterLink>

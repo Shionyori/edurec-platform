@@ -3,6 +3,11 @@
 平台的第二条内容来源：用 Python 采集 B 站公开视频元数据 → 输出 JSON → Go 命令导入 `resources` 表 →
 前端资源列表自然展示。视频以 `type=video` 的普通资源身份**混入现有列表**，不新增专区、不改动推荐链路。
 
+> 慕课等第三方数据集走**完全不同的链路**（纯离线导入，配置驱动字段映射），见
+> [dataset-import.md](./dataset-import.md)。两条链路复用同一段落库内核
+> （[crawl_import.go](../backend/internal/service/crawl_import.go) 的 `ImportItems`），
+> 故下文的判重与幂等语义对二者同样成立。
+
 链路分两种模式，**离线批量 + 在线实时并存**：
 
 ```
@@ -88,7 +93,7 @@ go run ./cmd/import_bilibili [-file data/bilibili/latest.json] [-dry-run]
 输出统计：
 
 ```
-[import_bilibili] 新增资源 27 条，刷新资源 0 条，跳过 0 条，新建分类 1 个
+[import_bilibili] 新增资源 27 条，刷新资源 0 条，跳过 0 条，非教育分区拦截 0 条，新建分类 1 个
 ```
 
 | 计数 | 含义 |
@@ -96,7 +101,44 @@ go run ./cmd/import_bilibili [-file data/bilibili/latest.json] [-dry-run]
 | `created_resources` | 新插入的 `type=video` 资源 |
 | `updated_resources` | `source_url` 命中已有记录，只刷新了动态字段 |
 | `skipped_resources` | 缺必填字段（`bvid` / `title` / `category`），未落库 |
+| `skipped_typenames` | **非教育分区被白名单拦下**，未落库（见下一节） |
 | `created_categories` | 按名称找不到、本次新建的分类 |
+
+## 教育分区白名单（内容质量闸门）
+
+B 站搜索是**按关键词返回**的，不区分内容性质。搜「杨真真」会把《夏家三千金》影视剪辑、
+娱乐杂谈、网络游戏等一并返回；这些条目若直接落库，就会和正常课程一起出现在首页与搜索页。
+因此落库前按 **B 站分区名（`typename`）白名单**拦截。
+
+- **判定依据**：爬虫在 `metadata.typename` 里写了 B 站分区名（`collect.py` 取搜索结果的 `typename`）。
+- **生效范围**：在线搜索抓取与离线导入**共用同一套**（都走 `CrawlImportService.ImportItems`）；
+  第三方数据集条目没有 `typename` 字段，**不受影响**。
+- **配置**：`backend/configs/config.yaml` 的 `bilibili.allowed_typenames`。
+  不写这一项 → 用代码内默认白名单（`config.DefaultEducationalTypenames`）；写 `[]` 表示不过滤（不推荐）。
+
+白名单之所以不能"只留校园学习"，是因为 B 站对正经课程的误分类非常普遍。实测（2026-09-19）：
+
+| 分区 | 为什么保留 |
+|---|---|
+| `校园学习` / `计算机技术` / `科学科普` / `野生技能协会` | 明确的教学与知识分区 |
+| `人文历史` / `社科·法律·心理` | 通识学科内容 |
+| `日常` / `数码` / `运动文化` / `竞技体育` | **误分类重灾区**：「数学分析」「泛函分析」「高等代数」「数学建模国赛」都被归进这些分区 |
+| `软件应用` / `职业职场` / `科工机械` / `财经商业` | 技能与职业教育向：「机器学习」「数据分析」教程落在这里 |
+
+刻意**不**收录：`其他`（内容不可控）、`预告·资讯`、`原创音乐`、
+`影视剪辑`/`影视杂谈`/`娱乐粉丝创作`/`娱乐杂谈`/`明星综合`/`网络游戏`/`音乐综合` 等。
+未收录的分区一律不导入 —— 新分区默认拦住，宁可漏也不要放回非教育内容。
+
+> ⚠️ **白名单是关键词搜索的兜底，不是万能的**：分区本身也可能误标（实测有数学视频被归进「搞笑」），
+> 因此仍可能有少量非教育条目落进白名单分区。发现后按标题清理即可：
+>
+> ```sql
+> -- 先查（把关键词换成要清理的主题）
+> SELECT id, title, JSON_UNQUOTE(JSON_EXTRACT(metadata,'$.typename')) tn
+> FROM resources WHERE title REGEXP '关键词1|关键词2';
+> -- 确认后删（有行为/评分引用时需先删引用行，外键会拦住）
+> DELETE FROM resources WHERE title REGEXP '关键词1|关键词2';
+> ```
 
 ## 字段映射
 
@@ -131,6 +173,47 @@ go run ./cmd/import_bilibili [-file data/bilibili/latest.json] [-dry-run]
 
 > `resources` 表当前**没有 `source_url` 唯一索引**（见「已知限制」）。导入命令是单进程串行执行的，
 > 不存在并发写入，实际不会产生重复行。
+
+## 资源类型：长合集/系统课程自动判为 course
+
+B 站采集**统一按 `type=video` 落库**（`BilibiliImportOptions.ResourceType`），因为 B 站搜索结果
+本身不区分「单集视频」与「系列课程」——一条搜索结果就是一个视频，即便它是 151 集的合集。
+于是 `resources` 里会出现「十几分钟的单集」和「150 小时的全套课程」类型相同、无法按类型筛选的情况。
+
+**导入时自动判定**（`config.ContentRulesConfig.IsLongCourse`，在线抓取与离线导入共用）：每条 B 站内容
+在落库前判一次，符合规则就落 `course`，否则落 `video`。规则**配置化**，在 `configs/config.yaml` 的
+`content_rules` 段调整，不用改代码：
+
+| 档位 | 触发条件 | 默认门槛 |
+|---|---|---|
+| 强标记 | 标题含 `course_keywords`（课程/精讲）或 `collection_markers`（合集/全集/全套/系列）或形如「全N集/共N讲」 | 时长 ≥ `course_min_minutes`（120 分钟） |
+| 弱关键词 | 标题含 `longform_keywords`（教程/讲解） | 时长 ≥ `longform_min_minutes`（**600 分钟 / 10 小时**） |
+
+弱词档门槛更高的原因：`教程`/`讲解` 在 B 站**短片**标题里极常见
+（「17分钟让你看懂所有机器学习算法」写作【入门教程】），只靠关键词会把短片误判成课程。
+两档都要求时长达标，这是规则的核心。
+
+> ⚠️ **`duration` 是「分钟:秒」，不是「时:分」**。采集器 `collect.py` 的 `_format_duration`
+> 用 `f"{seconds//60}:{seconds%60:02d}"` 格式化，所以 `9003:20` 表示 **9003 分钟**。
+> 曾按「时:分」解析，把 `119:59` 算成 7199 分钟，导致时长门槛形同失效。
+
+实测校准（2026-09-19）：单看时长 → 174 条都成课程，连没写「课程」字样的长课也算；
+单看关键词 → 17 分钟短片也被判课程（14 条）；本口径 → 命中 63 条，逐条核对均为长课程/系列
+（121 分钟 ~ 150 小时），结果 `course 63 / video 206`。
+
+**历史数据对齐**用一次性脚本（口径调整后也可重跑）：
+
+```bash
+mysql -h 127.0.0.1 -P 3308 -u root -p edurec < scripts/reclassify-long-courses.sql
+```
+
+判重命中时导入只刷新 `view_count` 与 `metadata`、**不覆盖 `type`**
+（`internal/service/crawl_import.go` 的 `ImportItems`），所以改判结果不会被后续导入改回，
+也可以随时在管理后台 `/admin/resources` 逐条调整。
+
+> ⚠️ **连带影响已处理**：详情页原先用 `type === 'video'` 判断是否显示 B 站评论区，
+> 改判后这些课程会丢失评论区。判据已改为「来源是 B 站」（`source_url` 含 `bilibili.com`），
+> 因此 **course 类型的 B 站内容同样有评论区**。
 
 ## 前端展示
 

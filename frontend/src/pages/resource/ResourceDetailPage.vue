@@ -39,9 +39,10 @@ const initialScore = ref(0)
 const initialComment = ref('')
 let prefilled = false
 
-// 只有 B 站视频才有可爬取的评论
-const isBilibiliVideo = computed(
-  () => resource.value?.type === 'video' && !!resource.value.source_url?.includes('bilibili.com'),
+// 只有 B 站来源才有可爬取的评论。判据是「来源是 B 站」而非「类型是 video」：
+// 长合集会被归入 course（见 docs/bilibili-import.md），若绑在 type 上这些课程就没了评论区。
+const isBilibiliResource = computed(
+  () => !!resource.value?.source_url?.includes('bilibili.com'),
 )
 
 async function loadResource() {
@@ -51,7 +52,7 @@ async function loadResource() {
     resource.value = await getResource(resourceId.value)
     // 资源加载成功才上报 view（404 时不产生行为记录）
     recordBehavior(resourceId.value, 'view').catch(() => {})
-    if (isBilibiliVideo.value) {
+    if (isBilibiliResource.value) {
       loadComments()
     }
   } catch (e) {
@@ -225,7 +226,7 @@ onMounted(() => {
             />
           </div>
 
-          <div v-if="isBilibiliVideo" class="mt-8">
+          <div v-if="isBilibiliResource" class="mt-8">
             <h2 class="text-base font-semibold text-ink">B 站评论</h2>
             <CommentList :comments="comments" :loading="commentsLoading" />
           </div>

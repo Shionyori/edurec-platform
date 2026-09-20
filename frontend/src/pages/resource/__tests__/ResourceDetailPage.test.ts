@@ -175,4 +175,26 @@ describe('ResourceDetailPage', () => {
     await mountPage()
     expect(mockedListComments).not.toHaveBeenCalled()
   })
+
+  // 长合集会被归入 course（docs/bilibili-import.md）。评论判据是「来源是 B 站」而非「类型是 video」，
+  // 否则这些课程的详情页会没有评论区。
+  it('B 站来源的课程（长合集）同样加载并显示评论', async () => {
+    const biliCourse: Resource = {
+      ...resource,
+      type: 'course',
+      source_url: 'https://www.bilibili.com/video/BV15v411g7VP',
+    }
+    mockedGetResource.mockResolvedValue(biliCourse)
+    mockedListComments.mockResolvedValue({
+      list: [
+        { id: 2, author_name: '小红', content: '课程很系统', like_count: 8, floor: 1, published_at: 1759990000 },
+      ],
+    })
+
+    const wrapper = await mountPage()
+
+    expect(mockedListComments).toHaveBeenCalledWith(1)
+    expect(wrapper.text()).toContain('B 站评论')
+    expect(wrapper.text()).toContain('课程很系统')
+  })
 })

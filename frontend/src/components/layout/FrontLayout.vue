@@ -1,11 +1,18 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 
 const router = useRouter()
 const route = useRoute()
 const auth = useAuthStore()
+
+// 当前搜索页的类型筛选，用于顶栏导航高亮（路由的 active 只看路径，无法区分 query）
+const activeType = computed(() => {
+  const raw = route.query.type
+  const value = Array.isArray(raw) ? raw[0] : raw
+  return typeof value === 'string' ? value : ''
+})
 
 // 顶栏搜索框：原先没有 v-model，输入的内容会被渲染清掉（看起来"打不进字"）。
 // 现在绑定 keyword 并回车跳搜索页；已在搜索页时改写 query，由页面 watch 触发重新搜索。
@@ -54,10 +61,22 @@ function submitSearch() {
           <RouterLink
             :to="{ name: 'search' }"
             class="transition-colors duration-150 hover:text-primary"
+            :class="route.name === 'search' && !activeType ? 'text-primary font-medium' : ''"
+          >全部</RouterLink>
+          <RouterLink
+            :to="{ name: 'search', query: { type: 'course' } }"
+            class="transition-colors duration-150 hover:text-primary"
+            :class="activeType === 'course' ? 'text-primary font-medium' : ''"
           >课程</RouterLink>
           <RouterLink
-            :to="{ name: 'search' }"
+            :to="{ name: 'search', query: { type: 'video' } }"
             class="transition-colors duration-150 hover:text-primary"
+            :class="activeType === 'video' ? 'text-primary font-medium' : ''"
+          >视频</RouterLink>
+          <RouterLink
+            :to="{ name: 'search', query: { type: 'article' } }"
+            class="transition-colors duration-150 hover:text-primary"
+            :class="activeType === 'article' ? 'text-primary font-medium' : ''"
           >文章</RouterLink>
         </nav>
         <div class="ml-auto flex items-center gap-3">

@@ -27,14 +27,25 @@ function keywordFromQuery(): string {
   return typeof value === 'string' ? value.trim() : ''
 }
 
+// 支持从顶栏导航跳转：/search?type=video（course / article / video）
+function typeFromQuery(): string {
+  const raw = route.query.type
+  const value = Array.isArray(raw) ? raw[0] : raw
+  return typeof value === 'string' ? value.trim() : ''
+}
+
 const keyword = ref(keywordFromQuery())
 const categoryId = ref<number | undefined>(undefined)
-const type = ref('')
+const type = ref(typeFromQuery())
 const sort = ref<'latest' | 'popular' | 'rating'>('latest')
 const tags = ref('')
 
 const page = ref(1)
 const onlinePage = ref(1)
+
+const TYPE_LABELS: Record<string, string> = { course: '课程', article: '文章', video: '视频' }
+// 标题跟随顶栏导航的类型，明确当前在看哪一类
+const pageTitle = computed(() => TYPE_LABELS[type.value] || '资源库')
 
 // 仅纯关键词搜索（无分类/类型/标签筛选）才会在本地耗尽后爬 B 站
 const canCrawlOnline = computed(
@@ -190,6 +201,17 @@ watch(
   },
 )
 
+// 顶栏导航切换类型（课程/视频/文章）时，同步筛选并重新搜索
+watch(
+  () => route.query.type,
+  () => {
+    const next = typeFromQuery()
+    if (next === type.value) return
+    type.value = next
+    resetAndSearch()
+  },
+)
+
 function handleSearch() {
   resetAndSearch()
 }
@@ -231,7 +253,7 @@ onBeforeUnmount(() => {
 
 <template>
   <div class="mx-auto max-w-7xl px-6 py-8">
-    <h1 class="text-2xl font-bold">资源库</h1>
+    <h1 class="text-2xl font-bold">{{ pageTitle }}</h1>
     <p class="mt-2 text-sm text-ink-secondary">搜索并筛选全部课程、文章与视频</p>
 
     <div class="mt-6 flex flex-wrap items-center gap-3 rounded-lg border border-border bg-surface p-4">

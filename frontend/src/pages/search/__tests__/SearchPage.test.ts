@@ -319,4 +319,10 @@ describe('SearchPage', () => {
     const wrapper = await mountPage()
     expect(wrapper.text()).toContain('加载失败')
   })
+
+  it('从 URL 的 type 初始化类型筛选并按该类型请求', async () => {
+    const wrapper = await mountPage({ type: 'video' })
+    expect(mockedListResources).toHaveBeenCalledWith(expect.objectContaining({ type: 'video' }))
+    expect(wrapper.text()).toContain('视频')
+  })
 })

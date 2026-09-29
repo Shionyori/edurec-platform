@@ -27,12 +27,19 @@ async function handleUpdated() {
 </script>
 
 <template>
-  <div class="mx-auto max-w-5xl px-6 py-8">
+  <div class="mx-auto max-w-6xl px-6 py-8">
     <h1 class="text-2xl font-bold">个人中心</h1>
-    <div class="mt-6 space-y-6">
-      <ProfileCard v-if="user" :user="user" @updated="handleUpdated" />
-      <FavoriteList />
-      <BehaviorHistory />
+    <div class="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-[320px_1fr] lg:items-start">
+      <ProfileCard
+        v-if="user"
+        :user="user"
+        class="lg:sticky lg:top-20"
+        @updated="handleUpdated"
+      />
+      <div class="space-y-6">
+        <FavoriteList />
+        <BehaviorHistory />
+      </div>
     </div>
   </div>
 </template>

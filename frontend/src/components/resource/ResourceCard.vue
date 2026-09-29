@@ -18,7 +18,7 @@ function onClick() {
 <template>
   <RouterLink
     :to="{ name: 'resource-detail', params: { id: resource.id } }"
-    class="group block overflow-hidden rounded-lg border border-border bg-surface shadow-sm transition hover:shadow-md"
+    class="group fade-up block overflow-hidden rounded-xl border border-border bg-surface shadow-sm transition-all duration-200 ease-out hover:-translate-y-1 hover:border-primary/30 hover:shadow-lg"
     @click="onClick"
   >
     <img
@@ -27,7 +27,7 @@ function onClick() {
       :alt="resource.title"
       referrerpolicy="no-referrer"
       loading="lazy"
-      class="aspect-video w-full object-cover"
+      class="aspect-video w-full object-cover transition-transform duration-300 ease-out group-hover:scale-105"
       @error="coverFailed = true"
     />
     <div

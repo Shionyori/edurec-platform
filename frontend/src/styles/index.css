@@ -29,3 +29,51 @@ body {
     'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
   -webkit-font-smoothing: antialiased;
 }
+
+html {
+  scroll-behavior: smooth;
+}
+
+/* 路由切换过渡：主内容淡入 + 轻微上移，比硬切更顺 */
+.route-enter-active {
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+.route-leave-active {
+  transition: opacity 0.12s ease;
+}
+.route-enter-from {
+  opacity: 0;
+  transform: translateY(8px);
+}
+.route-leave-to {
+  opacity: 0;
+}
+
+/* 列表/网格入场 */
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.fade-up {
+  animation: fade-up 0.32s ease both;
+}
+
+/* 尊重系统的「减少动效」偏好 */
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  .route-enter-active,
+  .route-leave-active {
+    transition: none;
+  }
+  .fade-up {
+    animation: none;
+  }
+}

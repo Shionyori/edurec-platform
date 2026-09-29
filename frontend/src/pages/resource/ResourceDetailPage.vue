@@ -180,7 +180,22 @@ onMounted(() => {
 
 <template>
   <div class="mx-auto max-w-7xl px-6 py-8">
-    <div v-if="resourceLoading" class="py-24 text-center text-sm text-ink-muted">加载中…</div>
+    <div v-if="resourceLoading" class="grid grid-cols-1 gap-8 lg:grid-cols-3">
+      <div class="lg:col-span-2">
+        <el-skeleton animated>
+          <template #template>
+            <el-skeleton-item variant="image" style="width: 100%; height: 320px; border-radius: 8px" />
+            <el-skeleton-item variant="h1" style="width: 60%; margin-top: 20px" />
+            <el-skeleton-item variant="text" style="width: 100%; margin-top: 14px" />
+            <el-skeleton-item variant="text" style="width: 92%; margin-top: 8px" />
+            <el-skeleton-item variant="text" style="width: 84%; margin-top: 8px" />
+          </template>
+        </el-skeleton>
+      </div>
+      <div>
+        <el-skeleton :rows="5" animated />
+      </div>
+    </div>
     <div v-else-if="resourceError" class="py-24 text-center">
       <p class="text-sm text-red-500">{{ resourceError }}</p>
       <RouterLink :to="{ name: 'home' }">

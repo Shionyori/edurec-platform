@@ -2,6 +2,7 @@
 import { onMounted, ref } from 'vue'
 import { listFavorites } from '@/api/behavior'
 import ResourceCard from '@/components/resource/ResourceCard.vue'
+import ResourceCardSkeleton from '@/components/resource/ResourceCardSkeleton.vue'
 import type { Resource } from '@/types'
 
 const items = ref<Resource[]>([])
@@ -34,7 +35,9 @@ onMounted(fetchFavorites)
       <span v-if="total > 0" class="text-xs text-ink-muted">共 {{ total }} 个</span>
     </div>
 
-    <el-skeleton v-if="loading" :rows="3" animated class="mt-4" />
+    <div v-if="loading" class="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <ResourceCardSkeleton v-for="i in 3" :key="i" />
+    </div>
     <div v-else-if="error" class="py-12 text-center text-sm text-red-500">{{ error }}</div>
     <el-empty
       v-else-if="items.length === 0"

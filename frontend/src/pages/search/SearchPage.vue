@@ -4,6 +4,7 @@ import { useRoute } from 'vue-router'
 import { listCategories } from '@/api/category'
 import { listResources } from '@/api/resource'
 import ResourceCard from '@/components/resource/ResourceCard.vue'
+import ResourceCardSkeleton from '@/components/resource/ResourceCardSkeleton.vue'
 import type { Category, Resource } from '@/types'
 
 const PAGE_SIZE = 12
@@ -252,13 +253,23 @@ onBeforeUnmount(() => {
       <el-button type="primary" @click="handleSearch">搜索</el-button>
     </div>
 
-    <div v-if="loading" class="py-24 text-center text-sm text-ink-muted">{{ loadingText }}</div>
+    <div v-if="loading" class="mt-6">
+      <p class="py-4 text-center text-sm text-ink-muted">{{ loadingText }}</p>
+      <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        <ResourceCardSkeleton v-for="i in 6" :key="i" />
+      </div>
+    </div>
     <div v-else-if="error && resources.length === 0" class="py-24 text-center text-sm text-red-500">{{ error }}</div>
     <div v-else-if="resources.length === 0 && !loadingMore" class="py-24 text-center text-sm text-ink-muted">
       没有符合条件的资源
     </div>
     <div v-else class="mt-6 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-      <ResourceCard v-for="r in resources" :key="r.id" :resource="r" />
+      <ResourceCard
+        v-for="(r, i) in resources"
+        :key="r.id"
+        :resource="r"
+        :style="{ animationDelay: `${Math.min(i, 8) * 25}ms` }"
+      />
     </div>
 
     <div v-if="loadingMore" class="py-8 text-center text-sm text-ink-muted">正在加载…</div>

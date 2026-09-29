@@ -46,9 +46,19 @@ function submitSearch() {
           @keyup.enter="submitSearch"
         />
         <nav class="ml-4 hidden items-center gap-5 text-sm text-ink-secondary md:flex">
-          <RouterLink to="/" class="hover:text-primary">首页</RouterLink>
-          <RouterLink :to="{ name: 'search' }" class="hover:text-primary">课程</RouterLink>
-          <RouterLink :to="{ name: 'search' }" class="hover:text-primary">文章</RouterLink>
+          <RouterLink
+            to="/"
+            class="transition-colors duration-150 hover:text-primary"
+            exact-active-class="text-primary font-medium"
+          >首页</RouterLink>
+          <RouterLink
+            :to="{ name: 'search' }"
+            class="transition-colors duration-150 hover:text-primary"
+          >课程</RouterLink>
+          <RouterLink
+            :to="{ name: 'search' }"
+            class="transition-colors duration-150 hover:text-primary"
+          >文章</RouterLink>
         </nav>
         <div class="ml-auto flex items-center gap-3">
           <template v-if="auth.isLoggedIn">
@@ -77,7 +87,11 @@ function submitSearch() {
     </header>
 
     <main class="flex-1">
-      <RouterView />
+      <RouterView v-slot="{ Component }">
+        <Transition name="route" mode="out-in">
+          <component :is="Component" />
+        </Transition>
+      </RouterView>
     </main>
 
     <footer class="border-t border-border py-6 text-center text-xs text-ink-muted">

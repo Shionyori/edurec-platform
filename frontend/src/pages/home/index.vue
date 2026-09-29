@@ -4,6 +4,7 @@ import { getRecommendations } from '@/api/recommendation'
 import { recordImpressions } from '@/api/impression'
 import { useAuthStore } from '@/stores/auth'
 import ResourceCard from '@/components/resource/ResourceCard.vue'
+import ResourceCardSkeleton from '@/components/resource/ResourceCardSkeleton.vue'
 import InterestPicker from '@/components/profile/InterestPicker.vue'
 import type { Resource } from '@/types'
 
@@ -49,10 +50,18 @@ onMounted(load)
 
     <InterestPicker v-if="showInterestPicker" @saved="load" />
 
-    <div v-if="loading" class="py-24 text-center text-sm text-ink-muted">加载中…</div>
+    <div v-if="loading" class="mt-8 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+      <ResourceCardSkeleton v-for="i in 6" :key="i" />
+    </div>
     <div v-else-if="error" class="py-24 text-center text-sm text-red-500">{{ error }}</div>
+    <el-empty v-else-if="resources.length === 0" description="暂无推荐内容" class="mt-8" />
     <div v-else class="mt-8 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-      <ResourceCard v-for="r in resources" :key="r.id" :resource="r" />
+      <ResourceCard
+        v-for="(r, i) in resources"
+        :key="r.id"
+        :resource="r"
+        :style="{ animationDelay: `${Math.min(i, 8) * 30}ms` }"
+      />
     </div>
   </div>
 </template>

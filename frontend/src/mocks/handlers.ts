@@ -209,7 +209,10 @@ export const handlers = [
     const resource = db.resources.find((r) => r.id === Number(params.id))
     if (!resource) return bizError(10004, '资源不存在', 404)
     resource.view_count += 1
-    return ok(toPublicResource(resource))
+    const favorited = db.behaviors.some(
+      (b) => b.user_id === user.id && b.resource_id === resource.id && b.action === 'favorite',
+    )
+    return ok({ ...toPublicResource(resource), favorited })
   }),
 
   http.post(`${BASE}/resources`, async ({ request }) => {
@@ -360,6 +363,49 @@ export const handlers = [
       created_at: new Date().toISOString(),
     })
     return ok(null)
+  }),
+
+  // 收藏 / 取消收藏
+  http.post(`${BASE}/resources/:id/favorite`, ({ request, params }) => {
+    const user = requireUser(request)
+    if (!user) return bizError(10002, '未认证', 401)
+    const rid = Number(params.id)
+    const exists = db.behaviors.some(
+      (b) => b.user_id === user.id && b.resource_id === rid && b.action === 'favorite',
+    )
+    if (!exists) {
+      db.behaviors.push({
+        id: db.behaviors.length + 1,
+        user_id: user.id,
+        resource_id: rid,
+        action: 'favorite',
+        created_at: new Date().toISOString(),
+      })
+    }
+    return ok({ favorited: true })
+  }),
+
+  http.delete(`${BASE}/resources/:id/favorite`, ({ request, params }) => {
+    const user = requireUser(request)
+    if (!user) return bizError(10002, '未认证', 401)
+    const rid = Number(params.id)
+    db.behaviors = db.behaviors.filter(
+      (b) => !(b.user_id === user.id && b.resource_id === rid && b.action === 'favorite'),
+    )
+    return ok({ favorited: false })
+  }),
+
+  // 我的收藏
+  http.get(`${BASE}/users/me/favorites`, ({ request }) => {
+    const user = requireUser(request)
+    if (!user) return bizError(10002, '未认证', 401)
+    const favIds = new Set(
+      db.behaviors
+        .filter((b) => b.user_id === user.id && b.action === 'favorite')
+        .map((b) => b.resource_id),
+    )
+    const list = db.resources.filter((r) => favIds.has(r.id))
+    return ok({ list: list.map(toPublicResource), total: list.length, page: 1, page_size: 12 })
   }),
 
   // 曝光（推荐展示打点，独立于用户行为，不参与正样本训练）

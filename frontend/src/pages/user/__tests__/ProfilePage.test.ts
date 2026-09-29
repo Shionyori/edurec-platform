@@ -3,6 +3,7 @@ import { flushPromises, mount } from '@vue/test-utils'
 import ElementPlus from 'element-plus'
 import type { User } from '@/types'
 import ProfileCard from '@/components/profile/ProfileCard.vue'
+import FavoriteList from '@/components/profile/FavoriteList.vue'
 import BehaviorHistory from '@/components/profile/BehaviorHistory.vue'
 import ProfilePage from '../ProfilePage.vue'
 
@@ -22,7 +23,7 @@ async function mountPage() {
   const wrapper = mount(ProfilePage, {
     global: {
       plugins: [ElementPlus],
-      stubs: { ProfileCard: true, BehaviorHistory: true },
+      stubs: { ProfileCard: true, FavoriteList: true, BehaviorHistory: true },
     },
   })
   await flushPromises()
@@ -39,6 +40,7 @@ describe('ProfilePage', () => {
     const wrapper = await mountPage()
     expect(fetchMe).toHaveBeenCalled()
     expect(wrapper.findComponent(ProfileCard).exists()).toBe(true)
+    expect(wrapper.findComponent(FavoriteList).exists()).toBe(true)
     expect(wrapper.findComponent(BehaviorHistory).exists()).toBe(true)
   })
 })

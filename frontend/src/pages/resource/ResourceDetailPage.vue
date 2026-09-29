@@ -5,7 +5,7 @@ import { ElMessage } from 'element-plus'
 import { getResource } from '@/api/resource'
 import { listRatings, upsertRating } from '@/api/rating'
 import { listComments } from '@/api/comment'
-import { recordBehavior } from '@/api/behavior'
+import { recordBehavior, setFavorite } from '@/api/behavior'
 import { useAuthStore } from '@/stores/auth'
 import { formatDate, formatUnixDate, difficultyLabel, formatDuration } from '@/utils/format'
 import type { BilibiliComment, Rating, Resource } from '@/types'
@@ -26,9 +26,10 @@ const resourceError = ref('')
 // 外链封面（如 B 站）可能失效：no-referrer 已规避防盗链，但仍需对加载失败做降级
 const coverFailed = ref(false)
 
-// 收藏状态：后端只有 favorite 这一正向行为（无「取消收藏」动作），
-// 因此这里只做本地开关 + 在「变为已收藏」时上报 favorite；取消仅为本地表现。
+// 收藏状态：以服务端 favorite 行为为准，进页面时由详情接口回填；
+// 切换即时反馈（乐观更新），失败则回滚。
 const favorited = ref(false)
+const favoritePending = ref(false)
 
 const ratings = ref<Rating[]>([])
 const total = ref(0)
@@ -54,6 +55,7 @@ async function loadResource() {
   resourceError.value = ''
   try {
     resource.value = await getResource(resourceId.value)
+    favorited.value = resource.value.favorited ?? false
     // 资源加载成功才上报 view（404 时不产生行为记录）
     recordBehavior(resourceId.value, 'view').catch(() => {})
     if (isBilibiliResource.value) {
@@ -129,11 +131,20 @@ function openSource() {
   }
 }
 
-// 收藏是强正反馈信号，纳入行为后可供推荐模型训练（当前平台只采 view/click）。
-function toggleFavorite() {
-  favorited.value = !favorited.value
-  if (favorited.value) {
-    recordBehavior(resourceId.value, 'favorite').catch(() => {})
+// 收藏是强正反馈信号，会随行为导出供推荐模型训练。乐观更新 + 失败回滚。
+async function toggleFavorite() {
+  if (favoritePending.value) return
+  const next = !favorited.value
+  favorited.value = next
+  favoritePending.value = true
+  try {
+    await setFavorite(resourceId.value, next)
+    ElMessage.success(next ? '已加入收藏' : '已取消收藏')
+  } catch (e) {
+    favorited.value = !next
+    ElMessage.error(e instanceof Error ? e.message : '操作失败，请重试')
+  } finally {
+    favoritePending.value = false
   }
 }
 
@@ -169,7 +180,22 @@ onMounted(() => {
 
 <template>
   <div class="mx-auto max-w-7xl px-6 py-8">
-    <div v-if="resourceLoading" class="py-24 text-center text-sm text-ink-muted">加载中…</div>
+    <div v-if="resourceLoading" class="grid grid-cols-1 gap-8 lg:grid-cols-3">
+      <div class="lg:col-span-2">
+        <el-skeleton animated>
+          <template #template>
+            <el-skeleton-item variant="image" style="width: 100%; height: 320px; border-radius: 8px" />
+            <el-skeleton-item variant="h1" style="width: 60%; margin-top: 20px" />
+            <el-skeleton-item variant="text" style="width: 100%; margin-top: 14px" />
+            <el-skeleton-item variant="text" style="width: 92%; margin-top: 8px" />
+            <el-skeleton-item variant="text" style="width: 84%; margin-top: 8px" />
+          </template>
+        </el-skeleton>
+      </div>
+      <div>
+        <el-skeleton :rows="5" animated />
+      </div>
+    </div>
     <div v-else-if="resourceError" class="py-24 text-center">
       <p class="text-sm text-red-500">{{ resourceError }}</p>
       <RouterLink :to="{ name: 'home' }">
@@ -230,6 +256,7 @@ onMounted(() => {
             <el-button v-if="resource.source_url" type="primary" round @click="openSource">前往原站学习</el-button>
             <el-button
               :type="favorited ? 'warning' : 'default'"
+              :loading="favoritePending"
               round
               @click="toggleFavorite"
             >

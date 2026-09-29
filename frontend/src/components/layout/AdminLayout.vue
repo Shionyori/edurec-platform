@@ -42,7 +42,11 @@ function logout() {
         </div>
       </header>
       <main class="flex-1 overflow-auto p-6">
-        <RouterView />
+        <RouterView v-slot="{ Component }">
+          <Transition name="route" mode="out-in">
+            <component :is="Component" />
+          </Transition>
+        </RouterView>
       </main>
     </div>
   </div>

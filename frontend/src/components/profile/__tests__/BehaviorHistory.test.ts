@@ -38,7 +38,31 @@ describe('BehaviorHistory', () => {
     const wrapper = await mountHistory()
     expect(mockedListMyBehaviors).toHaveBeenCalledWith(expect.objectContaining({ page: 1, action: undefined }))
     expect(wrapper.text()).toContain('Python 数据分析')
-    expect(wrapper.text()).toContain('view')
+    expect(wrapper.text()).toContain('浏览') // 行为动作已汉化（view → 浏览）
+  })
+
+  it('首次加载显示骨架；切换筛选时保留旧列表，不闪空态', async () => {
+    let resolveFirst!: (v: ReturnType<typeof pageResult>) => void
+    mockedListMyBehaviors.mockReturnValueOnce(new Promise((r) => { resolveFirst = r }))
+    const wrapper = mount(BehaviorHistory, {
+      global: { plugins: [ElementPlus], stubs: { RouterLink: RouterLinkStub } },
+    })
+    await flushPromises()
+    expect(wrapper.find('.el-skeleton').exists()).toBe(true)
+
+    resolveFirst(pageResult())
+    await flushPromises()
+    expect(wrapper.text()).toContain('Python 数据分析')
+
+    // 切换筛选：新请求未返回时旧列表仍在，且不再回到骨架屏
+    mockedListMyBehaviors.mockReturnValueOnce(new Promise(() => {}))
+    const group = wrapper.findComponent({ name: 'ElRadioGroup' })
+    group.vm.$emit('update:modelValue', 'favorite')
+    group.vm.$emit('change', 'favorite')
+    await flushPromises()
+
+    expect(wrapper.find('.el-skeleton').exists()).toBe(false)
+    expect(wrapper.text()).toContain('Python 数据分析')
   })
 
   it('按行为类型筛选会重置页码', async () => {
@@ -57,6 +81,16 @@ describe('BehaviorHistory', () => {
     mockedListMyBehaviors.mockResolvedValue(pageResult([], 0))
     const wrapper = await mountHistory()
     expect(wrapper.text()).toContain('暂无行为记录')
+  })
+
+  it('内容区预留高度、分页器容器始终存在（避免切换时页面高度变化导致滚动位移）', async () => {
+    // total 小于一页：不渲染分页器，但占位容器仍在
+    mockedListMyBehaviors.mockResolvedValue(pageResult([behavior], 1))
+    const wrapper = await mountHistory()
+
+    expect(wrapper.find('[data-testid="history-content"]').classes()).toContain('min-h-[34rem]')
+    expect(wrapper.findComponent({ name: 'ElPagination' }).exists()).toBe(false)
+    expect(wrapper.find('[data-testid="history-pagination"]').exists()).toBe(true)
   })
 
   it('切页重新拉取对应页码', async () => {

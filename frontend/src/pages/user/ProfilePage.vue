@@ -2,6 +2,7 @@
 import { onMounted, ref } from 'vue'
 import { useAuthStore } from '@/stores/auth'
 import ProfileCard from '@/components/profile/ProfileCard.vue'
+import FavoriteList from '@/components/profile/FavoriteList.vue'
 import BehaviorHistory from '@/components/profile/BehaviorHistory.vue'
 import type { User } from '@/types'
 
@@ -30,6 +31,7 @@ async function handleUpdated() {
     <h1 class="text-2xl font-bold">个人中心</h1>
     <div class="mt-6 space-y-6">
       <ProfileCard v-if="user" :user="user" @updated="handleUpdated" />
+      <FavoriteList />
       <BehaviorHistory />
     </div>
   </div>

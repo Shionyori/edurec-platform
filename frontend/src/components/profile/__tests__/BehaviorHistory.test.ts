@@ -83,6 +83,16 @@ describe('BehaviorHistory', () => {
     expect(wrapper.text()).toContain('暂无行为记录')
   })
 
+  it('内容区预留高度、分页器容器始终存在（避免切换时页面高度变化导致滚动位移）', async () => {
+    // total 小于一页：不渲染分页器，但占位容器仍在
+    mockedListMyBehaviors.mockResolvedValue(pageResult([behavior], 1))
+    const wrapper = await mountHistory()
+
+    expect(wrapper.find('[data-testid="history-content"]').classes()).toContain('min-h-[32rem]')
+    expect(wrapper.findComponent({ name: 'ElPagination' }).exists()).toBe(false)
+    expect(wrapper.find('[data-testid="history-pagination"]').exists()).toBe(true)
+  })
+
   it('切页重新拉取对应页码', async () => {
     mockedListMyBehaviors.mockResolvedValue(pageResult([behavior], 13))
     const wrapper = await mountHistory()

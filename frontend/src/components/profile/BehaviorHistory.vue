@@ -70,45 +70,50 @@ onMounted(fetchList)
       </el-radio-group>
     </div>
 
-    <!-- 首次加载：骨架屏 -->
-    <div v-if="firstLoad && loading && !error" class="mt-4">
-      <el-skeleton :rows="4" animated />
-    </div>
-    <div v-else-if="error" class="py-16 text-center text-sm text-red-500">{{ error }}</div>
-    <el-empty
-      v-else-if="items.length === 0"
-      description="暂无行为记录"
-      :image-size="80"
-      class="py-8"
-    />
-    <!-- 切换筛选/翻页：保留列表 + 轻量 loading 遮罩，内容不闪、高度不塌 -->
-    <div v-else v-loading="loading" class="mt-4 min-h-[220px]">
-      <TransitionGroup name="list" tag="ul" class="relative divide-y divide-border">
-        <li
-          v-for="b in items"
-          :key="b.id"
-          class="-mx-2 flex items-center justify-between rounded-md px-2 py-3 transition-colors hover:bg-bg/70"
-        >
-          <div class="flex min-w-0 items-center gap-3">
-            <el-tag size="small" :type="ACTION_TAG_TYPE[b.action]">
-              {{ ACTION_LABELS[b.action] }}
-            </el-tag>
-            <RouterLink
-              v-if="b.resource"
-              :to="{ name: 'resource-detail', params: { id: b.resource.id } }"
-              class="truncate text-sm text-ink transition-colors hover:text-primary"
-            >
-              {{ b.resource.title }}
-            </RouterLink>
-            <span v-else class="text-sm text-ink-muted">资源已删除</span>
-          </div>
-          <span class="shrink-0 pl-3 text-xs text-ink-muted">{{ formatDate(b.created_at) }}</span>
-        </li>
-      </TransitionGroup>
+    <!-- 内容区固定最小高度：切换筛选时列表变短也不会抬高页面（否则浏览器会把滚动位置往上夹） -->
+    <div class="mt-4 min-h-[32rem]" data-testid="history-content">
+      <!-- 首次加载：骨架屏 -->
+      <div v-if="firstLoad && loading && !error">
+        <el-skeleton :rows="4" animated />
+      </div>
+      <div v-else-if="error" class="py-16 text-center text-sm text-red-500">{{ error }}</div>
+      <el-empty
+        v-else-if="items.length === 0"
+        description="暂无行为记录"
+        :image-size="80"
+        class="py-8"
+      />
+      <!-- 切换筛选/翻页：保留列表 + 轻量 loading 遮罩，内容不闪、高度不塌 -->
+      <div v-else v-loading="loading">
+        <TransitionGroup name="list" tag="ul" class="relative divide-y divide-border">
+          <li
+            v-for="b in items"
+            :key="b.id"
+            class="-mx-2 flex items-center justify-between rounded-md px-2 py-3 transition-colors hover:bg-bg/70"
+          >
+            <div class="flex min-w-0 items-center gap-3">
+              <el-tag size="small" :type="ACTION_TAG_TYPE[b.action]">
+                {{ ACTION_LABELS[b.action] }}
+              </el-tag>
+              <RouterLink
+                v-if="b.resource"
+                :to="{ name: 'resource-detail', params: { id: b.resource.id } }"
+                class="truncate text-sm text-ink transition-colors hover:text-primary"
+              >
+                {{ b.resource.title }}
+              </RouterLink>
+              <span v-else class="text-sm text-ink-muted">资源已删除</span>
+            </div>
+            <span class="shrink-0 pl-3 text-xs text-ink-muted">{{ formatDate(b.created_at) }}</span>
+          </li>
+        </TransitionGroup>
+      </div>
     </div>
 
-    <div v-if="total > pageSize" class="mt-4 flex justify-center">
+    <!-- 分页器容器始终占位，避免有/无分页时高度跳动 -->
+    <div class="mt-4 flex min-h-[32px] justify-center" data-testid="history-pagination">
       <el-pagination
+        v-if="total > pageSize"
         background
         layout="prev, pager, next"
         :total="total"

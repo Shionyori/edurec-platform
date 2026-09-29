@@ -16,6 +16,7 @@ type ResourceRepository interface {
 	List(query ResourceListQuery) (*ResourceListResult, error)
 	FindByID(id uint) (*model.Resource, error)
 	FindByIDs(ids []uint) ([]model.Resource, error)
+	ListTopByCategories(categoryIDs []uint, limit int) ([]model.Resource, error)
 	FindBySourceURLs(urls []string) ([]model.Resource, error)
 	Update(resource *model.Resource) error
 	Delete(id uint) error
@@ -132,6 +133,21 @@ func (r *ResourceRepo) FindByIDs(ids []uint) ([]model.Resource, error) {
 	items := make([]model.Resource, 0)
 	if err := r.db.Preload("Category").Where("id IN ?", ids).Find(&items).Error; err != nil {
 		return nil, fmt.Errorf("按 ID 批量查询资源失败: %w", err)
+	}
+	return items, nil
+}
+
+// ListTopByCategories 取指定分类下评分最高的若干资源，用于冷启动兴趣兜底。
+func (r *ResourceRepo) ListTopByCategories(categoryIDs []uint, limit int) ([]model.Resource, error) {
+	if len(categoryIDs) == 0 || limit <= 0 {
+		return []model.Resource{}, nil
+	}
+	items := make([]model.Resource, 0, limit)
+	if err := r.db.Preload("Category").
+		Where("category_id IN ?", categoryIDs).
+		Order("avg_rating DESC, id DESC").
+		Limit(limit).Find(&items).Error; err != nil {
+		return nil, fmt.Errorf("按兴趣分类查询资源失败: %w", err)
 	}
 	return items, nil
 }

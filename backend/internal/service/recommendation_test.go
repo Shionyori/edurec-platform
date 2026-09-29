@@ -71,7 +71,7 @@ func TestRecommendGetCacheHitReturnsCachedOrder(t *testing.T) {
 			{Model: gorm.Model{ID: 3}, Title: "三"},
 		},
 	}
-	svc := service.NewRecommendationService(recRepo, resRepo)
+	svc := service.NewRecommendationService(recRepo, resRepo, &fakeUserRepository{})
 
 	result, err := svc.Get(7, 20)
 
@@ -99,7 +99,7 @@ func TestRecommendGetCacheHitTruncatesToLimit(t *testing.T) {
 	resRepo := &fakeResourceRepository{
 		findByIDsResult: []model.Resource{{Model: gorm.Model{ID: 1}}, {Model: gorm.Model{ID: 2}}, {Model: gorm.Model{ID: 3}}, {Model: gorm.Model{ID: 4}}},
 	}
-	svc := service.NewRecommendationService(recRepo, resRepo)
+	svc := service.NewRecommendationService(recRepo, resRepo, &fakeUserRepository{})
 
 	result, err := svc.Get(7, 2)
 
@@ -118,7 +118,7 @@ func TestRecommendGetCacheHitSkipsDeletedResources(t *testing.T) {
 	resRepo := &fakeResourceRepository{
 		findByIDsResult: []model.Resource{{Model: gorm.Model{ID: 1}}, {Model: gorm.Model{ID: 2}}}, // 99 已被删除
 	}
-	svc := service.NewRecommendationService(recRepo, resRepo)
+	svc := service.NewRecommendationService(recRepo, resRepo, &fakeUserRepository{})
 
 	result, err := svc.Get(7, 20)
 
@@ -141,7 +141,7 @@ func TestRecommendGetMissGeneratesFallbackAndWritesCache(t *testing.T) {
 			Total: 2,
 		},
 	}
-	svc := service.NewRecommendationService(recRepo, resRepo)
+	svc := service.NewRecommendationService(recRepo, resRepo, &fakeUserRepository{})
 
 	result, err := svc.Get(7, 20)
 
@@ -165,10 +165,33 @@ func TestRecommendGetMissGeneratesFallbackAndWritesCache(t *testing.T) {
 	}
 }
 
+func TestRecommendFallbackPrefersUserInterests(t *testing.T) {
+	recRepo := &fakeRecommendationRepository{} // 未命中
+	resRepo := &fakeResourceRepository{
+		listTopResult: []model.Resource{{Model: gorm.Model{ID: 5}, Title: "兴趣课"}},
+	}
+	users := &fakeUserRepository{users: []*model.User{{
+		Model: gorm.Model{ID: 7}, Interests: `[1,2]`,
+	}}}
+	svc := service.NewRecommendationService(recRepo, resRepo, users)
+
+	result, err := svc.Get(7, 10)
+
+	if err != nil {
+		t.Fatalf("Get() error = %v", err)
+	}
+	if len(resRepo.lastListTopCats) != 2 {
+		t.Fatalf("ListTopByCategories cats = %v, want [1 2]", resRepo.lastListTopCats)
+	}
+	if len(result.List) != 1 || result.List[0].ID != 5 {
+		t.Fatalf("Get() list = %+v, want 兴趣分类下的资源", result.List)
+	}
+}
+
 func TestRecommendGetClampsLimit(t *testing.T) {
 	recRepo := &fakeRecommendationRepository{}
 	resRepo := &fakeResourceRepository{result: &repository.ResourceListResult{Items: []model.Resource{}}}
-	svc := service.NewRecommendationService(recRepo, resRepo)
+	svc := service.NewRecommendationService(recRepo, resRepo, &fakeUserRepository{})
 
 	// limit = 0 → 默认 20
 	_, err := svc.Get(7, 0)
@@ -196,7 +219,7 @@ func TestRecommendGetCorruptCacheRegenerates(t *testing.T) {
 	resRepo := &fakeResourceRepository{
 		result: &repository.ResourceListResult{Items: []model.Resource{{Model: gorm.Model{ID: 5}}}},
 	}
-	svc := service.NewRecommendationService(recRepo, resRepo)
+	svc := service.NewRecommendationService(recRepo, resRepo, &fakeUserRepository{})
 
 	result, err := svc.Get(7, 20)
 
@@ -213,7 +236,7 @@ func TestRecommendGetCorruptCacheRegenerates(t *testing.T) {
 
 func TestRecommendGetMapsFindError(t *testing.T) {
 	recRepo := &fakeRecommendationRepository{findErr: errors.New("db error")}
-	svc := service.NewRecommendationService(recRepo, &fakeResourceRepository{})
+	svc := service.NewRecommendationService(recRepo, &fakeResourceRepository{}, &fakeUserRepository{})
 
 	_, err := svc.Get(7, 20)
 	assertErrorCode(t, err, apperror.CodeInternal)
@@ -222,7 +245,7 @@ func TestRecommendGetMapsFindError(t *testing.T) {
 func TestRecommendGetMapsFallbackError(t *testing.T) {
 	recRepo := &fakeRecommendationRepository{}
 	resRepo := &fakeResourceRepository{err: errors.New("db error")}
-	svc := service.NewRecommendationService(recRepo, resRepo)
+	svc := service.NewRecommendationService(recRepo, resRepo, &fakeUserRepository{})
 
 	_, err := svc.Get(7, 20)
 	assertErrorCode(t, err, apperror.CodeInternal)
@@ -231,7 +254,7 @@ func TestRecommendGetMapsFallbackError(t *testing.T) {
 func TestRecommendGetMapsReplaceError(t *testing.T) {
 	recRepo := &fakeRecommendationRepository{replaceErr: errors.New("db error")}
 	resRepo := &fakeResourceRepository{result: &repository.ResourceListResult{Items: []model.Resource{}}}
-	svc := service.NewRecommendationService(recRepo, resRepo)
+	svc := service.NewRecommendationService(recRepo, resRepo, &fakeUserRepository{})
 
 	_, err := svc.Get(7, 20)
 	assertErrorCode(t, err, apperror.CodeInternal)

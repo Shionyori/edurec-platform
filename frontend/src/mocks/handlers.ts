@@ -35,6 +35,7 @@ function toPublicUser(u: DbUser) {
     email: u.email,
     display_name: u.display_name,
     avatar_url: u.avatar_url,
+    interests: u.interests ?? [],
     is_admin: u.is_admin,
     created_at: u.created_at,
   }
@@ -139,6 +140,14 @@ export const handlers = [
     user.display_name = body.display_name ?? user.display_name
     user.avatar_url = body.avatar_url ?? user.avatar_url
     return ok({ id: user.id, display_name: user.display_name, avatar_url: user.avatar_url })
+  }),
+
+  http.put(`${BASE}/users/me/interests`, async ({ request }) => {
+    const user = requireUser(request)
+    if (!user) return bizError(10002, '未认证', 401)
+    const body = (await request.json()) as { category_ids?: number[] }
+    user.interests = Array.from(new Set(body.category_ids ?? [])).slice(0, 20)
+    return ok(toPublicUser(user))
   }),
 
   // 分类

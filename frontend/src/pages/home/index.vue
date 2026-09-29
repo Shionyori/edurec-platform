@@ -1,16 +1,25 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { getRecommendations } from '@/api/recommendation'
 import { recordImpressions } from '@/api/impression'
+import { useAuthStore } from '@/stores/auth'
 import ResourceCard from '@/components/resource/ResourceCard.vue'
+import InterestPicker from '@/components/profile/InterestPicker.vue'
 import type { Resource } from '@/types'
 
+const auth = useAuthStore()
 const resources = ref<Resource[]>([])
 const loading = ref(false)
 const error = ref('')
 
-onMounted(async () => {
+// 无兴趣且无历史的新用户，展示冷启动引导
+const showInterestPicker = computed(
+  () => !!auth.user && (auth.user.interests?.length ?? 0) === 0,
+)
+
+async function load() {
   loading.value = true
+  error.value = ''
   try {
     const data = await getRecommendations(12)
     resources.value = data.list
@@ -21,7 +30,9 @@ onMounted(async () => {
   } finally {
     loading.value = false
   }
-})
+}
+
+onMounted(load)
 </script>
 
 <template>
@@ -35,6 +46,8 @@ onMounted(async () => {
         <el-button round>查看全部</el-button>
       </RouterLink>
     </div>
+
+    <InterestPicker v-if="showInterestPicker" @saved="load" />
 
     <div v-if="loading" class="py-24 text-center text-sm text-ink-muted">加载中…</div>
     <div v-else-if="error" class="py-24 text-center text-sm text-red-500">{{ error }}</div>

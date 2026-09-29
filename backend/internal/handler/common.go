@@ -1,7 +1,9 @@
 package handler
 
 import (
+	"encoding/json"
 	"errors"
+	"strings"
 	"time"
 
 	"github.com/Shionyori/edurec-platform/backend/internal/apperror"
@@ -16,9 +18,23 @@ type userResponse struct {
 	Email       string    `json:"email"`
 	DisplayName string    `json:"display_name"`
 	AvatarURL   string    `json:"avatar_url"`
+	Interests   []uint    `json:"interests"`
 	IsAdmin     bool      `json:"is_admin"`
 	CreatedAt   time.Time `json:"created_at"`
 	UpdatedAt   time.Time `json:"updated_at"`
+}
+
+// parseUintJSON 解析 JSON 无符号整数数组；为空或损坏返回空数组。
+func parseUintJSON(raw string) []uint {
+	raw = strings.TrimSpace(raw)
+	if raw == "" {
+		return []uint{}
+	}
+	var ids []uint
+	if err := json.Unmarshal([]byte(raw), &ids); err != nil || ids == nil {
+		return []uint{}
+	}
+	return ids
 }
 
 func toUserResponse(user *model.User, isAdmin bool) userResponse {
@@ -28,6 +44,7 @@ func toUserResponse(user *model.User, isAdmin bool) userResponse {
 		Email:       user.Email,
 		DisplayName: user.DisplayName,
 		AvatarURL:   user.AvatarURL,
+		Interests:   parseUintJSON(user.Interests),
 		IsAdmin:     isAdmin,
 		CreatedAt:   user.CreatedAt,
 		UpdatedAt:   user.UpdatedAt,

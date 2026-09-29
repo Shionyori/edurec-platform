@@ -4,6 +4,8 @@ export interface User {
   email: string
   display_name: string | null
   avatar_url: string | null
+  // 冷启动兴趣分类 ID（新用户无行为时用于兜底推荐）
+  interests?: number[]
   is_admin?: boolean
   created_at: string
   updated_at?: string

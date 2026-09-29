@@ -20,6 +20,9 @@ type fakeResourceRepository struct {
 	lastFindID       uint
 	findByIDsResult  []model.Resource
 	findByIDsErr     error
+	listTopResult    []model.Resource
+	listTopErr       error
+	lastListTopCats  []uint
 	findByURLsResult []model.Resource
 	findByURLsErr    error
 	lastCreated      *model.Resource
@@ -60,6 +63,14 @@ func (f *fakeResourceRepository) FindByIDs(ids []uint) ([]model.Resource, error)
 		return nil, f.findByIDsErr
 	}
 	return f.findByIDsResult, nil
+}
+
+func (f *fakeResourceRepository) ListTopByCategories(categoryIDs []uint, _ int) ([]model.Resource, error) {
+	f.lastListTopCats = categoryIDs
+	if f.listTopErr != nil {
+		return nil, f.listTopErr
+	}
+	return f.listTopResult, nil
 }
 
 func (f *fakeResourceRepository) FindBySourceURLs([]string) ([]model.Resource, error) {

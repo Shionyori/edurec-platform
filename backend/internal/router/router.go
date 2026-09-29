@@ -51,7 +51,7 @@ func New(cfg *config.Config, db *gorm.DB, rdb *redis.Client) *gin.Engine {
 	bilibiliOnlineService := service.NewBilibiliOnlineService(bilibiliImportService, cfg.Bilibili)
 	resourceService.SetBilibiliOnline(bilibiliOnlineService)
 	commentService := service.NewCommentService(commentRepo, bilibiliOnlineService, cfg.Bilibili.CommentLimit)
-	recommendationService := service.NewRecommendationService(recommendationRepo, resourceRepo)
+	recommendationService := service.NewRecommendationService(recommendationRepo, resourceRepo, userRepo)
 	recommendationImportService := service.NewRecommendationImportService(
 		recommendationRepo, recommendationRunRepo, userRepo, resourceRepo, cfg.Engine.RecommendationsFile,
 	)
@@ -85,6 +85,7 @@ func New(cfg *config.Config, db *gorm.DB, rdb *redis.Client) *gin.Engine {
 	protected.Use(middleware.AuthRequired(jwtManager))
 	protected.GET("/users/me", userHandler.Me)
 	protected.PUT("/users/me", userHandler.UpdateMe)
+	protected.PUT("/users/me/interests", userHandler.UpdateInterests)
 	protected.GET("/categories", categoryHandler.List)
 	protected.POST("/categories", middleware.AdminRequired(userRepo), categoryHandler.Create)
 	protected.GET("/resources", resourceHandler.List)

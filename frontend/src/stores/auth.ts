@@ -39,6 +39,12 @@ export const useAuthStore = defineStore('auth', () => {
     return user.value
   }
 
+  // 保存冷启动兴趣并同步本地用户（供首页判断是否展示兴趣引导）
+  async function setInterests(categoryIds: number[]): Promise<User> {
+    user.value = await userApi.updateInterests(categoryIds)
+    return user.value
+  }
+
   function logout(): void {
     accessToken.value = ''
     refreshToken.value = ''
@@ -56,6 +62,7 @@ export const useAuthStore = defineStore('auth', () => {
     login,
     register,
     fetchMe,
+    setInterests,
     logout,
   }
 })

@@ -7,6 +7,34 @@
 
 ---
 
+## 0. 实施状态（2026-09）
+
+分支：platform `feat/recsys-improvement`；engine `feat/recsys-improvement`。
+
+| 阶段 | 里程碑 | 状态 |
+|---|---|---|
+| P0 打通链路 | 快照导正文、engine 批量推理入口、handoff 修正、点击/收藏/曝光上报 | ✅ 已完成 |
+| P1 内容结构化 | 资源难度/时长字段、导入映射、快照导出与 engine 读取 | ✅ 已完成 |
+| P2 模型补全 | 多路召回 / 多目标排序 / 重排（engine） | ⏳ 未开始（研究性工作） |
+| P3 评估中心 | 运行记录与可追溯、管理后台效果看板、离线评估命令 | ✅ 已完成 |
+| P4 服务增强 | 结果可追溯、推荐理由透出、注册后兴趣引导（冷启动） | ✅ 已完成 |
+
+### 已完成的关键交付
+
+- **反馈信号**：曝光（独立 `resource_impressions` 表，不污染 behaviors 正样本）、点击（资源卡片）、收藏（详情页）。
+- **链路打通**：`export_snapshot` 导出 `description`/`difficulty`/`duration_minutes`；engine 新增 `scripts/infer_batch.py`（产出推荐结果 + 旁挂信封）；`handoff.sh` 调用真实入口。
+- **可追溯**：`recommendation_runs` 记录每次运行的 run_id / 快照 / 模型 / 生成时间 / 导入统计；`recommendations.run_id` 关联到用户。
+- **可解释**：信封 reasons 落库并在首页卡片透出。
+- **可度量**：`GET /admin/recommendation-stats` 提供曝光/点击/CTR；`cmd/evaluate_recommendations` 对比「实际推荐 vs 热门基线」。
+- **冷启动**：`users.interests` + 兴趣兜底 + 首页兴趣引导。
+
+### 仍未做（P2，engine 侧）
+
+多路召回融合（当前是语义单路 + 质量融合）、学习排序（多目标）、规则重排的显式回归。
+这部分需要实验与调参，属研究性工作，本方案保留接口不变、模型可替换的契约。
+
+---
+
 ## 1. 定位与目标函数
 
 ### 1.1 一句话定位

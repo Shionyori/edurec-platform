@@ -24,6 +24,7 @@ function logout() {
         <el-menu-item index="/admin/resources">资源管理</el-menu-item>
         <el-menu-item index="/admin/users">用户管理</el-menu-item>
         <el-menu-item index="/admin/categories">分类管理</el-menu-item>
+        <el-menu-item index="/admin/recommendations">推荐管理</el-menu-item>
       </el-menu>
       <div class="border-t border-border p-4 text-xs text-ink-muted">
         当前管理员：{{ auth.user?.display_name ?? auth.user?.username }}

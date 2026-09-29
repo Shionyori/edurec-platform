@@ -416,4 +416,22 @@ export const handlers = [
     const paged = list.slice((page - 1) * pageSize, page * pageSize)
     return ok({ list: paged.map(toPublicResource), total, page, page_size: pageSize })
   }),
+
+  // 推荐运行记录与效果看板（admin）
+  http.get(`${BASE}/admin/recommendation-runs`, ({ request }) => {
+    const user = requireUser(request)
+    if (!user) return bizError(10002, '未认证', 401)
+    if (!user.is_admin) return bizError(10003, '无权限', 403)
+    return ok({ list: [] })
+  }),
+
+  http.get(`${BASE}/admin/recommendation-stats`, ({ request }) => {
+    const user = requireUser(request)
+    if (!user) return bizError(10002, '未认证', 401)
+    if (!user.is_admin) return bizError(10003, '无权限', 403)
+    return ok({
+      impressions: 0, clicks: 0, favorites: 0, views: 0,
+      recommendation_users: 0, click_through_rate: 0,
+    })
+  }),
 ]

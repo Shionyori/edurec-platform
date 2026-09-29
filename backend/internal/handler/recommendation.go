@@ -15,14 +15,16 @@ type RecommendationHandler struct {
 	recommendations *service.RecommendationService
 	importer        *service.RecommendationImportService
 	runs            repository.RecommendationRunRepository
+	stats           repository.StatsRepository
 }
 
 func NewRecommendationHandler(
 	recommendations *service.RecommendationService,
 	importer *service.RecommendationImportService,
 	runs repository.RecommendationRunRepository,
+	stats repository.StatsRepository,
 ) *RecommendationHandler {
-	return &RecommendationHandler{recommendations: recommendations, importer: importer, runs: runs}
+	return &RecommendationHandler{recommendations: recommendations, importer: importer, runs: runs, stats: stats}
 }
 
 // recommendationItem 在资源条目上附带推荐理由（可解释性）
@@ -99,4 +101,25 @@ func (h *RecommendationHandler) ListRuns(c *gin.Context) {
 		return
 	}
 	response.OK(c, gin.H{"list": runs})
+}
+
+// Stats 推荐效果看板数据（GET /api/v1/admin/recommendation-stats，管理员）
+func (h *RecommendationHandler) Stats(c *gin.Context) {
+	stats, err := h.stats.RecommendationStats()
+	if err != nil {
+		handleError(c, apperror.Internal(err))
+		return
+	}
+	ctr := 0.0
+	if stats.Impressions > 0 {
+		ctr = float64(stats.Clicks) / float64(stats.Impressions)
+	}
+	response.OK(c, gin.H{
+		"impressions":          stats.Impressions,
+		"clicks":               stats.Clicks,
+		"favorites":            stats.Favorites,
+		"views":                stats.Views,
+		"recommendation_users": stats.RecommendationUsers,
+		"click_through_rate":   ctr,
+	})
 }

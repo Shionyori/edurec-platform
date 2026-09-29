@@ -24,6 +24,7 @@ func New(cfg *config.Config, db *gorm.DB, rdb *redis.Client) *gin.Engine {
 	ratingRepo := repository.NewRatingRepository(db)
 	recommendationRepo := repository.NewRecommendationRepository(db)
 	recommendationRunRepo := repository.NewRecommendationRunRepository(db)
+	statsRepo := repository.NewStatsRepository(db)
 	adminRepo := repository.NewAdminRepository(db)
 	commentRepo := repository.NewCommentRepository(db)
 	refreshTokenStore := repository.NewRedisRefreshTokenStore(rdb)
@@ -63,7 +64,7 @@ func New(cfg *config.Config, db *gorm.DB, rdb *redis.Client) *gin.Engine {
 	impressionHandler := handler.NewResourceImpressionHandler(impressionService)
 	ratingHandler := handler.NewRatingHandler(ratingService)
 	commentHandler := handler.NewCommentHandler(resourceService, commentService)
-	recommendationHandler := handler.NewRecommendationHandler(recommendationService, recommendationImportService, recommendationRunRepo)
+	recommendationHandler := handler.NewRecommendationHandler(recommendationService, recommendationImportService, recommendationRunRepo, statsRepo)
 	adminHandler := handler.NewAdminHandler(adminService)
 
 	r := gin.New()
@@ -102,6 +103,7 @@ func New(cfg *config.Config, db *gorm.DB, rdb *redis.Client) *gin.Engine {
 	protected.GET("/admin/resources", middleware.AdminRequired(userRepo), adminHandler.ListResources)
 	protected.POST("/admin/recommendations/import", middleware.AdminRequired(userRepo), recommendationHandler.Import)
 	protected.GET("/admin/recommendation-runs", middleware.AdminRequired(userRepo), recommendationHandler.ListRuns)
+	protected.GET("/admin/recommendation-stats", middleware.AdminRequired(userRepo), recommendationHandler.Stats)
 
 	return r
 }

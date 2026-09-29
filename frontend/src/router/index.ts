@@ -14,6 +14,7 @@ import AdminDashboard from '@/pages/admin/AdminDashboard.vue'
 import AdminUsers from '@/pages/admin/AdminUsers.vue'
 import AdminResources from '@/pages/admin/AdminResources.vue'
 import AdminCategories from '@/pages/admin/AdminCategories.vue'
+import AdminRecommendations from '@/pages/admin/AdminRecommendations.vue'
 import NotFoundPage from '@/pages/not-found/NotFound.vue'
 
 const routes = [
@@ -71,6 +72,12 @@ const routes = [
         path: 'categories',
         name: 'admin-categories',
         component: AdminCategories,
+        meta: { requiresAuth: true, requiresAdmin: true },
+      },
+      {
+        path: 'recommendations',
+        name: 'admin-recommendations',
+        component: AdminRecommendations,
         meta: { requiresAuth: true, requiresAdmin: true },
       },
     ],

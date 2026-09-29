@@ -101,3 +101,31 @@ export interface RecommendationResult {
   updated_at: string
   run_id?: string
 }
+
+// 一次推荐推理运行的记录（来自 engine 旁挂信封，导入时落库）
+export interface RecommendationRun {
+  id: number
+  run_id: string
+  snapshot_run_id: string
+  model_name: string
+  model_version: string
+  encoder: string
+  generated_at: number
+  top_n: number
+  users_count: number
+  imported_users: number
+  skipped_users: number
+  imported_resources: number
+  skipped_resources: number
+  created_at: number
+}
+
+// 推荐效果统计：CTR = clicks / impressions
+export interface RecommendationStats {
+  impressions: number
+  clicks: number
+  favorites: number
+  views: number
+  recommendation_users: number
+  click_through_rate: number
+}

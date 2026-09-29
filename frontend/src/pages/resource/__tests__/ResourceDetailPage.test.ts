@@ -70,6 +70,17 @@ describe('ResourceDetailPage', () => {
     expect(mockedListRatings).toHaveBeenCalledWith(1, { page: 1, page_size: 10 })
   })
 
+  it('点击收藏按钮上报 favorite 行为并切换为已收藏', async () => {
+    const wrapper = await mountPage()
+
+    const favBtn = wrapper.findAll('button').find((b) => b.text() === '收藏')
+    expect(favBtn).toBeTruthy()
+    await favBtn!.trigger('click')
+
+    expect(mockedRecordBehavior).toHaveBeenCalledWith(1, 'favorite')
+    expect(wrapper.text()).toContain('已收藏')
+  })
+
   it('有封面时渲染封面，并禁用 Referer 以绕过外链防盗链', async () => {
     const coverUrl = 'https://i1.hdslb.com/bfs/archive/cover.jpg'
     mockedGetResource.mockResolvedValue({ ...resource, cover_url: coverUrl })

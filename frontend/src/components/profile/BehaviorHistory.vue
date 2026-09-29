@@ -12,7 +12,7 @@ const action = ref<BehaviorAction | ''>('')
 const page = ref(1)
 const pageSize = 10
 
-// 首次加载显示骨架；之后切换筛选/翻页保留旧列表 + loading 遮罩，避免整块内容闪烁与高度塌陷
+// 首次加载显示骨架；之后切换筛选/翻页保留旧列表 + loading 遮罩，避免整块内容闪烁
 const firstLoad = ref(true)
 
 const ACTION_LABELS: Record<BehaviorAction, string> = {
@@ -70,57 +70,61 @@ onMounted(fetchList)
       </el-radio-group>
     </div>
 
-    <!-- 内容区固定最小高度：切换筛选时列表变短也不会抬高页面（否则浏览器会把滚动位置往上夹） -->
-    <div class="mt-4 min-h-[32rem]" data-testid="history-content">
-      <!-- 首次加载：骨架屏 -->
-      <div v-if="firstLoad && loading && !error">
-        <el-skeleton :rows="4" animated />
+    <!-- 内容区：列表在上、分页器贴底，预留高度让页面在切换筛选时不会因变矮而上移 -->
+    <div class="mt-4 flex min-h-[18rem] flex-col" data-testid="history-content">
+      <div class="flex-1">
+        <!-- 首次加载：骨架屏 -->
+        <div v-if="firstLoad && loading && !error">
+          <el-skeleton :rows="4" animated />
+        </div>
+        <div v-else-if="error" class="py-16 text-center text-sm text-red-500">{{ error }}</div>
+        <el-empty
+          v-else-if="items.length === 0"
+          description="暂无行为记录"
+          :image-size="80"
+          class="py-6"
+        />
+        <!-- 切换筛选/翻页：保留列表 + 轻量 loading 遮罩，内容不闪 -->
+        <div v-else v-loading="loading">
+          <TransitionGroup name="list" tag="ul" class="relative divide-y divide-border">
+            <li
+              v-for="b in items"
+              :key="b.id"
+              class="-mx-2 flex items-center justify-between rounded-md px-2 py-3 transition-colors hover:bg-bg/70"
+            >
+              <div class="flex min-w-0 items-center gap-3">
+                <el-tag size="small" :type="ACTION_TAG_TYPE[b.action]">
+                  {{ ACTION_LABELS[b.action] }}
+                </el-tag>
+                <RouterLink
+                  v-if="b.resource"
+                  :to="{ name: 'resource-detail', params: { id: b.resource.id } }"
+                  class="truncate text-sm text-ink transition-colors hover:text-primary"
+                >
+                  {{ b.resource.title }}
+                </RouterLink>
+                <span v-else class="text-sm text-ink-muted">资源已删除</span>
+              </div>
+              <span class="shrink-0 pl-3 text-xs text-ink-muted">{{ formatDate(b.created_at) }}</span>
+            </li>
+          </TransitionGroup>
+        </div>
       </div>
-      <div v-else-if="error" class="py-16 text-center text-sm text-red-500">{{ error }}</div>
-      <el-empty
-        v-else-if="items.length === 0"
-        description="暂无行为记录"
-        :image-size="80"
-        class="py-8"
-      />
-      <!-- 切换筛选/翻页：保留列表 + 轻量 loading 遮罩，内容不闪、高度不塌 -->
-      <div v-else v-loading="loading">
-        <TransitionGroup name="list" tag="ul" class="relative divide-y divide-border">
-          <li
-            v-for="b in items"
-            :key="b.id"
-            class="-mx-2 flex items-center justify-between rounded-md px-2 py-3 transition-colors hover:bg-bg/70"
-          >
-            <div class="flex min-w-0 items-center gap-3">
-              <el-tag size="small" :type="ACTION_TAG_TYPE[b.action]">
-                {{ ACTION_LABELS[b.action] }}
-              </el-tag>
-              <RouterLink
-                v-if="b.resource"
-                :to="{ name: 'resource-detail', params: { id: b.resource.id } }"
-                class="truncate text-sm text-ink transition-colors hover:text-primary"
-              >
-                {{ b.resource.title }}
-              </RouterLink>
-              <span v-else class="text-sm text-ink-muted">资源已删除</span>
-            </div>
-            <span class="shrink-0 pl-3 text-xs text-ink-muted">{{ formatDate(b.created_at) }}</span>
-          </li>
-        </TransitionGroup>
-      </div>
-    </div>
 
-    <!-- 分页器容器始终占位，避免有/无分页时高度跳动 -->
-    <div class="mt-4 flex min-h-[32px] justify-center" data-testid="history-pagination">
-      <el-pagination
-        v-if="total > pageSize"
-        background
-        layout="prev, pager, next"
-        :total="total"
-        :page-size="pageSize"
-        :current-page="page"
-        @current-change="handlePageChange"
-      />
+      <!-- 分页器固定在卡片底部：有则显示，无则留空，高度稳定 -->
+      <div class="mt-4 flex justify-center" data-testid="history-pagination">
+        <el-pagination
+          v-if="total > pageSize"
+          size="small"
+          background
+          layout="prev, pager, next"
+          :pager-count="5"
+          :total="total"
+          :page-size="pageSize"
+          :current-page="page"
+          @current-change="handlePageChange"
+        />
+      </div>
     </div>
   </div>
 </template>

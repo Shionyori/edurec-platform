@@ -2,7 +2,7 @@
 
 ## 背景
 
-edurec-engine 是独立仓库（`github.com/Shionyori/edurec-engine`），离线完成「双塔 DSSM 召回 → 多任务 DeepFM 精排 → MMR 重排」。
+edurec-engine 是独立仓库（`github.com/Shionyori/edurec-engine`），离线完成「语义双塔召回 + 质量信号融合」。
 platform 与 engine 的接入形态为**离线批量训练 + 结果物化落库**：engine 消费平台导出的数据快照完成训练与全量推理，
 产出每个用户的推荐结果列表；platform 将结果导入 `Recommendation` 缓存表，推荐接口读缓存返回。
 **platform 侧不运行模型、不做推理**——个性化结果完全来自 engine 离线产出，模型权重只保留在 engine。
@@ -20,7 +20,7 @@ serving 输出落在 `Recommendation` 缓存表；快照与推荐结果文件只
 ```
 platform 导出快照（export_snapshot，平台真实数据）
    ↓ 拷至 engine dataset/platform_snapshot/<run_id>/
-engine 训练 + 全量推理（train_all / run_batch_infer，同一快照目录）
+engine 训练 + 全量推理（train_semantic / infer_batch，同一快照目录）
    ↓ model/recommendations.json（平台原始 ID，覆盖全量用户，冷启动走热门兜底）
 拷回 platform data/ 后，POST /api/v1/admin/recommendations/import（管理员）
    ↓
@@ -49,8 +49,8 @@ engine:
 （`meta.json` + `users/resources/categories/behaviors/ratings.csv` + sha256）。快照拷给 engine 后：
 
 ```bash
-python -m scripts.train_all       --data-source platform --snapshot-dir dataset/platform_snapshot/<run_id>
-python -m scripts.run_batch_infer --data-source platform --snapshot-dir dataset/platform_snapshot/<run_id>
+python -m scripts.train_semantic --data-source platform --snapshot-dir dataset/platform_snapshot/<run_id>
+python -m scripts.infer_batch    --data-source platform --snapshot-dir dataset/platform_snapshot/<run_id>
 ```
 
 ### 导入接口（engine → platform）

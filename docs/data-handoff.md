@@ -26,7 +26,7 @@ platform 交接目录为 `backend/data/`（快照、推荐结果、演示数据�
 ```bash
 # 在 platform 仓库根目录执行（engine 默认取 ../edurec-engine）
 bash scripts/handoff.sh               # 导出 + 训练 + 推理 + 导入
-bash scripts/handoff.sh --infer-only  # 复用已有 model/models.pt，只导出 + 推理 + 导入
+bash scripts/handoff.sh --infer-only  # 复用已有 model/semantic_recall.pt，只导出 + 推理 + 导入
 ```
 
 脚本与手动步骤一一对应；engine 根目录、后端配置、管理员账号等可用环境变量覆盖
@@ -43,11 +43,12 @@ cd <platform>/backend && CONFIG_PATH=configs/config.yaml go run ./cmd/export_sna
 # ② 快照交给 engine（拷入 engine 的快照目录）
 cp -r data/snapshots/<run_id> <engine>/dataset/platform_snapshot/<run_id>/
 
-# ③ engine：训练 + 全量推理（同一快照目录，保证训练/推理口径一致）
-cd <engine> && python -m scripts.train_all       --data-source platform --snapshot-dir dataset/platform_snapshot/<run_id>
-cd <engine> && python -m scripts.run_batch_infer --data-source platform --snapshot-dir dataset/platform_snapshot/<run_id>
+# ③ engine：训练 + 全量推理（统一入口 scripts.train_semantic / scripts.infer_batch，
+#    同一快照目录保证训练/推理口径一致）
+cd <engine> && python -m scripts.train_semantic --data-source platform --snapshot-dir dataset/platform_snapshot/<run_id>
+cd <engine> && python -m scripts.infer_batch    --data-source platform --snapshot-dir dataset/platform_snapshot/<run_id>
 
-# ④ 推理结果放回 platform
+# ④ 推理结果放回 platform（旁挂信封 recommendations.meta.json 可选，含生成时间/分数/理由）
 cp <engine>/model/recommendations.json <platform>/backend/data/recommendations.json
 
 # ⑤ platform：导入缓存表（管理员登录后 POST /api/v1/admin/recommendations/import）

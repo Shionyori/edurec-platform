@@ -2,6 +2,7 @@ package service
 
 import (
 	"encoding/json"
+	"strings"
 	"time"
 
 	"github.com/Shionyori/edurec-platform/backend/internal/apperror"
@@ -26,7 +27,9 @@ func NewRecommendationService(recommendations repository.RecommendationRepositor
 // RecommendationResult 推荐结果
 type RecommendationResult struct {
 	List      []model.Resource
-	UpdatedAt int64 // Unix 时间戳，本次推荐生成时间
+	Reasons   map[uint]string // 资源 ID → 推荐理由（缺省为空）
+	RunID     string          // 产出本次结果的运行标识（平台兜底时为空）
+	UpdatedAt int64           // Unix 时间戳，本次推荐生成时间
 }
 
 // Get 获取用户个性化推荐：优先命中缓存，未命中时兜底生成并写入缓存。
@@ -61,7 +64,12 @@ func (s *RecommendationService) Get(userID uint, limit int) (*RecommendationResu
 			if len(ordered) > limit {
 				ordered = ordered[:limit]
 			}
-			return &RecommendationResult{List: ordered, UpdatedAt: rec.UpdatedAt}, nil
+			return &RecommendationResult{
+				List:      ordered,
+				Reasons:   parseReasons(rec.Reasons, resourceIDs),
+				RunID:     rec.RunID,
+				UpdatedAt: rec.UpdatedAt,
+			}, nil
 		}
 	}
 
@@ -84,7 +92,11 @@ func (s *RecommendationService) Get(userID uint, limit int) (*RecommendationResu
 		return nil, apperror.Internal(err)
 	}
 
-	saved, err := s.recommendations.Replace(userID, string(idsJSON), now)
+	saved, err := s.recommendations.Replace(repository.RecommendationUpsert{
+		UserID:      userID,
+		ResourceIDs: string(idsJSON),
+		Now:         now,
+	})
 	if err != nil {
 		return nil, apperror.Internal(err)
 	}
@@ -99,6 +111,25 @@ func parseResourceIDs(raw string) ([]uint, error) {
 		return nil, err
 	}
 	return ids, nil
+}
+
+// parseReasons 解析缓存里的推荐理由，返回 资源ID → 理由 的映射。
+// 理由数组与 resource_ids 一一对应；长度不一致或损坏时按能对齐的部分返回，不影响推荐主流程。
+func parseReasons(raw string, ids []uint) map[uint]string {
+	if strings.TrimSpace(raw) == "" {
+		return nil
+	}
+	var reasons []string
+	if err := json.Unmarshal([]byte(raw), &reasons); err != nil {
+		return nil
+	}
+	out := make(map[uint]string, len(ids))
+	for i, id := range ids {
+		if i < len(reasons) && reasons[i] != "" {
+			out[id] = reasons[i]
+		}
+	}
+	return out
 }
 
 // orderResources 按缓存中的 ID 顺序重排资源，已删除的资源自动跳过

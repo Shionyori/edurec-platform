@@ -22,6 +22,7 @@ type fakeRecommendationRepository struct {
 	findErr       error
 	replaceUserID uint
 	replaceIDs    string
+	replaceRunID  string
 	replaceErr    error
 	saved         *model.Recommendation
 	replaceCalls  []replaceCall
@@ -34,19 +35,22 @@ func (f *fakeRecommendationRepository) FindByUserID(userID uint) (*model.Recomme
 	return f.found, nil
 }
 
-func (f *fakeRecommendationRepository) Replace(userID uint, resourceIDs string, now int64) (*model.Recommendation, error) {
+func (f *fakeRecommendationRepository) Replace(input repository.RecommendationUpsert) (*model.Recommendation, error) {
 	if f.replaceErr != nil {
 		return nil, f.replaceErr
 	}
-	f.replaceUserID = userID
-	f.replaceIDs = resourceIDs
-	f.replaceCalls = append(f.replaceCalls, replaceCall{userID: userID, ids: resourceIDs})
+	f.replaceUserID = input.UserID
+	f.replaceIDs = input.ResourceIDs
+	f.replaceRunID = input.RunID
+	f.replaceCalls = append(f.replaceCalls, replaceCall{userID: input.UserID, ids: input.ResourceIDs})
 	f.saved = &model.Recommendation{
 		ID:          1,
-		UserID:      userID,
-		ResourceIDs: resourceIDs,
-		CreatedAt:   now,
-		UpdatedAt:   now,
+		UserID:      input.UserID,
+		ResourceIDs: input.ResourceIDs,
+		RunID:       input.RunID,
+		Reasons:     input.Reasons,
+		CreatedAt:   input.Now,
+		UpdatedAt:   input.Now,
 	}
 	return f.saved, nil
 }

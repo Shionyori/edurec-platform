@@ -23,6 +23,7 @@ func New(cfg *config.Config, db *gorm.DB, rdb *redis.Client) *gin.Engine {
 	impressionRepo := repository.NewResourceImpressionRepository(db)
 	ratingRepo := repository.NewRatingRepository(db)
 	recommendationRepo := repository.NewRecommendationRepository(db)
+	recommendationRunRepo := repository.NewRecommendationRunRepository(db)
 	adminRepo := repository.NewAdminRepository(db)
 	commentRepo := repository.NewCommentRepository(db)
 	refreshTokenStore := repository.NewRedisRefreshTokenStore(rdb)
@@ -51,7 +52,7 @@ func New(cfg *config.Config, db *gorm.DB, rdb *redis.Client) *gin.Engine {
 	commentService := service.NewCommentService(commentRepo, bilibiliOnlineService, cfg.Bilibili.CommentLimit)
 	recommendationService := service.NewRecommendationService(recommendationRepo, resourceRepo)
 	recommendationImportService := service.NewRecommendationImportService(
-		recommendationRepo, userRepo, resourceRepo, cfg.Engine.RecommendationsFile,
+		recommendationRepo, recommendationRunRepo, userRepo, resourceRepo, cfg.Engine.RecommendationsFile,
 	)
 	adminService := service.NewAdminService(adminRepo)
 	authHandler := handler.NewAuthHandler(authService, userService)
@@ -62,7 +63,7 @@ func New(cfg *config.Config, db *gorm.DB, rdb *redis.Client) *gin.Engine {
 	impressionHandler := handler.NewResourceImpressionHandler(impressionService)
 	ratingHandler := handler.NewRatingHandler(ratingService)
 	commentHandler := handler.NewCommentHandler(resourceService, commentService)
-	recommendationHandler := handler.NewRecommendationHandler(recommendationService, recommendationImportService)
+	recommendationHandler := handler.NewRecommendationHandler(recommendationService, recommendationImportService, recommendationRunRepo)
 	adminHandler := handler.NewAdminHandler(adminService)
 
 	r := gin.New()
@@ -100,6 +101,7 @@ func New(cfg *config.Config, db *gorm.DB, rdb *redis.Client) *gin.Engine {
 	protected.GET("/admin/users", middleware.AdminRequired(userRepo), adminHandler.ListUsers)
 	protected.GET("/admin/resources", middleware.AdminRequired(userRepo), adminHandler.ListResources)
 	protected.POST("/admin/recommendations/import", middleware.AdminRequired(userRepo), recommendationHandler.Import)
+	protected.GET("/admin/recommendation-runs", middleware.AdminRequired(userRepo), recommendationHandler.ListRuns)
 
 	return r
 }

@@ -33,6 +33,8 @@ export interface Resource {
   // 结构化推荐特征：难度（空串=未知）、时长（分钟，0=未知）
   difficulty?: Difficulty | ''
   duration_minutes?: number
+  // 推荐理由（仅推荐接口返回时带，可解释性）
+  reason?: string
   created_at: string
   updated_at: string
 }
@@ -97,4 +99,5 @@ export interface RegisterPayload {
 export interface RecommendationResult {
   list: Resource[]
   updated_at: string
+  run_id?: string
 }

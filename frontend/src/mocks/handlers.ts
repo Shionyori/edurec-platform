@@ -331,7 +331,11 @@ export const handlers = [
     const url = new URL(request.url)
     const limit = Math.min(Number(url.searchParams.get('limit') ?? '20'), 50)
     const list = [...db.resources].sort((a, b) => b.avg_rating - a.avg_rating).slice(0, limit)
-    return ok({ list: list.map(toPublicResource), updated_at: new Date().toISOString() })
+    return ok({
+      list: list.map((r) => ({ ...toPublicResource(r), reason: '根据你的学习历史推荐' })),
+      updated_at: new Date().toISOString(),
+      run_id: 'mock',
+    })
   }),
 
   // 行为

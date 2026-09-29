@@ -45,6 +45,11 @@ describe('ResourceCard', () => {
     expect(link.exists()).toBe(true)
     expect(link.props('to')).toEqual({ name: 'resource-detail', params: { id: 1 } })
   })
+
+  it('有推荐理由时展示（可解释性）', () => {
+    const wrapper = mountCard({ reason: '与你学过的《线性代数》相关' })
+    expect(wrapper.text()).toContain('与你学过的《线性代数》相关')
+  })
 })
 
 describe('ResourceCard 点击上报', () => {

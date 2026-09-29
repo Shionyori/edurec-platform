@@ -14,7 +14,8 @@ import (
 func TestResourceHeaderIncludesDescription(t *testing.T) {
 	header := resourceHeader()
 	want := []string{"resource_id", "title", "description", "type", "category_id",
-		"tags_json", "metadata_json", "avg_rating", "view_count", "created_at"}
+		"tags_json", "metadata_json", "avg_rating", "view_count", "difficulty",
+		"duration_minutes", "created_at"}
 	if len(header) != len(want) {
 		t.Fatalf("表头列数 %d，期望 %d：%v", len(header), len(want), header)
 	}

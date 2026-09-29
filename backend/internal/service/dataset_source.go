@@ -14,6 +14,7 @@ import (
 
 	"github.com/Shionyori/edurec-platform/backend/internal/apperror"
 	"github.com/Shionyori/edurec-platform/backend/internal/config"
+	"github.com/Shionyori/edurec-platform/backend/internal/model"
 )
 
 // 条目被跳过的原因。这些字符串会直接展示给使用者，用于反查 YAML 里的字段映射，
@@ -282,7 +283,11 @@ func mapDatasetRecord(record map[string]any, cfg config.DatasetConfig) (CrawlIte
 		Category:    category,
 		Tags:        tags,
 		ViewCount:   normalizeViewCount(firstNonEmpty(record, cfg.Fields[config.DatasetFieldViewCount])),
-		Metadata:    buildDatasetMetadata(record, cfg.Metadata),
+		Difficulty:  normalizeDifficulty(firstNonEmpty(record, cfg.Fields[config.DatasetFieldDifficulty])),
+		DurationMinutes: normalizeDuration(
+			firstNonEmpty(record, cfg.Fields[config.DatasetFieldDuration]),
+			cfg.DurationUnitOrDefault()),
+		Metadata: buildDatasetMetadata(record, cfg.Metadata),
 	}, ""
 }
 
@@ -416,6 +421,54 @@ func normalizeViewCount(value any) uint {
 			return 0
 		}
 		return uint(number * multiplier)
+	}
+	return 0
+}
+
+// normalizeDifficulty 把外部难度取值归一为平台枚举；识别不了一律留空（未知）。
+// 难度是可选特征，不值得为它让整条记录失败。
+func normalizeDifficulty(value any) string {
+	switch strings.ToLower(strings.TrimSpace(asString(value))) {
+	case "beginner", "easy", "intro", "introductory", "入门", "初级", "简单":
+		return model.DifficultyBeginner
+	case "intermediate", "medium", "进阶", "中级", "中等":
+		return model.DifficultyIntermediate
+	case "advanced", "hard", "高阶", "高级", "困难":
+		return model.DifficultyAdvanced
+	}
+	return ""
+}
+
+// normalizeDuration 把外部时长归一为「分钟」。unit=seconds 时按秒换算；
+// 识别不了记 0（与 view_count 同理，不让展示/特征字段拖垮整条记录）。
+func normalizeDuration(value any, unit string) uint {
+	minutes := durationToFloat(value)
+	if minutes <= 0 {
+		return 0
+	}
+	if unit == config.DatasetDurationSeconds {
+		minutes /= 60
+	}
+	if minutes < 0.5 {
+		return 0
+	}
+	return uint(minutes + 0.5)
+}
+
+func durationToFloat(value any) float64 {
+	switch typed := value.(type) {
+	case float64:
+		return typed
+	case string:
+		text := strings.ReplaceAll(strings.TrimSpace(typed), ",", "")
+		if text == "" {
+			return 0
+		}
+		number, err := strconv.ParseFloat(text, 64)
+		if err != nil {
+			return 0
+		}
+		return number
 	}
 	return 0
 }

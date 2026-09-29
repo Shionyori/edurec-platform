@@ -148,7 +148,8 @@ func main() {
 // 补上它后语义召回模型才能拿到资源正文，故不涉及契约版本变更。
 func resourceHeader() []string {
 	return []string{"resource_id", "title", "description", "type", "category_id",
-		"tags_json", "metadata_json", "avg_rating", "view_count", "created_at"}
+		"tags_json", "metadata_json", "avg_rating", "view_count", "difficulty",
+		"duration_minutes", "created_at"}
 }
 
 // resourceRows 把资源映射为 resources.csv 的数据行，列顺序与 resourceHeader 一致。
@@ -170,6 +171,8 @@ func resourceRows(res []model.Resource) [][]string {
 			r.Metadata,
 			strconv.FormatFloat(float64(r.AvgRating), 'f', 2, 32),
 			strconv.FormatUint(uint64(r.ViewCount), 10),
+			r.Difficulty,
+			strconv.FormatUint(uint64(r.DurationMinutes), 10),
 			strconv.FormatInt(r.CreatedAt.Unix(), 10),
 		})
 	}

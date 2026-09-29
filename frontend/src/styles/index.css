@@ -32,6 +32,16 @@ body {
 
 html {
   scroll-behavior: smooth;
+  /* 永久预留滚动条槽位：页面高度变化（滚动条出现/消失）时不再挤压内容，
+     消除首页↔课程页等切换时的横向抖动 */
+  scrollbar-gutter: stable;
+}
+
+/* 不支持 scrollbar-gutter 的浏览器（如旧版 Safari）退回「始终显示滚动条」 */
+@supports not (scrollbar-gutter: stable) {
+  html {
+    overflow-y: scroll;
+  }
 }
 
 /* 路由切换过渡：主内容淡入 + 轻微上移，比硬切更顺 */

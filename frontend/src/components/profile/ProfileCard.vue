@@ -40,7 +40,7 @@ function cancel() {
 
 <template>
   <div class="rounded-xl border border-border bg-surface p-6 shadow-sm">
-    <div class="flex items-start gap-4">
+    <div class="flex items-center gap-4">
       <el-avatar :size="64" :src="user.avatar_url ?? undefined">
         {{ (user.display_name ?? user.username).charAt(0) }}
       </el-avatar>
@@ -52,13 +52,10 @@ function cancel() {
         <p class="mt-1 truncate text-sm text-ink-secondary">@{{ user.username }} · {{ user.email }}</p>
         <p class="mt-0.5 text-xs text-ink-muted">注册于 {{ formatDate(user.created_at) }}</p>
       </div>
+      <el-button v-if="!editing" round class="shrink-0" @click="editing = true">编辑资料</el-button>
     </div>
 
-    <div v-if="!editing" class="mt-5">
-      <el-button round @click="editing = true">编辑资料</el-button>
-    </div>
-
-    <div v-else class="mt-6 border-t border-border pt-5">
+    <div v-if="editing" class="mt-6 border-t border-border pt-5">
       <div class="grid grid-cols-1 gap-4">
         <div>
           <label class="mb-1 block text-xs text-ink-muted">昵称</label>

@@ -30,9 +30,15 @@ export interface Resource {
   source_url: string | null
   avg_rating: number
   view_count: number
+  // 结构化推荐特征：难度（空串=未知）、时长（分钟，0=未知）
+  difficulty?: Difficulty | ''
+  duration_minutes?: number
   created_at: string
   updated_at: string
 }
+
+// 学习难度：与后端 model.Difficulty* 常量一致
+export type Difficulty = 'beginner' | 'intermediate' | 'advanced'
 
 export interface Rating {
   id: number

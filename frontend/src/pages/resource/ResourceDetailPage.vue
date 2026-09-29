@@ -7,7 +7,7 @@ import { listRatings, upsertRating } from '@/api/rating'
 import { listComments } from '@/api/comment'
 import { recordBehavior } from '@/api/behavior'
 import { useAuthStore } from '@/stores/auth'
-import { formatDate, formatUnixDate } from '@/utils/format'
+import { formatDate, formatUnixDate, difficultyLabel, formatDuration } from '@/utils/format'
 import type { BilibiliComment, Rating, Resource } from '@/types'
 import RatingForm from '@/components/resource/RatingForm.vue'
 import RatingList from '@/components/resource/RatingList.vue'
@@ -207,6 +207,8 @@ onMounted(() => {
             <span>作者：{{ resource.author }}</span>
             <span class="text-amber-500">★ {{ resource.avg_rating.toFixed(1) }}</span>
             <span>{{ resource.view_count }} 次浏览</span>
+            <span v-if="resource.difficulty">{{ difficultyLabel(resource.difficulty) }}</span>
+            <span v-if="resource.duration_minutes">{{ formatDuration(resource.duration_minutes) }}</span>
           </div>
 
           <div class="mt-6 rounded-lg border border-border bg-surface p-5">

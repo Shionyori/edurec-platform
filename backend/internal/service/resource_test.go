@@ -343,6 +343,40 @@ func TestResourceCreateRejectsInvalidType(t *testing.T) {
 	assertErrorCode(t, err, apperror.CodeBadRequest)
 }
 
+func TestResourceCreateStoresDifficultyAndDuration(t *testing.T) {
+	repo := &fakeResourceRepository{}
+	svc := service.NewResourceService(repo)
+
+	resource, err := svc.Create(context.Background(), service.CreateResourceInput{
+		Title:           "线性代数",
+		Description:     "入门课程",
+		Type:            "course",
+		CategoryID:      1,
+		Difficulty:      "beginner",
+		DurationMinutes: 90,
+	})
+	if err != nil {
+		t.Fatalf("Create() error = %v", err)
+	}
+	if resource.Difficulty != "beginner" || resource.DurationMinutes != 90 {
+		t.Fatalf("Create() difficulty/duration = %q/%d, want beginner/90",
+			resource.Difficulty, resource.DurationMinutes)
+	}
+}
+
+func TestResourceCreateRejectsInvalidDifficulty(t *testing.T) {
+	svc := service.NewResourceService(&fakeResourceRepository{})
+
+	_, err := svc.Create(context.Background(), service.CreateResourceInput{
+		Title:       "测试资源",
+		Description: "描述",
+		Type:        "course",
+		CategoryID:  1,
+		Difficulty:  "expert",
+	})
+	assertErrorCode(t, err, apperror.CodeBadRequest)
+}
+
 func TestResourceCreateMapsRepositoryError(t *testing.T) {
 	repo := &fakeResourceRepository{createErr: errors.New("db error")}
 	svc := service.NewResourceService(repo)

@@ -12,3 +12,24 @@ export function formatUnixDate(seconds: number): string {
   if (Number.isNaN(d.getTime())) return String(seconds)
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
 }
+
+/** 分钟数 → 人类可读时长（90 → “1 小时 30 分”）；非正数返回空串 */
+export function formatDuration(minutes: number): string {
+  if (!minutes || minutes <= 0) return ''
+  const h = Math.floor(minutes / 60)
+  const m = minutes % 60
+  if (h === 0) return `${m} 分钟`
+  if (m === 0) return `${h} 小时`
+  return `${h} 小时 ${m} 分`
+}
+
+const DIFFICULTY_LABELS: Record<string, string> = {
+  beginner: '入门',
+  intermediate: '进阶',
+  advanced: '高阶',
+}
+
+/** 难度英文枚举 → 中文标签；未知值原样返回 */
+export function difficultyLabel(value: string): string {
+  return DIFFICULTY_LABELS[value] ?? value
+}

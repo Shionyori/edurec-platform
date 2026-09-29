@@ -28,34 +28,38 @@ type categorySummary struct {
 }
 
 type resourceListItem struct {
-	ID          uint             `json:"id"`
-	Title       string           `json:"title"`
-	Description string           `json:"description"`
-	CoverURL    string           `json:"cover_url"`
-	Type        string           `json:"type"`
-	Category    *categorySummary `json:"category"`
-	Tags        []string         `json:"tags"`
-	Author      string           `json:"author"`
-	AvgRating   float32          `json:"avg_rating"`
-	ViewCount   uint             `json:"view_count"`
-	CreatedAt   time.Time        `json:"created_at"`
+	ID              uint             `json:"id"`
+	Title           string           `json:"title"`
+	Description     string           `json:"description"`
+	CoverURL        string           `json:"cover_url"`
+	Type            string           `json:"type"`
+	Category        *categorySummary `json:"category"`
+	Tags            []string         `json:"tags"`
+	Author          string           `json:"author"`
+	AvgRating       float32          `json:"avg_rating"`
+	ViewCount       uint             `json:"view_count"`
+	Difficulty      string           `json:"difficulty"`
+	DurationMinutes uint             `json:"duration_minutes"`
+	CreatedAt       time.Time        `json:"created_at"`
 }
 
 type resourceDetail struct {
-	ID          uint             `json:"id"`
-	Title       string           `json:"title"`
-	Description string           `json:"description"`
-	CoverURL    string           `json:"cover_url"`
-	Type        string           `json:"type"`
-	Category    *categorySummary `json:"category"`
-	Tags        []string         `json:"tags"`
-	Metadata    map[string]any   `json:"metadata"`
-	Author      string           `json:"author"`
-	SourceURL   string           `json:"source_url"`
-	AvgRating   float32          `json:"avg_rating"`
-	ViewCount   uint             `json:"view_count"`
-	CreatedAt   time.Time        `json:"created_at"`
-	UpdatedAt   time.Time        `json:"updated_at"`
+	ID              uint             `json:"id"`
+	Title           string           `json:"title"`
+	Description     string           `json:"description"`
+	CoverURL        string           `json:"cover_url"`
+	Type            string           `json:"type"`
+	Category        *categorySummary `json:"category"`
+	Tags            []string         `json:"tags"`
+	Metadata        map[string]any   `json:"metadata"`
+	Author          string           `json:"author"`
+	SourceURL       string           `json:"source_url"`
+	AvgRating       float32          `json:"avg_rating"`
+	ViewCount       uint             `json:"view_count"`
+	Difficulty      string           `json:"difficulty"`
+	DurationMinutes uint             `json:"duration_minutes"`
+	CreatedAt       time.Time        `json:"created_at"`
+	UpdatedAt       time.Time        `json:"updated_at"`
 }
 
 func toResourceListItem(resource *model.Resource) resourceListItem {
@@ -68,17 +72,19 @@ func toResourceListItem(resource *model.Resource) resourceListItem {
 	}
 
 	return resourceListItem{
-		ID:          resource.ID,
-		Title:       resource.Title,
-		Description: resource.Description,
-		CoverURL:    resource.CoverURL,
-		Type:        resource.Type,
-		Category:    category,
-		Tags:        parseTags(resource.Tags),
-		Author:      resource.Author,
-		AvgRating:   resource.AvgRating,
-		ViewCount:   resource.ViewCount,
-		CreatedAt:   resource.CreatedAt,
+		ID:              resource.ID,
+		Title:           resource.Title,
+		Description:     resource.Description,
+		CoverURL:        resource.CoverURL,
+		Type:            resource.Type,
+		Category:        category,
+		Tags:            parseTags(resource.Tags),
+		Author:          resource.Author,
+		AvgRating:       resource.AvgRating,
+		ViewCount:       resource.ViewCount,
+		Difficulty:      resource.Difficulty,
+		DurationMinutes: resource.DurationMinutes,
+		CreatedAt:       resource.CreatedAt,
 	}
 }
 
@@ -92,20 +98,22 @@ func toResourceDetail(resource *model.Resource) resourceDetail {
 	}
 
 	return resourceDetail{
-		ID:          resource.ID,
-		Title:       resource.Title,
-		Description: resource.Description,
-		CoverURL:    resource.CoverURL,
-		Type:        resource.Type,
-		Category:    category,
-		Tags:        parseTags(resource.Tags),
-		Metadata:    parseMetadata(resource.Metadata),
-		Author:      resource.Author,
-		SourceURL:   resource.SourceURL,
-		AvgRating:   resource.AvgRating,
-		ViewCount:   resource.ViewCount,
-		CreatedAt:   resource.CreatedAt,
-		UpdatedAt:   resource.UpdatedAt,
+		ID:              resource.ID,
+		Title:           resource.Title,
+		Description:     resource.Description,
+		CoverURL:        resource.CoverURL,
+		Type:            resource.Type,
+		Category:        category,
+		Tags:            parseTags(resource.Tags),
+		Metadata:        parseMetadata(resource.Metadata),
+		Author:          resource.Author,
+		SourceURL:       resource.SourceURL,
+		AvgRating:       resource.AvgRating,
+		ViewCount:       resource.ViewCount,
+		Difficulty:      resource.Difficulty,
+		DurationMinutes: resource.DurationMinutes,
+		CreatedAt:       resource.CreatedAt,
+		UpdatedAt:       resource.UpdatedAt,
 	}
 }
 
@@ -194,15 +202,17 @@ func (h *ResourceHandler) Detail(c *gin.Context) {
 }
 
 type createResourceRequest struct {
-	Title       string         `json:"title" binding:"required,max=256"`
-	Description string         `json:"description" binding:"required"`
-	CoverURL    string         `json:"cover_url" binding:"omitempty,max=512"`
-	Type        string         `json:"type" binding:"required,oneof=course article video"`
-	CategoryID  uint           `json:"category_id" binding:"required"`
-	Tags        []string       `json:"tags"`
-	Metadata    map[string]any `json:"metadata"`
-	Author      string         `json:"author" binding:"omitempty,max=128"`
-	SourceURL   string         `json:"source_url" binding:"omitempty,max=512"`
+	Title           string         `json:"title" binding:"required,max=256"`
+	Description     string         `json:"description" binding:"required"`
+	CoverURL        string         `json:"cover_url" binding:"omitempty,max=512"`
+	Type            string         `json:"type" binding:"required,oneof=course article video"`
+	CategoryID      uint           `json:"category_id" binding:"required"`
+	Tags            []string       `json:"tags"`
+	Metadata        map[string]any `json:"metadata"`
+	Author          string         `json:"author" binding:"omitempty,max=128"`
+	SourceURL       string         `json:"source_url" binding:"omitempty,max=512"`
+	Difficulty      string         `json:"difficulty" binding:"omitempty,oneof=beginner intermediate advanced"`
+	DurationMinutes uint           `json:"duration_minutes"`
 }
 
 func (h *ResourceHandler) Create(c *gin.Context) {
@@ -213,15 +223,17 @@ func (h *ResourceHandler) Create(c *gin.Context) {
 	}
 
 	resource, err := h.resources.Create(c.Request.Context(), service.CreateResourceInput{
-		Title:       req.Title,
-		Description: req.Description,
-		CoverURL:    req.CoverURL,
-		Type:        req.Type,
-		CategoryID:  req.CategoryID,
-		Tags:        req.Tags,
-		Metadata:    req.Metadata,
-		Author:      req.Author,
-		SourceURL:   req.SourceURL,
+		Title:           req.Title,
+		Description:     req.Description,
+		CoverURL:        req.CoverURL,
+		Type:            req.Type,
+		CategoryID:      req.CategoryID,
+		Tags:            req.Tags,
+		Metadata:        req.Metadata,
+		Author:          req.Author,
+		SourceURL:       req.SourceURL,
+		Difficulty:      req.Difficulty,
+		DurationMinutes: req.DurationMinutes,
 	})
 	if err != nil {
 		handleError(c, err)
@@ -237,15 +249,17 @@ func (h *ResourceHandler) Create(c *gin.Context) {
 }
 
 type updateResourceRequest struct {
-	Title       *string         `json:"title" binding:"omitempty,max=256"`
-	Description *string         `json:"description" binding:"omitempty"`
-	CoverURL    *string         `json:"cover_url" binding:"omitempty,max=512"`
-	Type        *string         `json:"type" binding:"omitempty,oneof=course article video"`
-	CategoryID  *uint           `json:"category_id"`
-	Tags        *[]string       `json:"tags"`
-	Metadata    *map[string]any `json:"metadata"`
-	Author      *string         `json:"author" binding:"omitempty,max=128"`
-	SourceURL   *string         `json:"source_url" binding:"omitempty,max=512"`
+	Title           *string         `json:"title" binding:"omitempty,max=256"`
+	Description     *string         `json:"description" binding:"omitempty"`
+	CoverURL        *string         `json:"cover_url" binding:"omitempty,max=512"`
+	Type            *string         `json:"type" binding:"omitempty,oneof=course article video"`
+	CategoryID      *uint           `json:"category_id"`
+	Tags            *[]string       `json:"tags"`
+	Metadata        *map[string]any `json:"metadata"`
+	Author          *string         `json:"author" binding:"omitempty,max=128"`
+	SourceURL       *string         `json:"source_url" binding:"omitempty,max=512"`
+	Difficulty      *string         `json:"difficulty" binding:"omitempty,oneof=beginner intermediate advanced"`
+	DurationMinutes *uint           `json:"duration_minutes"`
 }
 
 func (h *ResourceHandler) Update(c *gin.Context) {
@@ -262,16 +276,18 @@ func (h *ResourceHandler) Update(c *gin.Context) {
 	}
 
 	resource, err := h.resources.Update(c.Request.Context(), service.UpdateResourceInput{
-		ID:          uint(id),
-		Title:       req.Title,
-		Description: req.Description,
-		CoverURL:    req.CoverURL,
-		Type:        req.Type,
-		CategoryID:  req.CategoryID,
-		Tags:        req.Tags,
-		Metadata:    req.Metadata,
-		Author:      req.Author,
-		SourceURL:   req.SourceURL,
+		ID:              uint(id),
+		Title:           req.Title,
+		Description:     req.Description,
+		CoverURL:        req.CoverURL,
+		Type:            req.Type,
+		CategoryID:      req.CategoryID,
+		Tags:            req.Tags,
+		Metadata:        req.Metadata,
+		Author:          req.Author,
+		SourceURL:       req.SourceURL,
+		Difficulty:      req.Difficulty,
+		DurationMinutes: req.DurationMinutes,
 	})
 	if err != nil {
 		handleError(c, err)

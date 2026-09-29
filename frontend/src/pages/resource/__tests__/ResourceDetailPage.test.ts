@@ -81,6 +81,14 @@ describe('ResourceDetailPage', () => {
     expect(wrapper.text()).toContain('已收藏')
   })
 
+  it('展示难度与时长等结构化特征', async () => {
+    mockedGetResource.mockResolvedValue({ ...resource, difficulty: 'beginner', duration_minutes: 90 })
+    const wrapper = await mountPage()
+
+    expect(wrapper.text()).toContain('入门')
+    expect(wrapper.text()).toContain('1 小时 30 分')
+  })
+
   it('有封面时渲染封面，并禁用 Referer 以绕过外链防盗链', async () => {
     const coverUrl = 'https://i1.hdslb.com/bfs/archive/cover.jpg'
     mockedGetResource.mockResolvedValue({ ...resource, cover_url: coverUrl })

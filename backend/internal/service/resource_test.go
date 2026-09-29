@@ -20,6 +20,9 @@ type fakeResourceRepository struct {
 	lastFindID       uint
 	findByIDsResult  []model.Resource
 	findByIDsErr     error
+	listTopResult    []model.Resource
+	listTopErr       error
+	lastListTopCats  []uint
 	findByURLsResult []model.Resource
 	findByURLsErr    error
 	lastCreated      *model.Resource
@@ -60,6 +63,14 @@ func (f *fakeResourceRepository) FindByIDs(ids []uint) ([]model.Resource, error)
 		return nil, f.findByIDsErr
 	}
 	return f.findByIDsResult, nil
+}
+
+func (f *fakeResourceRepository) ListTopByCategories(categoryIDs []uint, _ int) ([]model.Resource, error) {
+	f.lastListTopCats = categoryIDs
+	if f.listTopErr != nil {
+		return nil, f.listTopErr
+	}
+	return f.listTopResult, nil
 }
 
 func (f *fakeResourceRepository) FindBySourceURLs([]string) ([]model.Resource, error) {
@@ -339,6 +350,40 @@ func TestResourceCreateRejectsInvalidType(t *testing.T) {
 		Description: "描述",
 		Type:        "book",
 		CategoryID:  1,
+	})
+	assertErrorCode(t, err, apperror.CodeBadRequest)
+}
+
+func TestResourceCreateStoresDifficultyAndDuration(t *testing.T) {
+	repo := &fakeResourceRepository{}
+	svc := service.NewResourceService(repo)
+
+	resource, err := svc.Create(context.Background(), service.CreateResourceInput{
+		Title:           "线性代数",
+		Description:     "入门课程",
+		Type:            "course",
+		CategoryID:      1,
+		Difficulty:      "beginner",
+		DurationMinutes: 90,
+	})
+	if err != nil {
+		t.Fatalf("Create() error = %v", err)
+	}
+	if resource.Difficulty != "beginner" || resource.DurationMinutes != 90 {
+		t.Fatalf("Create() difficulty/duration = %q/%d, want beginner/90",
+			resource.Difficulty, resource.DurationMinutes)
+	}
+}
+
+func TestResourceCreateRejectsInvalidDifficulty(t *testing.T) {
+	svc := service.NewResourceService(&fakeResourceRepository{})
+
+	_, err := svc.Create(context.Background(), service.CreateResourceInput{
+		Title:       "测试资源",
+		Description: "描述",
+		Type:        "course",
+		CategoryID:  1,
+		Difficulty:  "expert",
 	})
 	assertErrorCode(t, err, apperror.CodeBadRequest)
 }

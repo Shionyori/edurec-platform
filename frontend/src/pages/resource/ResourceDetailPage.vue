@@ -7,7 +7,7 @@ import { listRatings, upsertRating } from '@/api/rating'
 import { listComments } from '@/api/comment'
 import { recordBehavior } from '@/api/behavior'
 import { useAuthStore } from '@/stores/auth'
-import { formatDate, formatUnixDate } from '@/utils/format'
+import { formatDate, formatUnixDate, difficultyLabel, formatDuration } from '@/utils/format'
 import type { BilibiliComment, Rating, Resource } from '@/types'
 import RatingForm from '@/components/resource/RatingForm.vue'
 import RatingList from '@/components/resource/RatingList.vue'
@@ -25,6 +25,10 @@ const resourceError = ref('')
 
 // 外链封面（如 B 站）可能失效：no-referrer 已规避防盗链，但仍需对加载失败做降级
 const coverFailed = ref(false)
+
+// 收藏状态：后端只有 favorite 这一正向行为（无「取消收藏」动作），
+// 因此这里只做本地开关 + 在「变为已收藏」时上报 favorite；取消仅为本地表现。
+const favorited = ref(false)
 
 const ratings = ref<Rating[]>([])
 const total = ref(0)
@@ -125,6 +129,14 @@ function openSource() {
   }
 }
 
+// 收藏是强正反馈信号，纳入行为后可供推荐模型训练（当前平台只采 view/click）。
+function toggleFavorite() {
+  favorited.value = !favorited.value
+  if (favorited.value) {
+    recordBehavior(resourceId.value, 'favorite').catch(() => {})
+  }
+}
+
 // metadata 是自由键值表：B 站视频的发布时间存的是 Unix 秒，直接渲染会是一长串数字
 function formatMetadataValue(key: string, value: unknown): string {
   if (key === 'pubdate' && typeof value === 'number') {
@@ -137,6 +149,7 @@ function formatMetadataValue(key: string, value: unknown): string {
 // 因此必须手动重置并重拉，否则页面会一直停留在上一个资源的数据上
 watch(resourceId, () => {
   coverFailed.value = false
+  favorited.value = false
   prefilled = false
   initialScore.value = 0
   initialComment.value = ''
@@ -194,6 +207,8 @@ onMounted(() => {
             <span>作者：{{ resource.author }}</span>
             <span class="text-amber-500">★ {{ resource.avg_rating.toFixed(1) }}</span>
             <span>{{ resource.view_count }} 次浏览</span>
+            <span v-if="resource.difficulty">{{ difficultyLabel(resource.difficulty) }}</span>
+            <span v-if="resource.duration_minutes">{{ formatDuration(resource.duration_minutes) }}</span>
           </div>
 
           <div class="mt-6 rounded-lg border border-border bg-surface p-5">
@@ -211,8 +226,15 @@ onMounted(() => {
             </dl>
           </div>
 
-          <div v-if="resource.source_url" class="mt-4">
-            <el-button type="primary" round @click="openSource">前往原站学习</el-button>
+          <div class="mt-4 flex gap-3">
+            <el-button v-if="resource.source_url" type="primary" round @click="openSource">前往原站学习</el-button>
+            <el-button
+              :type="favorited ? 'warning' : 'default'"
+              round
+              @click="toggleFavorite"
+            >
+              {{ favorited ? '已收藏' : '收藏' }}
+            </el-button>
           </div>
 
           <div class="mt-8">

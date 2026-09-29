@@ -35,6 +35,7 @@ function toPublicUser(u: DbUser) {
     email: u.email,
     display_name: u.display_name,
     avatar_url: u.avatar_url,
+    interests: u.interests ?? [],
     is_admin: u.is_admin,
     created_at: u.created_at,
   }
@@ -139,6 +140,14 @@ export const handlers = [
     user.display_name = body.display_name ?? user.display_name
     user.avatar_url = body.avatar_url ?? user.avatar_url
     return ok({ id: user.id, display_name: user.display_name, avatar_url: user.avatar_url })
+  }),
+
+  http.put(`${BASE}/users/me/interests`, async ({ request }) => {
+    const user = requireUser(request)
+    if (!user) return bizError(10002, '未认证', 401)
+    const body = (await request.json()) as { category_ids?: number[] }
+    user.interests = Array.from(new Set(body.category_ids ?? [])).slice(0, 20)
+    return ok(toPublicUser(user))
   }),
 
   // 分类
@@ -331,7 +340,11 @@ export const handlers = [
     const url = new URL(request.url)
     const limit = Math.min(Number(url.searchParams.get('limit') ?? '20'), 50)
     const list = [...db.resources].sort((a, b) => b.avg_rating - a.avg_rating).slice(0, limit)
-    return ok({ list: list.map(toPublicResource), updated_at: new Date().toISOString() })
+    return ok({
+      list: list.map((r) => ({ ...toPublicResource(r), reason: '根据你的学习历史推荐' })),
+      updated_at: new Date().toISOString(),
+      run_id: 'mock',
+    })
   }),
 
   // 行为
@@ -346,6 +359,13 @@ export const handlers = [
       action: body.action,
       created_at: new Date().toISOString(),
     })
+    return ok(null)
+  }),
+
+  // 曝光（推荐展示打点，独立于用户行为，不参与正样本训练）
+  http.post(`${BASE}/impressions`, ({ request }) => {
+    const user = requireUser(request)
+    if (!user) return bizError(10002, '未认证', 401)
     return ok(null)
   }),
 
@@ -404,5 +424,23 @@ export const handlers = [
     const total = list.length
     const paged = list.slice((page - 1) * pageSize, page * pageSize)
     return ok({ list: paged.map(toPublicResource), total, page, page_size: pageSize })
+  }),
+
+  // 推荐运行记录与效果看板（admin）
+  http.get(`${BASE}/admin/recommendation-runs`, ({ request }) => {
+    const user = requireUser(request)
+    if (!user) return bizError(10002, '未认证', 401)
+    if (!user.is_admin) return bizError(10003, '无权限', 403)
+    return ok({ list: [] })
+  }),
+
+  http.get(`${BASE}/admin/recommendation-stats`, ({ request }) => {
+    const user = requireUser(request)
+    if (!user) return bizError(10002, '未认证', 401)
+    if (!user.is_admin) return bizError(10003, '无权限', 403)
+    return ok({
+      impressions: 0, clicks: 0, favorites: 0, views: 0,
+      recommendation_users: 0, click_through_rate: 0,
+    })
   }),
 ]

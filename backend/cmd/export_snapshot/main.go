@@ -56,27 +56,7 @@ func main() {
 	// resources
 	var res []model.Resource
 	db.Order("id").Find(&res)
-	resRows := make([][]string, 0, len(res))
-	for _, r := range res {
-		tags := strings.TrimSpace(r.Tags)
-		if tags == "" {
-			tags = "[]"
-		}
-		resRows = append(resRows, []string{
-			strconv.FormatUint(uint64(r.ID), 10),
-			r.Title,
-			r.Type,
-			strconv.FormatUint(uint64(r.CategoryID), 10),
-			tags,
-			r.Metadata,
-			strconv.FormatFloat(float64(r.AvgRating), 'f', 2, 32),
-			strconv.FormatUint(uint64(r.ViewCount), 10),
-			strconv.FormatInt(r.CreatedAt.Unix(), 10),
-		})
-	}
-	writeCSV(filepath.Join(dir, "resources.csv"),
-		[]string{"resource_id", "title", "type", "category_id", "tags_json",
-			"metadata_json", "avg_rating", "view_count", "created_at"}, resRows)
+	writeCSV(filepath.Join(dir, "resources.csv"), resourceHeader(), resourceRows(res))
 
 	// categories
 	var cats []model.Category
@@ -161,6 +141,42 @@ func main() {
 		log.Fatalf("写 meta.json 失败: %v", err)
 	}
 	fmt.Printf("[export_snapshot] 快照导出完成 -> %s\n", dir)
+}
+
+// resourceHeader 返回 resources.csv 的表头。
+// description 为可选列：engine（contract_version=1）在缺失时降级为空串，
+// 补上它后语义召回模型才能拿到资源正文，故不涉及契约版本变更。
+func resourceHeader() []string {
+	return []string{"resource_id", "title", "description", "type", "category_id",
+		"tags_json", "metadata_json", "avg_rating", "view_count", "difficulty",
+		"duration_minutes", "created_at"}
+}
+
+// resourceRows 把资源映射为 resources.csv 的数据行，列顺序与 resourceHeader 一致。
+// 抽成纯函数以便单测（原先内联在 main 中），行为不变。
+func resourceRows(res []model.Resource) [][]string {
+	rows := make([][]string, 0, len(res))
+	for _, r := range res {
+		tags := strings.TrimSpace(r.Tags)
+		if tags == "" {
+			tags = "[]"
+		}
+		rows = append(rows, []string{
+			strconv.FormatUint(uint64(r.ID), 10),
+			r.Title,
+			r.Description,
+			r.Type,
+			strconv.FormatUint(uint64(r.CategoryID), 10),
+			tags,
+			r.Metadata,
+			strconv.FormatFloat(float64(r.AvgRating), 'f', 2, 32),
+			strconv.FormatUint(uint64(r.ViewCount), 10),
+			r.Difficulty,
+			strconv.FormatUint(uint64(r.DurationMinutes), 10),
+			strconv.FormatInt(r.CreatedAt.Unix(), 10),
+		})
+	}
+	return rows
 }
 
 func writeCSV(path string, header []string, rows [][]string) {

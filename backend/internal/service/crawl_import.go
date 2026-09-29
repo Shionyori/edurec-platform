@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"strconv"
 	"strings"
 
 	"github.com/Shionyori/edurec-platform/backend/internal/apperror"
@@ -101,12 +102,56 @@ func isBilibiliItem(item CrawlItem) bool {
 	return metadataString(item.Metadata, "typename") != ""
 }
 
+// resolveDurationMinutes 取条目时长（分钟）：优先显式字段（数据集映射），
+// 否则从 metadata 的 duration 推导（B 站为 "16:08" / "1:30:00" 这类时钟串）。
+func resolveDurationMinutes(item CrawlItem) uint {
+	if item.DurationMinutes > 0 {
+		return item.DurationMinutes
+	}
+	return metadataDurationMinutes(item.Metadata)
+}
+
+// metadataDurationMinutes 从 metadata 的 duration 推导分钟数（兼容数字型秒值）。
+func metadataDurationMinutes(metadata map[string]any) uint {
+	if metadata == nil {
+		return 0
+	}
+	if seconds, ok := metadata["duration"].(float64); ok {
+		return secondsToMinutes(seconds)
+	}
+	return parseClockDuration(metadataString(metadata, "duration"))
+}
+
+// parseClockDuration 解析 "MM:SS" / "HH:MM:SS" 时钟串为分钟；无法解析返回 0。
+func parseClockDuration(text string) uint {
+	parts := strings.Split(strings.TrimSpace(text), ":")
+	if len(parts) != 2 && len(parts) != 3 {
+		return 0
+	}
+	total := 0
+	for _, part := range parts {
+		n, err := strconv.Atoi(strings.TrimSpace(part))
+		if err != nil || n < 0 {
+			return 0
+		}
+		total = total*60 + n
+	}
+	return secondsToMinutes(float64(total))
+}
+
+func secondsToMinutes(seconds float64) uint {
+	if seconds <= 0 {
+		return 0
+	}
+	return uint((seconds + 30) / 60)
+}
+
 // CrawlImportResult 导入统计
 type CrawlImportResult struct {
 	CreatedResources  int `json:"created_resources"`
 	UpdatedResources  int `json:"updated_resources"`
-	SkippedResources  int `json:"skipped_resources"`   // 缺必填字段，未落库
-	SkippedTypenames  int `json:"skipped_typenames"`   // 非教育分区，按白名单拦下（见 BilibiliConfig.AllowedTypenames）
+	SkippedResources  int `json:"skipped_resources"` // 缺必填字段，未落库
+	SkippedTypenames  int `json:"skipped_typenames"` // 非教育分区，按白名单拦下（见 BilibiliConfig.AllowedTypenames）
 	CreatedCategories int `json:"created_categories"`
 }
 
@@ -125,10 +170,11 @@ var BilibiliImportOptions = CrawlImportOptions{
 
 // model.Resource 各字段的 gorm size，超长按字符截断，避免整批导入因单条超长而失败
 const (
-	maxTitleRunes     = 256
-	maxCoverURLRunes  = 512
-	maxAuthorRunes    = 128
-	maxSourceURLRunes = 512
+	maxTitleRunes      = 256
+	maxCoverURLRunes   = 512
+	maxAuthorRunes     = 128
+	maxSourceURLRunes  = 512
+	maxDifficultyRunes = 16
 )
 
 // crawlFile 是 crawler/run.py 写出的交接文件结构
@@ -143,17 +189,19 @@ type crawlFile struct {
 // 身份键优先取 SourceID；B 站的采集脚本只发 bvid，故 bvid 作为兼容别名保留，
 // 二者取到任意一个即可入库。sourceURL 为空时由来源的 URL 模板 + 身份键兜底。
 type CrawlItem struct {
-	SourceID    string         `json:"source_id"`
-	Bvid        string         `json:"bvid"`
-	Title       string         `json:"title"`
-	Description string         `json:"description"`
-	CoverURL    string         `json:"cover_url"`
-	Author      string         `json:"author"`
-	SourceURL   string         `json:"source_url"`
-	Category    string         `json:"category"`
-	Tags        []string       `json:"tags"`
-	ViewCount   uint           `json:"view_count"`
-	Metadata    map[string]any `json:"metadata"`
+	SourceID        string         `json:"source_id"`
+	Bvid            string         `json:"bvid"`
+	Title           string         `json:"title"`
+	Description     string         `json:"description"`
+	CoverURL        string         `json:"cover_url"`
+	Author          string         `json:"author"`
+	SourceURL       string         `json:"source_url"`
+	Category        string         `json:"category"`
+	Tags            []string       `json:"tags"`
+	ViewCount       uint           `json:"view_count"`
+	Difficulty      string         `json:"difficulty"`
+	DurationMinutes uint           `json:"duration_minutes"`
+	Metadata        map[string]any `json:"metadata"`
 }
 
 // sourceID 返回本条记录的身份键：优先 source_id，回退到 B 站兼容字段 bvid
@@ -166,15 +214,17 @@ func (item CrawlItem) sourceID() string {
 
 // crawlRecord 是校验、截断、序列化之后的待落库记录
 type crawlRecord struct {
-	title        string
-	description  string
-	coverURL     string
-	author       string
-	sourceURL    string
-	category     string
-	tagsJSON     string
-	metadataJSON string
-	viewCount    uint
+	title           string
+	description     string
+	coverURL        string
+	author          string
+	sourceURL       string
+	category        string
+	tagsJSON        string
+	metadataJSON    string
+	viewCount       uint
+	difficulty      string
+	durationMinutes uint
 	// isLongCourse 该条是否应落库为 course 而非来源默认类型。
 	// 在解析阶段判定一次（依赖原始 title 与 metadata），落库时直接用。
 	isLongCourse bool
@@ -390,15 +440,17 @@ func newCrawlRecord(item CrawlItem, sourceURLTemplate string, rules config.Conte
 	}
 
 	return crawlRecord{
-		title:        truncateRunes(title, maxTitleRunes),
-		description:  strings.TrimSpace(item.Description),
-		coverURL:     truncateRunes(strings.TrimSpace(item.CoverURL), maxCoverURLRunes),
-		author:       truncateRunes(strings.TrimSpace(item.Author), maxAuthorRunes),
-		sourceURL:    truncateRunes(sourceURL, maxSourceURLRunes),
-		category:     category,
-		tagsJSON:     string(tagsJSON),
-		metadataJSON: string(metadataJSON),
-		viewCount:    item.ViewCount,
+		title:           truncateRunes(title, maxTitleRunes),
+		description:     strings.TrimSpace(item.Description),
+		coverURL:        truncateRunes(strings.TrimSpace(item.CoverURL), maxCoverURLRunes),
+		author:          truncateRunes(strings.TrimSpace(item.Author), maxAuthorRunes),
+		sourceURL:       truncateRunes(sourceURL, maxSourceURLRunes),
+		category:        category,
+		tagsJSON:        string(tagsJSON),
+		metadataJSON:    string(metadataJSON),
+		viewCount:       item.ViewCount,
+		difficulty:      truncateRunes(strings.TrimSpace(item.Difficulty), maxDifficultyRunes),
+		durationMinutes: resolveDurationMinutes(item),
 		// 「长合集→course」只作用于 B 站条目：带 typename 才算 B 站，
 		// 第三方数据集沿用 opts.ResourceType，不被标题关键词误判。
 		isLongCourse: isBilibiliItem(item) &&
@@ -408,16 +460,18 @@ func newCrawlRecord(item CrawlItem, sourceURLTemplate string, rules config.Conte
 
 func (r crawlRecord) toResource(categoryID uint, resourceType string) *model.Resource {
 	return &model.Resource{
-		Title:       r.title,
-		Description: r.description,
-		CoverURL:    r.coverURL,
-		Type:        resourceType,
-		CategoryID:  categoryID,
-		Tags:        r.tagsJSON,
-		Metadata:    r.metadataJSON,
-		Author:      r.author,
-		SourceURL:   r.sourceURL,
-		ViewCount:   r.viewCount,
+		Title:           r.title,
+		Description:     r.description,
+		CoverURL:        r.coverURL,
+		Type:            resourceType,
+		CategoryID:      categoryID,
+		Tags:            r.tagsJSON,
+		Metadata:        r.metadataJSON,
+		Author:          r.author,
+		SourceURL:       r.sourceURL,
+		ViewCount:       r.viewCount,
+		Difficulty:      r.difficulty,
+		DurationMinutes: r.durationMinutes,
 	}
 }
 

@@ -3,14 +3,22 @@ import { flushPromises, mount } from '@vue/test-utils'
 import ElementPlus from 'element-plus'
 import type { RecommendationResult, Resource } from '@/types'
 import { getRecommendations } from '@/api/recommendation'
+import { recordImpressions } from '@/api/impression'
 import HomePage from '../index.vue'
 
 vi.mock('vue-router', () => ({
   RouterLink: { template: '<a><slot /></a>' },
 }))
 vi.mock('@/api/recommendation', () => ({ getRecommendations: vi.fn() }))
+vi.mock('@/api/impression', () => ({ recordImpressions: vi.fn(() => Promise.resolve(null)) }))
+vi.mock('@/api/category', () => ({ listCategories: vi.fn(() => Promise.resolve([])) }))
+
+// 用可变的 auth mock 控制「是否展示冷启动兴趣引导」
+const authMock = vi.hoisted(() => ({ user: null as unknown }))
+vi.mock('@/stores/auth', () => ({ useAuthStore: () => authMock }))
 
 const mockedGetRecommendations = vi.mocked(getRecommendations)
+const mockedRecordImpressions = vi.mocked(recordImpressions)
 
 const resource: Resource = {
   id: 1, title: '机器学习入门', description: '面向零基础学习者',
@@ -33,6 +41,7 @@ async function mountPage() {
 describe('HomePage', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    authMock.user = { interests: [1] } // 默认已有兴趣 → 不展示引导
     mockedGetRecommendations.mockResolvedValue(recResult)
   })
 
@@ -46,5 +55,21 @@ describe('HomePage', () => {
     mockedGetRecommendations.mockRejectedValue(new Error('加载失败'))
     const wrapper = await mountPage()
     expect(wrapper.text()).toContain('加载失败')
+  })
+
+  it('推荐加载成功后上报本屏曝光', async () => {
+    await mountPage()
+    expect(mockedRecordImpressions).toHaveBeenCalledWith('home', [1])
+  })
+
+  it('新用户（无兴趣）展示冷启动兴趣引导', async () => {
+    authMock.user = { interests: [] }
+    const wrapper = await mountPage()
+    expect(wrapper.text()).toContain('选择你感兴趣的方向')
+  })
+
+  it('已有兴趣的用户不展示兴趣引导', async () => {
+    const wrapper = await mountPage()
+    expect(wrapper.text()).not.toContain('选择你感兴趣的方向')
   })
 })

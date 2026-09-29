@@ -13,14 +13,14 @@ import (
 
 // Config 是应用的顶层配置
 type Config struct {
-	Server        ServerConfig             `mapstructure:"server"`
-	Database      DatabaseConfig           `mapstructure:"database"`
-	Redis         RedisConfig              `mapstructure:"redis"`
-	JWT           JWTConfig                `mapstructure:"jwt"`
-	Engine        EngineConfig             `mapstructure:"engine"`
-	Bilibili      BilibiliConfig           `mapstructure:"bilibili"`
-	ContentRules  ContentRulesConfig       `mapstructure:"content_rules"`
-	Datasets      map[string]DatasetConfig `mapstructure:"datasets"`
+	Server       ServerConfig             `mapstructure:"server"`
+	Database     DatabaseConfig           `mapstructure:"database"`
+	Redis        RedisConfig              `mapstructure:"redis"`
+	JWT          JWTConfig                `mapstructure:"jwt"`
+	Engine       EngineConfig             `mapstructure:"engine"`
+	Bilibili     BilibiliConfig           `mapstructure:"bilibili"`
+	ContentRules ContentRulesConfig       `mapstructure:"content_rules"`
+	Datasets     map[string]DatasetConfig `mapstructure:"datasets"`
 }
 
 // 数据集字段映射支持的内部字段名。出现词表外的 key 一律报错：
@@ -34,6 +34,8 @@ const (
 	DatasetFieldCategory    = "category"
 	DatasetFieldTags        = "tags"
 	DatasetFieldViewCount   = "view_count"
+	DatasetFieldDifficulty  = "difficulty"
+	DatasetFieldDuration    = "duration"
 )
 
 // DatasetFormat 数据集文件的容器格式
@@ -48,6 +50,7 @@ const (
 var datasetFieldNames = []string{
 	DatasetFieldTitle, DatasetFieldDescription, DatasetFieldCoverURL, DatasetFieldAuthor,
 	DatasetFieldSourceURL, DatasetFieldCategory, DatasetFieldTags, DatasetFieldViewCount,
+	DatasetFieldDifficulty, DatasetFieldDuration,
 }
 
 // DatasetConfig 第三方数据集导入配置：声明式地把外部字段映射到平台的采集结果契约。
@@ -60,6 +63,7 @@ type DatasetConfig struct {
 	DefaultCategory   string              `mapstructure:"default_category"`    // 分类字段为空时的兜底分类名
 	SourceURLTemplate string              `mapstructure:"source_url_template"` // source_url 缺失时的兜底模板，{外部字段名} 作占位，如 https://x/learn/{obj_id}
 	TagSeparator      string              `mapstructure:"tag_separator"`       // tags 为字符串时的分隔符，默认 ","
+	DurationUnit      string              `mapstructure:"duration_unit"`       // duration 字段单位：seconds | minutes，默认 seconds
 	Fields            map[string][]string `mapstructure:"fields"`              // 内部字段 → 外部字段候选，按序回退取第一个非空
 	Metadata          []string            `mapstructure:"metadata"`            // 原样收进 metadata 的外部字段名
 }
@@ -81,6 +85,11 @@ func (d DatasetConfig) Validate(name string) error {
 	if len(d.Fields) == 0 {
 		return fmt.Errorf("datasets.%s 缺少 fields 字段映射", name)
 	}
+	switch d.DurationUnit {
+	case "", DatasetDurationSeconds, DatasetDurationMinutes:
+	default:
+		return fmt.Errorf("datasets.%s 的 duration_unit %q 非法，只能是 seconds / minutes", name, d.DurationUnit)
+	}
 	for field := range d.Fields {
 		if !slices.Contains(datasetFieldNames, field) {
 			return fmt.Errorf("datasets.%s 的 fields 含未知字段 %q，可用：%s",
@@ -96,6 +105,20 @@ func (d DatasetConfig) TagSeparatorOrDefault() string {
 		return ","
 	}
 	return d.TagSeparator
+}
+
+// 数据集 duration 字段的单位
+const (
+	DatasetDurationSeconds = "seconds"
+	DatasetDurationMinutes = "minutes"
+)
+
+// DurationUnitOrDefault duration 字段单位，默认按秒（多数公开数据集如此）
+func (d DatasetConfig) DurationUnitOrDefault() string {
+	if d.DurationUnit == "" {
+		return DatasetDurationSeconds
+	}
+	return d.DurationUnit
 }
 
 // FormatOrDefault 归一化 format 取值

@@ -222,6 +222,31 @@ func TestLoadDatasetParsesCSVWithBOM(t *testing.T) {
 	}
 }
 
+func TestLoadDatasetMapsDifficultyAndDuration(t *testing.T) {
+	path := writeDataset(t, "courses.json", `[
+      {"title": "线性代数", "target_url": "https://x/1", "level": "入门", "length": 5400}
+    ]`)
+	cfg := moocDataset(path)
+	cfg.Fields[config.DatasetFieldDifficulty] = []string{"level"}
+	cfg.Fields[config.DatasetFieldDuration] = []string{"length"}
+	cfg.DurationUnit = config.DatasetDurationSeconds
+
+	result, err := service.LoadDataset(cfg)
+	if err != nil {
+		t.Fatalf("LoadDataset() error = %v", err)
+	}
+	if len(result.Items) != 1 {
+		t.Fatalf("result = %+v, want 1 条", result)
+	}
+	got := result.Items[0]
+	if got.Difficulty != "beginner" {
+		t.Fatalf("Difficulty = %q, want beginner（入门 归一化）", got.Difficulty)
+	}
+	if got.DurationMinutes != 90 {
+		t.Fatalf("DurationMinutes = %d, want 90（5400 秒换算）", got.DurationMinutes)
+	}
+}
+
 func TestNormalizeViewCountVariants(t *testing.T) {
 	cases := []struct {
 		raw  string

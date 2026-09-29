@@ -4,10 +4,12 @@ import (
 	"errors"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/Shionyori/edurec-platform/backend/internal/apperror"
 	"github.com/Shionyori/edurec-platform/backend/internal/model"
+	"github.com/Shionyori/edurec-platform/backend/internal/repository"
 	"github.com/Shionyori/edurec-platform/backend/internal/service"
 	"gorm.io/gorm"
 )
@@ -36,8 +38,38 @@ type errRecRepo struct {
 	err error
 }
 
-func (f *errRecRepo) Replace(uint, string, int64) (*model.Recommendation, error) {
+func (f *errRecRepo) Replace(repository.RecommendationUpsert) (*model.Recommendation, error) {
 	return nil, f.err
+}
+
+// fakeRecommendationRunRepository 记录写入的运行记录，供断言。
+type fakeRecommendationRunRepository struct {
+	created []*model.RecommendationRun
+	err     error
+}
+
+func (f *fakeRecommendationRunRepository) Create(run *model.RecommendationRun) error {
+	if f.err != nil {
+		return f.err
+	}
+	f.created = append(f.created, run)
+	return nil
+}
+
+func (f *fakeRecommendationRunRepository) List(limit int) ([]model.RecommendationRun, error) {
+	return nil, f.err
+}
+
+// newImportService 构造导入服务，默认用一个真实（内存）运行仓储；
+// 需断言运行记录时改用 NewRecommendationImportService 直接传 fakeRunRepo。
+func newImportService(
+	recs repository.RecommendationRepository,
+	users repository.UserRepository,
+	resources repository.ResourceRepository,
+	path string,
+) *service.RecommendationImportService {
+	return service.NewRecommendationImportService(
+		recs, &fakeRecommendationRunRepository{}, users, resources, path)
 }
 
 func newFakeUsers(ids ...uint) *fakeUserRepository {
@@ -67,7 +99,7 @@ func writeRecommendations(t *testing.T, content string) string {
 
 func TestImportFiltersAndWritesMatchingData(t *testing.T) {
 	recs := &fakeRecommendationRepository{}
-	svc := service.NewRecommendationImportService(
+	svc := newImportService(
 		recs,
 		newFakeUsers(1, 3),
 		newFakeResources(101, 201),
@@ -103,7 +135,7 @@ func TestImportFiltersAndWritesMatchingData(t *testing.T) {
 
 func TestImportWritesPerUser(t *testing.T) {
 	recs := &fakeRecommendationRepository{}
-	svc := service.NewRecommendationImportService(
+	svc := newImportService(
 		recs,
 		newFakeUsers(1, 2),
 		newFakeResources(10, 20, 30),
@@ -122,7 +154,7 @@ func TestImportWritesPerUser(t *testing.T) {
 
 func TestImportSkipsUserWithNoValidResources(t *testing.T) {
 	recs := &fakeRecommendationRepository{}
-	svc := service.NewRecommendationImportService(
+	svc := newImportService(
 		recs,
 		newFakeUsers(1),
 		newFakeResources(),
@@ -143,7 +175,7 @@ func TestImportSkipsUserWithNoValidResources(t *testing.T) {
 }
 
 func TestImportEmptyFileReturnsEmptyResult(t *testing.T) {
-	svc := service.NewRecommendationImportService(
+	svc := newImportService(
 		&fakeRecommendationRepository{},
 		newFakeUsers(),
 		newFakeResources(),
@@ -161,7 +193,7 @@ func TestImportEmptyFileReturnsEmptyResult(t *testing.T) {
 }
 
 func TestImportMissingFileReturnsError(t *testing.T) {
-	svc := service.NewRecommendationImportService(
+	svc := newImportService(
 		&fakeRecommendationRepository{},
 		newFakeUsers(),
 		newFakeResources(),
@@ -175,7 +207,7 @@ func TestImportMissingFileReturnsError(t *testing.T) {
 }
 
 func TestImportMalformedJSONReturnsError(t *testing.T) {
-	svc := service.NewRecommendationImportService(
+	svc := newImportService(
 		&fakeRecommendationRepository{},
 		newFakeUsers(),
 		newFakeResources(),
@@ -189,7 +221,7 @@ func TestImportMalformedJSONReturnsError(t *testing.T) {
 }
 
 func TestImportMapsUserRepoError(t *testing.T) {
-	svc := service.NewRecommendationImportService(
+	svc := newImportService(
 		&fakeRecommendationRepository{},
 		&errUserRepo{fakeUserRepository: newFakeUsers(1), err: errors.New("db error")},
 		newFakeResources(),
@@ -201,7 +233,7 @@ func TestImportMapsUserRepoError(t *testing.T) {
 }
 
 func TestImportMapsResourceRepoError(t *testing.T) {
-	svc := service.NewRecommendationImportService(
+	svc := newImportService(
 		&fakeRecommendationRepository{},
 		newFakeUsers(1),
 		&errResourceRepo{fakeResourceRepository: newFakeResources(), err: errors.New("db error")},
@@ -213,7 +245,7 @@ func TestImportMapsResourceRepoError(t *testing.T) {
 }
 
 func TestImportMapsReplaceError(t *testing.T) {
-	svc := service.NewRecommendationImportService(
+	svc := newImportService(
 		&errRecRepo{fakeRecommendationRepository: &fakeRecommendationRepository{}, err: errors.New("db error")},
 		newFakeUsers(1),
 		newFakeResources(10),
@@ -222,4 +254,46 @@ func TestImportMapsReplaceError(t *testing.T) {
 
 	_, err := svc.Import()
 	assertErrorCode(t, err, apperror.CodeInternal)
+}
+
+func TestImportReadsEnvelopeRecordsRunAndReasons(t *testing.T) {
+	dir := t.TempDir()
+	main := filepath.Join(dir, "recommendations.json")
+	meta := filepath.Join(dir, "recommendations.meta.json")
+	if err := os.WriteFile(main, []byte(`{"1": [101, 102]}`), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(meta, []byte(`{
+		"contract_version": 1, "generated_at": 1700000000, "run_id": "20260101_000000",
+		"snapshot_run_id": "20260101_000000",
+		"model": {"name": "semantic_deterministic_two_tower", "version": "v1", "encoder": "tfidf"},
+		"top_n": 20, "users_count": 1,
+		"reasons": {"1": ["与你学过的《线性代数》相关", "根据你的学习历史推荐"]}
+	}`), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	recs := &fakeRecommendationRepository{}
+	runs := &fakeRecommendationRunRepository{}
+	svc := service.NewRecommendationImportService(recs, runs, newFakeUsers(1), newFakeResources(101, 102), main)
+
+	if _, err := svc.Import(); err != nil {
+		t.Fatalf("Import() error = %v", err)
+	}
+	if len(runs.created) != 1 {
+		t.Fatalf("runs created = %d, want 1", len(runs.created))
+	}
+	run := runs.created[0]
+	if run.RunID != "20260101_000000" || run.ModelName != "semantic_deterministic_two_tower" {
+		t.Fatalf("run metadata = %+v", run)
+	}
+	if run.GeneratedAt != 1700000000 || run.ImportedUsers != 1 || run.ImportedResources != 2 {
+		t.Fatalf("run stats = %+v", run)
+	}
+	if recs.saved == nil || !strings.Contains(recs.saved.Reasons, "线性代数") {
+		t.Fatalf("reasons not persisted: %+v", recs.saved)
+	}
+	if recs.saved.RunID != "20260101_000000" {
+		t.Fatalf("recommendation run_id = %q", recs.saved.RunID)
+	}
 }

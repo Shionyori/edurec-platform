@@ -4,7 +4,7 @@
 #
 # 把「导出 -> 训练 -> 推理 -> 导入」整条离线交接链路固化为一条命令，
 # 与 docs/data-handoff.md 的手动步骤一一对应。平台只认「CSV 快照进、
-# 排名 ID 列表出」这一对契约，engine 内部算法（DSSM/DeepFM/MMR）不可见，
+# 排名 ID 列表出」这一对契约，engine 内部算法（如语义双塔）不可见，
 # 换算法或模型时本脚本无需改动。
 #
 # 前置条件：
@@ -13,7 +13,7 @@
 #
 # 用法：
 #   bash scripts/handoff.sh                 # 完整一轮：导出 + 训练 + 推理 + 导入
-#   bash scripts/handoff.sh --infer-only    # 复用 model/models.pt，只导出 + 推理 + 导入
+#   bash scripts/handoff.sh --infer-only    # 复用 model/semantic_recall.pt，只导出 + 推理 + 导入
 #
 # 可用环境变量覆盖：
 #   ENGINE_ROOT   engine 仓库根目录（默认 ../edurec-engine，与 platform 并列）
@@ -42,7 +42,7 @@ INFER_ONLY=0
 for arg in "$@"; do
   case "$arg" in
     --infer-only) INFER_ONLY=1 ;;
-    -h|--help) sed -n '2,23p' "$0"; exit 0 ;;
+    -h|--help) sed -n '2,24p' "$0"; exit 0 ;;
     *) echo "未知参数: $arg" >&2; exit 2 ;;
   esac
 done
@@ -72,21 +72,25 @@ cp -r "$BACKEND_DIR/$SNAPSHOT_DIR/$run_id" "$ENGINE_ROOT/dataset/platform_snapsh
 # [3] 训练（--infer-only 跳过）
 if [ "$INFER_ONLY" -eq 0 ]; then
   log "[3] 训练模型"
-  ( cd "$ENGINE_ROOT" && "$ENGINE_PYTHON" -m scripts.train_all \
+  ( cd "$ENGINE_ROOT" && "$ENGINE_PYTHON" -m scripts.train_semantic \
       --data-source platform --snapshot-dir "dataset/platform_snapshot/$run_id" )
 else
-  log "[3] 跳过训练（--infer-only，复用已有模型）"
+  log "[3] 跳过训练（--infer-only，复用 model/semantic_recall.pt）"
 fi
 
 # [4] 全量推理
 log "[4] 全量推理"
-( cd "$ENGINE_ROOT" && "$ENGINE_PYTHON" -m scripts.run_batch_infer \
+( cd "$ENGINE_ROOT" && "$ENGINE_PYTHON" -m scripts.infer_batch \
     --data-source platform --snapshot-dir "dataset/platform_snapshot/$run_id" )
 
 # [5] 推理结果放回 platform
 log "[5] 回传推荐结果 (data/recommendations.json)"
 mkdir -p "$BACKEND_DIR/data"
 cp "$ENGINE_ROOT/model/recommendations.json" "$BACKEND_DIR/data/recommendations.json"
+# 旁挂信封（可选，缺失不影响）：生成的元信息/分数/理由，供结果追溯与推荐解释使用
+if [ -f "$ENGINE_ROOT/model/recommendations.meta.json" ]; then
+  cp "$ENGINE_ROOT/model/recommendations.meta.json" "$BACKEND_DIR/data/recommendations.meta.json"
+fi
 
 # [6] 管理员登录并导入缓存表
 log "[6] 导入推荐缓存"

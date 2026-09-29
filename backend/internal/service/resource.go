@@ -24,28 +24,32 @@ type ResourceService struct {
 }
 
 type CreateResourceInput struct {
-	Title       string
-	Description string
-	CoverURL    string
-	Type        string
-	CategoryID  uint
-	Tags        []string
-	Metadata    map[string]any
-	Author      string
-	SourceURL   string
+	Title           string
+	Description     string
+	CoverURL        string
+	Type            string
+	CategoryID      uint
+	Tags            []string
+	Metadata        map[string]any
+	Author          string
+	SourceURL       string
+	Difficulty      string
+	DurationMinutes uint
 }
 
 type UpdateResourceInput struct {
-	ID          uint
-	Title       *string
-	Description *string
-	CoverURL    *string
-	Type        *string
-	CategoryID  *uint
-	Tags        *[]string
-	Metadata    *map[string]any
-	Author      *string
-	SourceURL   *string
+	ID              uint
+	Title           *string
+	Description     *string
+	CoverURL        *string
+	Type            *string
+	CategoryID      *uint
+	Tags            *[]string
+	Metadata        *map[string]any
+	Author          *string
+	SourceURL       *string
+	Difficulty      *string
+	DurationMinutes *uint
 }
 
 func NewResourceService(resources repository.ResourceRepository) *ResourceService {
@@ -104,8 +108,12 @@ func (s *ResourceService) Create(ctx context.Context, input CreateResourceInput)
 	input.Type = strings.TrimSpace(input.Type)
 	input.Author = strings.TrimSpace(input.Author)
 	input.SourceURL = strings.TrimSpace(input.SourceURL)
+	input.Difficulty = strings.TrimSpace(input.Difficulty)
 
 	if input.Title == "" || input.Description == "" || input.Type == "" || input.CategoryID == 0 {
+		return nil, apperror.BadRequest("请求参数错误")
+	}
+	if !model.IsValidDifficulty(input.Difficulty) {
 		return nil, apperror.BadRequest("请求参数错误")
 	}
 	switch input.Type {
@@ -132,15 +140,17 @@ func (s *ResourceService) Create(ctx context.Context, input CreateResourceInput)
 	}
 
 	resource := &model.Resource{
-		Title:       input.Title,
-		Description: input.Description,
-		CoverURL:    input.CoverURL,
-		Type:        input.Type,
-		CategoryID:  input.CategoryID,
-		Tags:        string(tags),
-		Metadata:    string(metadata),
-		Author:      input.Author,
-		SourceURL:   input.SourceURL,
+		Title:           input.Title,
+		Description:     input.Description,
+		CoverURL:        input.CoverURL,
+		Type:            input.Type,
+		CategoryID:      input.CategoryID,
+		Tags:            string(tags),
+		Metadata:        string(metadata),
+		Author:          input.Author,
+		SourceURL:       input.SourceURL,
+		Difficulty:      input.Difficulty,
+		DurationMinutes: input.DurationMinutes,
 	}
 	if err := s.resources.Create(resource); err != nil {
 		return nil, apperror.Internal(err)
@@ -208,6 +218,16 @@ func (s *ResourceService) Update(ctx context.Context, input UpdateResourceInput)
 	}
 	if input.SourceURL != nil {
 		resource.SourceURL = strings.TrimSpace(*input.SourceURL)
+	}
+	if input.Difficulty != nil {
+		value := strings.TrimSpace(*input.Difficulty)
+		if !model.IsValidDifficulty(value) {
+			return nil, apperror.BadRequest("请求参数错误")
+		}
+		resource.Difficulty = value
+	}
+	if input.DurationMinutes != nil {
+		resource.DurationMinutes = *input.DurationMinutes
 	}
 
 	if err := s.resources.Update(resource); err != nil {

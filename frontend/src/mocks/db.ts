@@ -9,6 +9,7 @@ export interface DbUser {
   avatar_url: string | null
   is_admin: boolean
   created_at: string
+  interests?: number[]
 }
 
 export interface DbCategory {

@@ -4,6 +4,8 @@ export interface User {
   email: string
   display_name: string | null
   avatar_url: string | null
+  // 冷启动兴趣分类 ID（新用户无行为时用于兜底推荐）
+  interests?: number[]
   is_admin?: boolean
   created_at: string
   updated_at?: string
@@ -30,9 +32,17 @@ export interface Resource {
   source_url: string | null
   avg_rating: number
   view_count: number
+  // 结构化推荐特征：难度（空串=未知）、时长（分钟，0=未知）
+  difficulty?: Difficulty | ''
+  duration_minutes?: number
+  // 推荐理由（仅推荐接口返回时带，可解释性）
+  reason?: string
   created_at: string
   updated_at: string
 }
+
+// 学习难度：与后端 model.Difficulty* 常量一致
+export type Difficulty = 'beginner' | 'intermediate' | 'advanced'
 
 export interface Rating {
   id: number
@@ -91,4 +101,33 @@ export interface RegisterPayload {
 export interface RecommendationResult {
   list: Resource[]
   updated_at: string
+  run_id?: string
+}
+
+// 一次推荐推理运行的记录（来自 engine 旁挂信封，导入时落库）
+export interface RecommendationRun {
+  id: number
+  run_id: string
+  snapshot_run_id: string
+  model_name: string
+  model_version: string
+  encoder: string
+  generated_at: number
+  top_n: number
+  users_count: number
+  imported_users: number
+  skipped_users: number
+  imported_resources: number
+  skipped_resources: number
+  created_at: number
+}
+
+// 推荐效果统计：CTR = clicks / impressions
+export interface RecommendationStats {
+  impressions: number
+  clicks: number
+  favorites: number
+  views: number
+  recommendation_users: number
+  click_through_rate: number
 }

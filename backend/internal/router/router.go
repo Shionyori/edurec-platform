@@ -20,8 +20,11 @@ func New(cfg *config.Config, db *gorm.DB, rdb *redis.Client) *gin.Engine {
 	categoryRepo := repository.NewCategoryRepository(db)
 	resourceRepo := repository.NewResourceRepository(db)
 	behaviorRepo := repository.NewUserBehaviorRepository(db)
+	impressionRepo := repository.NewResourceImpressionRepository(db)
 	ratingRepo := repository.NewRatingRepository(db)
 	recommendationRepo := repository.NewRecommendationRepository(db)
+	recommendationRunRepo := repository.NewRecommendationRunRepository(db)
+	statsRepo := repository.NewStatsRepository(db)
 	adminRepo := repository.NewAdminRepository(db)
 	commentRepo := repository.NewCommentRepository(db)
 	refreshTokenStore := repository.NewRedisRefreshTokenStore(rdb)
@@ -35,6 +38,7 @@ func New(cfg *config.Config, db *gorm.DB, rdb *redis.Client) *gin.Engine {
 	categoryService := service.NewCategoryService(categoryRepo)
 	resourceService := service.NewResourceService(resourceRepo)
 	behaviorService := service.NewUserBehaviorService(behaviorRepo, resourceRepo)
+	impressionService := service.NewResourceImpressionService(impressionRepo, resourceRepo)
 	ratingService := service.NewRatingService(ratingRepo, resourceRepo)
 
 	// 在线 B 站采集：搜索落库 + 评论抓取（复用离线导入服务，filePath 仅离线导入用）
@@ -47,9 +51,9 @@ func New(cfg *config.Config, db *gorm.DB, rdb *redis.Client) *gin.Engine {
 	bilibiliOnlineService := service.NewBilibiliOnlineService(bilibiliImportService, cfg.Bilibili)
 	resourceService.SetBilibiliOnline(bilibiliOnlineService)
 	commentService := service.NewCommentService(commentRepo, bilibiliOnlineService, cfg.Bilibili.CommentLimit)
-	recommendationService := service.NewRecommendationService(recommendationRepo, resourceRepo)
+	recommendationService := service.NewRecommendationService(recommendationRepo, resourceRepo, userRepo)
 	recommendationImportService := service.NewRecommendationImportService(
-		recommendationRepo, userRepo, resourceRepo, cfg.Engine.RecommendationsFile,
+		recommendationRepo, recommendationRunRepo, userRepo, resourceRepo, cfg.Engine.RecommendationsFile,
 	)
 	adminService := service.NewAdminService(adminRepo)
 	authHandler := handler.NewAuthHandler(authService, userService)
@@ -57,9 +61,10 @@ func New(cfg *config.Config, db *gorm.DB, rdb *redis.Client) *gin.Engine {
 	categoryHandler := handler.NewCategoryHandler(categoryService)
 	resourceHandler := handler.NewResourceHandler(resourceService)
 	behaviorHandler := handler.NewUserBehaviorHandler(behaviorService)
+	impressionHandler := handler.NewResourceImpressionHandler(impressionService)
 	ratingHandler := handler.NewRatingHandler(ratingService)
 	commentHandler := handler.NewCommentHandler(resourceService, commentService)
-	recommendationHandler := handler.NewRecommendationHandler(recommendationService, recommendationImportService)
+	recommendationHandler := handler.NewRecommendationHandler(recommendationService, recommendationImportService, recommendationRunRepo, statsRepo)
 	adminHandler := handler.NewAdminHandler(adminService)
 
 	r := gin.New()
@@ -80,6 +85,7 @@ func New(cfg *config.Config, db *gorm.DB, rdb *redis.Client) *gin.Engine {
 	protected.Use(middleware.AuthRequired(jwtManager))
 	protected.GET("/users/me", userHandler.Me)
 	protected.PUT("/users/me", userHandler.UpdateMe)
+	protected.PUT("/users/me/interests", userHandler.UpdateInterests)
 	protected.GET("/categories", categoryHandler.List)
 	protected.POST("/categories", middleware.AdminRequired(userRepo), categoryHandler.Create)
 	protected.GET("/resources", resourceHandler.List)
@@ -88,6 +94,7 @@ func New(cfg *config.Config, db *gorm.DB, rdb *redis.Client) *gin.Engine {
 	protected.PUT("/resources/:id", middleware.AdminRequired(userRepo), resourceHandler.Update)
 	protected.DELETE("/resources/:id", middleware.AdminRequired(userRepo), resourceHandler.Delete)
 	protected.POST("/resources/:id/behaviors", behaviorHandler.Record)
+	protected.POST("/impressions", impressionHandler.Record)
 	protected.GET("/users/me/behaviors", behaviorHandler.List)
 	protected.GET("/resources/:id/ratings", ratingHandler.List)
 	protected.POST("/resources/:id/ratings", ratingHandler.Upsert)
@@ -96,6 +103,8 @@ func New(cfg *config.Config, db *gorm.DB, rdb *redis.Client) *gin.Engine {
 	protected.GET("/admin/users", middleware.AdminRequired(userRepo), adminHandler.ListUsers)
 	protected.GET("/admin/resources", middleware.AdminRequired(userRepo), adminHandler.ListResources)
 	protected.POST("/admin/recommendations/import", middleware.AdminRequired(userRepo), recommendationHandler.Import)
+	protected.GET("/admin/recommendation-runs", middleware.AdminRequired(userRepo), recommendationHandler.ListRuns)
+	protected.GET("/admin/recommendation-stats", middleware.AdminRequired(userRepo), recommendationHandler.Stats)
 
 	return r
 }

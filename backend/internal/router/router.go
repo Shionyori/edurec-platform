@@ -20,6 +20,7 @@ func New(cfg *config.Config, db *gorm.DB, rdb *redis.Client) *gin.Engine {
 	categoryRepo := repository.NewCategoryRepository(db)
 	resourceRepo := repository.NewResourceRepository(db)
 	behaviorRepo := repository.NewUserBehaviorRepository(db)
+	impressionRepo := repository.NewResourceImpressionRepository(db)
 	ratingRepo := repository.NewRatingRepository(db)
 	recommendationRepo := repository.NewRecommendationRepository(db)
 	adminRepo := repository.NewAdminRepository(db)
@@ -35,6 +36,7 @@ func New(cfg *config.Config, db *gorm.DB, rdb *redis.Client) *gin.Engine {
 	categoryService := service.NewCategoryService(categoryRepo)
 	resourceService := service.NewResourceService(resourceRepo)
 	behaviorService := service.NewUserBehaviorService(behaviorRepo, resourceRepo)
+	impressionService := service.NewResourceImpressionService(impressionRepo, resourceRepo)
 	ratingService := service.NewRatingService(ratingRepo, resourceRepo)
 
 	// 在线 B 站采集：搜索落库 + 评论抓取（复用离线导入服务，filePath 仅离线导入用）
@@ -57,6 +59,7 @@ func New(cfg *config.Config, db *gorm.DB, rdb *redis.Client) *gin.Engine {
 	categoryHandler := handler.NewCategoryHandler(categoryService)
 	resourceHandler := handler.NewResourceHandler(resourceService)
 	behaviorHandler := handler.NewUserBehaviorHandler(behaviorService)
+	impressionHandler := handler.NewResourceImpressionHandler(impressionService)
 	ratingHandler := handler.NewRatingHandler(ratingService)
 	commentHandler := handler.NewCommentHandler(resourceService, commentService)
 	recommendationHandler := handler.NewRecommendationHandler(recommendationService, recommendationImportService)
@@ -88,6 +91,7 @@ func New(cfg *config.Config, db *gorm.DB, rdb *redis.Client) *gin.Engine {
 	protected.PUT("/resources/:id", middleware.AdminRequired(userRepo), resourceHandler.Update)
 	protected.DELETE("/resources/:id", middleware.AdminRequired(userRepo), resourceHandler.Delete)
 	protected.POST("/resources/:id/behaviors", behaviorHandler.Record)
+	protected.POST("/impressions", impressionHandler.Record)
 	protected.GET("/users/me/behaviors", behaviorHandler.List)
 	protected.GET("/resources/:id/ratings", ratingHandler.List)
 	protected.POST("/resources/:id/ratings", ratingHandler.Upsert)

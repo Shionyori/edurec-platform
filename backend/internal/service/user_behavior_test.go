@@ -12,11 +12,15 @@ import (
 )
 
 type fakeUserBehaviorRepository struct {
-	createErr   error
-	lastCreated *model.UserBehavior
-	listResult  *repository.UserBehaviorListResult
-	listErr     error
-	lastQuery   repository.UserBehaviorListQuery
+	createErr    error
+	lastCreated  *model.UserBehavior
+	listResult   *repository.UserBehaviorListResult
+	listErr      error
+	lastQuery    repository.UserBehaviorListQuery
+	existsResult bool
+	existsErr    error
+	deleteErr    error
+	deleted      bool
 }
 
 func (f *fakeUserBehaviorRepository) Create(behavior *model.UserBehavior) error {
@@ -25,6 +29,22 @@ func (f *fakeUserBehaviorRepository) Create(behavior *model.UserBehavior) error 
 	}
 	f.lastCreated = behavior
 	return nil
+}
+
+func (f *fakeUserBehaviorRepository) Exists(uint, uint, string) (bool, error) {
+	return f.existsResult, f.existsErr
+}
+
+func (f *fakeUserBehaviorRepository) DeleteByUserResourceAction(uint, uint, string) error {
+	if f.deleteErr != nil {
+		return f.deleteErr
+	}
+	f.deleted = true
+	return nil
+}
+
+func (f *fakeUserBehaviorRepository) ListFavoriteResourceIDs(uint, int, int) ([]uint, int64, error) {
+	return nil, 0, nil
 }
 
 func (f *fakeUserBehaviorRepository) List(query repository.UserBehaviorListQuery) (*repository.UserBehaviorListResult, error) {
@@ -123,4 +143,60 @@ func TestUserBehaviorListMapsRepositoryError(t *testing.T) {
 
 	_, err := svc.List(context.Background(), repository.UserBehaviorListQuery{})
 	assertErrorCode(t, err, apperror.CodeInternal)
+}
+
+func TestSetFavoriteCreatesWhenAbsent(t *testing.T) {
+	behaviors := &fakeUserBehaviorRepository{existsResult: false}
+	resources := &fakeResourceRepository{findResult: &model.Resource{Title: "机器学习入门"}}
+	svc := service.NewUserBehaviorService(behaviors, resources)
+
+	if err := svc.SetFavorite(context.Background(), 7, 9, true); err != nil {
+		t.Fatalf("SetFavorite() error = %v", err)
+	}
+	if behaviors.lastCreated == nil || behaviors.lastCreated.Action != "favorite" {
+		t.Fatalf("SetFavorite() did not create favorite behavior: %+v", behaviors.lastCreated)
+	}
+}
+
+func TestSetFavoriteIsIdempotentWhenPresent(t *testing.T) {
+	behaviors := &fakeUserBehaviorRepository{existsResult: true}
+	svc := service.NewUserBehaviorService(behaviors, &fakeResourceRepository{findResult: &model.Resource{}})
+
+	if err := svc.SetFavorite(context.Background(), 7, 9, true); err != nil {
+		t.Fatalf("SetFavorite() error = %v", err)
+	}
+	if behaviors.lastCreated != nil {
+		t.Fatal("SetFavorite() should not create a duplicate favorite")
+	}
+}
+
+func TestSetFavoriteFalseDeletes(t *testing.T) {
+	behaviors := &fakeUserBehaviorRepository{}
+	svc := service.NewUserBehaviorService(behaviors, &fakeResourceRepository{findResult: &model.Resource{}})
+
+	if err := svc.SetFavorite(context.Background(), 7, 9, false); err != nil {
+		t.Fatalf("SetFavorite() error = %v", err)
+	}
+	if !behaviors.deleted {
+		t.Fatal("SetFavorite(false) should delete favorite behavior")
+	}
+}
+
+func TestSetFavoriteMapsResourceNotFound(t *testing.T) {
+	svc := service.NewUserBehaviorService(
+		&fakeUserBehaviorRepository{},
+		&fakeResourceRepository{findErr: repository.ErrNotFound},
+	)
+	assertErrorCode(t, svc.SetFavorite(context.Background(), 7, 9, true), apperror.CodeNotFound)
+}
+
+func TestIsFavoriteDelegatesToRepository(t *testing.T) {
+	svc := service.NewUserBehaviorService(
+		&fakeUserBehaviorRepository{existsResult: true},
+		&fakeResourceRepository{},
+	)
+	got, err := svc.IsFavorite(context.Background(), 7, 9)
+	if err != nil || !got {
+		t.Fatalf("IsFavorite() = %v, %v; want true, nil", got, err)
+	}
 }

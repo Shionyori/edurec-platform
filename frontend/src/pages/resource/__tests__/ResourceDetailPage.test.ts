@@ -5,7 +5,7 @@ import type { Rating, Resource } from '@/types'
 import { getResource } from '@/api/resource'
 import { listRatings, upsertRating } from '@/api/rating'
 import { listComments } from '@/api/comment'
-import { recordBehavior } from '@/api/behavior'
+import { recordBehavior, setFavorite } from '@/api/behavior'
 import * as vueRouterMock from 'vue-router'
 import ResourceDetailPage from '../ResourceDetailPage.vue'
 
@@ -25,7 +25,7 @@ const route = (vueRouterMock as unknown as { route: { params: { id: string } } }
 vi.mock('@/api/resource', () => ({ getResource: vi.fn() }))
 vi.mock('@/api/rating', () => ({ listRatings: vi.fn(), upsertRating: vi.fn() }))
 vi.mock('@/api/comment', () => ({ listComments: vi.fn() }))
-vi.mock('@/api/behavior', () => ({ recordBehavior: vi.fn() }))
+vi.mock('@/api/behavior', () => ({ recordBehavior: vi.fn(), setFavorite: vi.fn(() => Promise.resolve({ favorited: true })) }))
 vi.mock('@/stores/auth', () => ({ useAuthStore: () => ({ user: { id: 2, username: 'user' } }) }))
 
 const mockedGetResource = vi.mocked(getResource)
@@ -33,6 +33,7 @@ const mockedListRatings = vi.mocked(listRatings)
 const mockedUpsertRating = vi.mocked(upsertRating)
 const mockedListComments = vi.mocked(listComments)
 const mockedRecordBehavior = vi.mocked(recordBehavior)
+const mockedSetFavorite = vi.mocked(setFavorite)
 
 const resource: Resource = {
   id: 1, title: '机器学习入门', description: '面向零基础学习者',
@@ -76,8 +77,9 @@ describe('ResourceDetailPage', () => {
     const favBtn = wrapper.findAll('button').find((b) => b.text() === '收藏')
     expect(favBtn).toBeTruthy()
     await favBtn!.trigger('click')
+    await flushPromises()
 
-    expect(mockedRecordBehavior).toHaveBeenCalledWith(1, 'favorite')
+    expect(mockedSetFavorite).toHaveBeenCalledWith(1, true)
     expect(wrapper.text()).toContain('已收藏')
   })
 

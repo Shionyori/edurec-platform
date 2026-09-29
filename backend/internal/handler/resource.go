@@ -1,12 +1,14 @@
 package handler
 
 import (
+	"context"
 	"encoding/json"
 	"strconv"
 	"strings"
 	"time"
 
 	"github.com/Shionyori/edurec-platform/backend/internal/apperror"
+	"github.com/Shionyori/edurec-platform/backend/internal/middleware"
 	"github.com/Shionyori/edurec-platform/backend/internal/model"
 	"github.com/Shionyori/edurec-platform/backend/internal/repository"
 	"github.com/Shionyori/edurec-platform/backend/internal/response"
@@ -14,12 +16,18 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-type ResourceHandler struct {
-	resources *service.ResourceService
+// favoriteReader 提供「当前用户是否已收藏某资源」的读取能力（由 UserBehaviorService 实现）
+type favoriteReader interface {
+	IsFavorite(ctx context.Context, userID, resourceID uint) (bool, error)
 }
 
-func NewResourceHandler(resources *service.ResourceService) *ResourceHandler {
-	return &ResourceHandler{resources: resources}
+type ResourceHandler struct {
+	resources *service.ResourceService
+	favorites favoriteReader
+}
+
+func NewResourceHandler(resources *service.ResourceService, favorites favoriteReader) *ResourceHandler {
+	return &ResourceHandler{resources: resources, favorites: favorites}
 }
 
 type categorySummary struct {
@@ -60,6 +68,7 @@ type resourceDetail struct {
 	DurationMinutes uint             `json:"duration_minutes"`
 	CreatedAt       time.Time        `json:"created_at"`
 	UpdatedAt       time.Time        `json:"updated_at"`
+	Favorited       bool             `json:"favorited"`
 }
 
 func toResourceListItem(resource *model.Resource) resourceListItem {
@@ -198,7 +207,15 @@ func (h *ResourceHandler) Detail(c *gin.Context) {
 		return
 	}
 
-	response.OK(c, toResourceDetail(resource))
+	detail := toResourceDetail(resource)
+	// 已收藏状态：登录用户才查（详情路由本身需认证，这里再防御一次）
+	if userID, ok := middleware.UserID(c); ok && h.favorites != nil {
+		if fav, err := h.favorites.IsFavorite(c.Request.Context(), userID, uint(id)); err == nil {
+			detail.Favorited = fav
+		}
+	}
+
+	response.OK(c, detail)
 }
 
 type createResourceRequest struct {

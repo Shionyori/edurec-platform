@@ -37,6 +37,8 @@ export interface Resource {
   duration_minutes?: number
   // 推荐理由（仅推荐接口返回时带，可解释性）
   reason?: string
+  // 当前用户是否已收藏（仅详情接口返回时带）
+  favorited?: boolean
   created_at: string
   updated_at: string
 }

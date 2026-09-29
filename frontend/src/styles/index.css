@@ -74,6 +74,26 @@ html {
   animation: fade-up 0.32s ease both;
 }
 
+/* 列表（行为历史等）增删/换序过渡 */
+.list-enter-active {
+  transition: opacity 0.25s ease, transform 0.25s ease;
+}
+.list-leave-active {
+  transition: opacity 0.15s ease;
+  position: absolute;
+  width: 100%;
+}
+.list-enter-from {
+  opacity: 0;
+  transform: translateY(6px);
+}
+.list-leave-to {
+  opacity: 0;
+}
+.list-move {
+  transition: transform 0.25s ease;
+}
+
 /* 尊重系统的「减少动效」偏好 */
 @media (prefers-reduced-motion: reduce) {
   html {
@@ -85,5 +105,10 @@ html {
   }
   .fade-up {
     animation: none;
+  }
+  .list-enter-active,
+  .list-leave-active,
+  .list-move {
+    transition: none;
   }
 }

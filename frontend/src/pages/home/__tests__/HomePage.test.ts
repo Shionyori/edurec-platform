@@ -3,14 +3,17 @@ import { flushPromises, mount } from '@vue/test-utils'
 import ElementPlus from 'element-plus'
 import type { RecommendationResult, Resource } from '@/types'
 import { getRecommendations } from '@/api/recommendation'
+import { recordImpressions } from '@/api/impression'
 import HomePage from '../index.vue'
 
 vi.mock('vue-router', () => ({
   RouterLink: { template: '<a><slot /></a>' },
 }))
 vi.mock('@/api/recommendation', () => ({ getRecommendations: vi.fn() }))
+vi.mock('@/api/impression', () => ({ recordImpressions: vi.fn(() => Promise.resolve(null)) }))
 
 const mockedGetRecommendations = vi.mocked(getRecommendations)
+const mockedRecordImpressions = vi.mocked(recordImpressions)
 
 const resource: Resource = {
   id: 1, title: '机器学习入门', description: '面向零基础学习者',
@@ -46,5 +49,10 @@ describe('HomePage', () => {
     mockedGetRecommendations.mockRejectedValue(new Error('加载失败'))
     const wrapper = await mountPage()
     expect(wrapper.text()).toContain('加载失败')
+  })
+
+  it('推荐加载成功后上报本屏曝光', async () => {
+    await mountPage()
+    expect(mockedRecordImpressions).toHaveBeenCalledWith('home', [1])
   })
 })

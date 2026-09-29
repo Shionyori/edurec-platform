@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
 import { getRecommendations } from '@/api/recommendation'
+import { recordImpressions } from '@/api/impression'
 import ResourceCard from '@/components/resource/ResourceCard.vue'
 import type { Resource } from '@/types'
 
@@ -13,6 +14,8 @@ onMounted(async () => {
   try {
     const data = await getRecommendations(12)
     resources.value = data.list
+    // 列表渲染即曝光：记录本屏展示的资源（CTR 的分母）。失败静默，埋点不影响页面。
+    recordImpressions('home', data.list.map((r) => r.id)).catch(() => {})
   } catch (e) {
     error.value = e instanceof Error ? e.message : '加载失败'
   } finally {

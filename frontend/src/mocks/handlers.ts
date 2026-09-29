@@ -349,6 +349,13 @@ export const handlers = [
     return ok(null)
   }),
 
+  // 曝光（推荐展示打点，独立于用户行为，不参与正样本训练）
+  http.post(`${BASE}/impressions`, ({ request }) => {
+    const user = requireUser(request)
+    if (!user) return bizError(10002, '未认证', 401)
+    return ok(null)
+  }),
+
   http.get(`${BASE}/users/me/behaviors`, ({ request }) => {
     const user = requireUser(request)
     if (!user) return bizError(10002, '未认证', 401)

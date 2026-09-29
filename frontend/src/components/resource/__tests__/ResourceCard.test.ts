@@ -1,8 +1,13 @@
-import { describe, expect, it } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { RouterLinkStub, mount } from '@vue/test-utils'
 import ElementPlus from 'element-plus'
 import type { Resource } from '@/types'
 import ResourceCard from '../ResourceCard.vue'
+
+vi.mock('@/api/behavior', () => ({
+  recordBehavior: vi.fn(() => Promise.resolve(null)),
+}))
+import { recordBehavior } from '@/api/behavior'
 
 const resource: Resource = {
   id: 1, title: '机器学习入门', description: '面向零基础学习者',
@@ -39,6 +44,29 @@ describe('ResourceCard', () => {
     const link = wrapper.findComponent(RouterLinkStub)
     expect(link.exists()).toBe(true)
     expect(link.props('to')).toEqual({ name: 'resource-detail', params: { id: 1 } })
+  })
+})
+
+describe('ResourceCard 点击上报', () => {
+  beforeEach(() => {
+    vi.mocked(recordBehavior).mockClear()
+  })
+
+  it('点击卡片时上报 click 行为（列表→详情的点击转化信号）', async () => {
+    const wrapper = mountCard()
+
+    await wrapper.findComponent(RouterLinkStub).trigger('click')
+
+    expect(recordBehavior).toHaveBeenCalledWith(1, 'click')
+  })
+
+  it('上报失败不影响卡片渲染', async () => {
+    vi.mocked(recordBehavior).mockRejectedValueOnce(new Error('network'))
+    const wrapper = mountCard()
+
+    await wrapper.findComponent(RouterLinkStub).trigger('click')
+
+    expect(wrapper.text()).toContain('机器学习入门')
   })
 })
 

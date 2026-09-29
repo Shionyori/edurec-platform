@@ -71,7 +71,7 @@ onMounted(fetchList)
     </div>
 
     <!-- 内容区预留一整页高度（列表 + 分页器）：无论切到哪个筛选，卡片高度恒定，页面不会因变矮而上移 -->
-    <div class="mt-4 flex min-h-[34rem] flex-col" data-testid="history-content">
+    <div class="mt-4 flex min-h-[30rem] flex-col" data-testid="history-content">
       <div class="flex-1">
         <!-- 首次加载：骨架屏 -->
         <div v-if="firstLoad && loading && !error">

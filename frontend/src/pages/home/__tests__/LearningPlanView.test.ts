@@ -1,15 +1,29 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { flushPromises, mount } from '@vue/test-utils'
 import ElementPlus from 'element-plus'
-import type { LearningPlan } from '@/types'
+import type { LearningPlan, Resource } from '@/types'
 import { getLearningPlan } from '@/api/learningPlan'
+import { recordImpressions } from '@/api/impression'
 import LearningPlanView from '../LearningPlanView.vue'
 
 vi.mock('vue-router', () => ({ RouterLink: { template: '<a><slot /></a>' } }))
 vi.mock('@/api/learningPlan', () => ({ getLearningPlan: vi.fn() }))
 vi.mock('@/api/behavior', () => ({ recordBehavior: vi.fn(() => Promise.resolve(null)) }))
+vi.mock('@/api/impression', () => ({ recordImpressions: vi.fn(() => Promise.resolve(null)) }))
 
 const mockedGetLearningPlan = vi.mocked(getLearningPlan)
+const mockedRecordImpressions = vi.mocked(recordImpressions)
+
+function resourceFixture(id: number): Resource {
+  return {
+    id, title: `资源 ${id}`, description: '简介',
+    cover_url: null, type: 'video',
+    category: null, tags: [], metadata: {},
+    author: null, source_url: null,
+    avg_rating: 4, view_count: 10,
+    created_at: '2026-07-01T08:00:00Z', updated_at: '2026-07-01T08:00:00Z',
+  }
+}
 
 const plan: LearningPlan = {
   goal: '我想入门机器学习',
@@ -88,5 +102,30 @@ describe('LearningPlanView', () => {
 
     expect(wrapper.text()).toContain('线性代数')
     expect(wrapper.text()).not.toContain('监督学习')
+  })
+
+  it('计划加载成功后按 learning-plan 场景上报本屏曝光', async () => {
+    mockedGetLearningPlan.mockResolvedValue({
+      ...plan,
+      groups: [
+        {
+          knowledge_point: { id: 1, name: '监督学习', description: '', category: null },
+          total: 2,
+          resources: [
+            { ...resourceFixture(1) },
+            { ...resourceFixture(2) },
+          ],
+        },
+      ],
+    })
+
+    await mountView()
+
+    expect(mockedRecordImpressions).toHaveBeenCalledWith('learning-plan', [1, 2])
+  })
+
+  it('没有资源时不发曝光请求', async () => {
+    await mountView()
+    expect(mockedRecordImpressions).not.toHaveBeenCalled()
   })
 })

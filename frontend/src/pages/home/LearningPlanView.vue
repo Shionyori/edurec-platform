@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
 import { getLearningPlan } from '@/api/learningPlan'
+import { recordImpressions } from '@/api/impression'
 import KnowledgePointPanel from './KnowledgePointPanel.vue'
 import type { LearningPlan, LearningPlanGroup } from '@/types'
 
@@ -22,6 +23,11 @@ async function load(goal: string) {
     const data = await getLearningPlan(goal)
     if (current !== generation) return // 已被更新的请求取代，丢弃
     plan.value = data
+    // 面板展开即曝光：记录本屏知识点下的资源。用独立场景，避免扰动首页 CTR 口径。
+    // 失败静默，埋点不影响页面。
+    const shown = data.groups.flatMap((g) => g.resources.map((r) => r.id))
+    // 无可见资源时跳过：避免一次空曝光调用（服务端没有任何资源可记录）
+    if (shown.length > 0) recordImpressions('learning-plan', shown).catch(() => {})
   } catch (e) {
     if (current !== generation) return
     error.value = e instanceof Error ? e.message : '加载失败'

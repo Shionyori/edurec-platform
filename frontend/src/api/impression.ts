@@ -1,7 +1,7 @@
 import { post } from './client'
 
 // 曝光场景，与后端 ResourceImpression.Scene 对应
-export type ImpressionScene = 'home' | 'search' | 'detail'
+export type ImpressionScene = 'home' | 'search' | 'detail' | 'learning-plan'
 
 // 上报一次推荐展示（批量），由列表渲染后调用。
 // 曝光是 CTR 的分母（CTR = click / impression），也是推荐评估与负采样的数据来源；

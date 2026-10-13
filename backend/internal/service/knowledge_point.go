@@ -27,7 +27,8 @@ const (
 	// minGoalRunes / maxGoalRunes 学习目标的字符数区间
 	minGoalRunes = 2
 	maxGoalRunes = 100
-	// minMatchRunes 命中词的最小长度，见 Model.MatchKnowledgePoints 注释
+	// minMatchRunes 命中词的最小长度：短词（尤其单字符）会命中几乎任何目标文本，
+	// 让匹配失去意义。中文与拉丁文都按 rune 计。
 	minMatchRunes = 2
 	// fallbackGroupName 兜底分组的展示名
 	fallbackGroupName = "为你找到的相关资源"

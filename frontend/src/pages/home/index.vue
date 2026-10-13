@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { getRecommendations } from '@/api/recommendation'
 import { recordImpressions } from '@/api/impression'
@@ -51,10 +51,18 @@ function resetGoal() {
   router.push({ name: 'home' })
 }
 
-// 未提交目标时才有推荐流——提交后整页切换为知识点面板（决策 #7 / #8）
-onMounted(() => {
-  if (!goal.value) load()
-})
+// 未提交目标时才有推荐流——提交后整页切换为知识点面板（决策 #7 / #8）。
+//
+// 用 watch + immediate 而不是 onMounted：只在挂载时拉一次的话，带 ?goal= 进入
+// （或刷新时正处于计划态）再点「换一个目标」，goal 变空但 resources 仍是 []，
+// 页面会渲染成「暂无推荐内容」并且不再发请求——对已有兴趣的用户没有恢复入口。
+watch(
+  () => goal.value,
+  (current) => {
+    if (!current && resources.value.length === 0 && !loading.value) load()
+  },
+  { immediate: true },
+)
 </script>
 
 <template>

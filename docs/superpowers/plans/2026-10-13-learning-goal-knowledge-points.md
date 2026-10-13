@@ -81,7 +81,7 @@
 
 | 里程碑 | 分支 | Tasks | 提交信息 |
 |---|---|---|---|
-| M1 | `feat/knowledge-point-import` | 1–4 | 见表内各 Task |
+| M1 | `feat/knowledge-point-import` | 1–4b | 见表内各 Task |
 | M2 | `feat/learning-plan-api` | 5–6 | 同上 |
 | M3 | `feat/frontend-learning-plan` | 7–10 | 同上 |
 | M4 | `feat/frontend-learning-plan-impression` | 11 | 同上 |
@@ -1025,6 +1025,495 @@ git commit -m "feat(backend): 新增知识点导入命令"
 
 ---
 
+### Task 4b: 知识点质量修补（大小写归并 · 停用词 · 别名归并）
+
+> **为什么有这个 Task**：Task 4 的人工闸门实测 60 个候选知识点，上半段是可用的真知识点
+> （机器学习 35 / 人工智能 28 / 深度学习 21 / 编程 19 / Python 18），但暴露出三类问题：
+> ① 拉丁文大小写未归一把同一个知识点拆成多条（`GO`/`Go`/`go`/`Golang`/`GOLANG`/`Go语言`/`go语言`/`GO语言`
+> 共 8 条，合并后约 38 会排全库第一——即这个缺陷还把真正的头号知识点压到了第 12 位）；
+> ② 平台徽章/人名/元信息词混入（科技猎手、吴恩达、视频教程…）；③ 语义重叠（机器学习 / 机器学习入门 / 机器学习算法）。
+> ① 是缺陷，② 是配置问题，③ 用 `aliases` 解决。用户已就此拍板：修这三处，不换知识点来源。
+
+**Files:**
+- Modify: `backend/internal/service/knowledge_point_import.go`
+- Modify: `backend/internal/service/knowledge_point_import_test.go`
+- Modify: `backend/internal/config/config.go`
+- Modify: `backend/internal/config/config_test.go`
+- Modify: `backend/internal/repository/resource.go`
+- Modify: `backend/configs/config.yaml`
+
+**Interfaces:**
+- Consumes: `model.Resource`、`repository.ResourceListQuery`、`config.KnowledgePointsConfig`
+- Produces:
+  - `service.AggregateOptions{ Stoplist []string; MinCount int; Max int; Synonyms map[string][]string }`
+  - `service.AggregateKnowledgePointsFromTags(resources []model.Resource, opts AggregateOptions) []TagAggregate` —**签名变更**（原为四个位置参数）
+  - `service.TagAggregate{ Name string; Count int; CategoryID uint; Aliases []string }` —**新增 `Aliases`**
+  - `config.KnowledgePointsConfig.Synonyms map[string][]string`（mapstructure: `synonyms`）
+  - `repository.ResourceListQuery.AnyTags []string`（OR 语义，与既有的 `Tags` AND 语义并存）
+
+- [ ] **Step 1: 写失败的测试 — 大小写归并与别名归并**
+
+在 `backend/internal/service/knowledge_point_import_test.go` 中，**更新既有用例的调用形式**（签名变了），并追加：
+
+```go
+func TestAggregate_CaseFoldingAndSynonyms(t *testing.T) {
+	t.Run("拉丁文大小写归并到同一条，展示名取出现最多的写法", func(t *testing.T) {
+		resources := []model.Resource{
+			resourceWithTags(1, 1, `["Python"]`),
+			resourceWithTags(2, 1, `["Python"]`),
+			resourceWithTags(3, 1, `["python"]`),
+		}
+		got := service.AggregateKnowledgePointsFromTags(resources, service.AggregateOptions{MinCount: 2, Max: 60})
+
+		if len(got) != 1 {
+			t.Fatalf("got %d 条，want 1（Python/python 应归并）: %+v", len(got), got)
+		}
+		if got[0].Name != "Python" {
+			t.Errorf("展示名 = %q, want Python（出现次数多的写法胜出）", got[0].Name)
+		}
+		if got[0].Count != 3 {
+			t.Errorf("Count = %d, want 3（归并后应累加）", got[0].Count)
+		}
+		if len(got[0].Aliases) != 1 || got[0].Aliases[0] != "python" {
+			t.Errorf("Aliases = %v, want [python]（折叠进来的原始写法要留作别名）", got[0].Aliases)
+		}
+	})
+
+	t.Run("同频时展示名取字典序最小，保证确定", func(t *testing.T) {
+		resources := []model.Resource{
+			resourceWithTags(1, 1, `["Go"]`),
+			resourceWithTags(2, 1, `["go"]`),
+		}
+		got := service.AggregateKnowledgePointsFromTags(resources, service.AggregateOptions{MinCount: 2, Max: 60})
+		// "Go" < "go"（大写字母字节序在前）
+		if len(got) != 1 || got[0].Name != "Go" {
+			t.Fatalf("got %+v, want 展示名 Go", got)
+		}
+	})
+
+	t.Run("synonyms 把别名归到规范名", func(t *testing.T) {
+		resources := []model.Resource{
+			resourceWithTags(1, 1, `["Golang"]`),
+			resourceWithTags(2, 1, `["Go语言"]`),
+			resourceWithTags(3, 1, `["Go"]`),
+			resourceWithTags(4, 1, `["go"]`),
+		}
+		got := service.AggregateKnowledgePointsFromTags(resources, service.AggregateOptions{
+			MinCount: 2, Max: 60,
+			Synonyms: map[string][]string{"Go": {"Golang", "Go语言", "go"}},
+		})
+
+		if len(got) != 1 {
+			t.Fatalf("got %d 条，want 1（四种写法应归到 Go）: %+v", len(got), got)
+		}
+		if got[0].Name != "Go" || got[0].Count != 4 {
+			t.Errorf("got %+v, want Go 计数 4", got[0])
+		}
+		// 别名要去重、且不含规范名本身；顺序稳定
+		want := []string{"Go语言", "Golang", "go"}
+		if len(got[0].Aliases) != len(want) {
+			t.Fatalf("Aliases = %v, want %v", got[0].Aliases, want)
+		}
+		for i := range want {
+			if got[0].Aliases[i] != want[i] {
+				t.Errorf("Aliases = %v, want %v", got[0].Aliases, want)
+				break
+			}
+		}
+	})
+
+	t.Run("synonyms 的别名也受停用词与长度规则约束", func(t *testing.T) {
+		resources := []model.Resource{
+			resourceWithTags(1, 1, `["Golang"]`),
+			resourceWithTags(2, 1, `["Golang"]`),
+		}
+		// 别名 "Golang" 被停用 → 不应有任何知识点产出
+		got := service.AggregateKnowledgePointsFromTags(resources, service.AggregateOptions{
+			MinCount: 2, Max: 60, Stoplist: []string{"Golang"},
+			Synonyms: map[string][]string{"Go": {"Golang"}},
+		})
+		if len(got) != 0 {
+			t.Errorf("停用词应作用于别名，got %+v", got)
+		}
+	})
+}
+```
+
+- [ ] **Step 2: 运行测试确认失败**
+
+Run: `cd /home/shionyori/project/edurec-platform/backend && go test ./internal/service/ -run TestAggregate -v`
+Expected: 编译失败 — 参数类型不符 / `service.AggregateOptions` 未定义。
+
+- [ ] **Step 3: 改聚合实现**
+
+在 `backend/internal/service/knowledge_point_import.go` 中：
+
+1. 新增选项结构与字段：
+
+```go
+// AggregateOptions 标签聚合的配置。用结构体而非散参：字段还会增加，
+// 散参每次都要改所有调用点。
+type AggregateOptions struct {
+	// Stoplist 丢弃这些标签（平台徽章、人名、元信息词等无区分度的噪音）
+	Stoplist []string
+	// MinCount 标签至少要出现多少次才算知识点
+	MinCount int
+	// Max 知识点上限，<=0 表示不限
+	Max int
+	// Synonyms 把别名归到规范名，键是规范名（如 {"Go": ["Golang", "go"]}）。
+	// 拉丁文即便不在表里，也会按小写再归并一轮，避免同一个词因大小写拆成多条。
+	Synonyms map[string][]string
+}
+```
+
+2. `TagAggregate` 增加 `Aliases []string`：
+
+```go
+type TagAggregate struct {
+	Name       string
+	Count      int
+	CategoryID uint
+	// Aliases 折叠进这个知识点的其它写法（大小写变体 + synonyms 里配的别名），
+	// 去重、不含 Name 本身、已排序。落库进 knowledge_points.aliases，
+	// 并参与资源检索（见 ResourceListQuery.AnyTags）。
+	Aliases []string
+}
+```
+
+3. 把 `AggregateKnowledgePointsFromTags` 改为按「规范键」聚合：
+
+```go
+// AggregateKnowledgePointsFromTags 从资源标签聚合知识点候选。
+//
+// 归并规则（两级）：
+//  1. synonyms 里配了别名 → 归到规范名（"Golang" → "Go"）
+//  2. 其余按小写归并（"python" → "Python"），避免同一个词因大小写拆成多条
+//
+// 展示名取该组内出现次数最多的原始写法；同频取字典序最小的，保证多次运行结果一致。
+func AggregateKnowledgePointsFromTags(resources []model.Resource, opts AggregateOptions) []TagAggregate {
+	stop := make(map[string]struct{}, len(opts.Stoplist))
+	for _, s := range opts.Stoplist {
+		stop[s] = struct{}{}
+	}
+
+	// 别名（已小写）→ 规范名
+	aliasToCanonical := make(map[string]string)
+	for canonical, aliases := range opts.Synonyms {
+		for _, alias := range aliases {
+			aliasToCanonical[strings.ToLower(strings.TrimSpace(alias))] = canonical
+		}
+	}
+
+	type spelling struct {
+		original string
+		count    int
+	}
+	type group struct {
+		canonical   string // 配了 synonyms 时是规范名；否则为空，由展示名兜底
+		spellings   map[string]int
+		categoryHit map[uint]int
+	}
+	groups := make(map[string]*group) // key = 归并键（小写后的规范名）
+
+	for i := range resources {
+		seen := make(map[string]struct{})
+		for _, tag := range ParseResourceTags(resources[i].Tags) {
+			if utf8.RuneCountInString(tag) < MinKnowledgePointNameRunes {
+				continue
+			}
+			if _, blocked := stop[tag]; blocked {
+				continue
+			}
+			lowered := strings.ToLower(tag)
+			key := lowered
+			canonical := ""
+			if c, ok := aliasToCanonical[lowered]; ok {
+				canonical = c
+				key = strings.ToLower(c)
+			}
+			// 同一资源里重复挂同一个标签只算一次，否则词频会被单个资源刷高
+			if _, dup := seen[key]; dup {
+				continue
+			}
+			seen[key] = struct{}{}
+
+			g, ok := groups[key]
+			if !ok {
+				g = &group{canonical: canonical, spellings: make(map[string]int), categoryHit: make(map[uint]int)}
+				groups[key] = g
+			}
+			g.spellings[tag]++
+			if resources[i].CategoryID != 0 {
+				g.categoryHit[resources[i].CategoryID]++
+			}
+		}
+	}
+
+	out := make([]TagAggregate, 0, len(groups))
+	for _, g := range groups {
+		name := g.canonical
+		total := 0
+		if name == "" {
+			name, total = dominantSpelling(g.spellings)
+		} else {
+			for _, c := range g.spellings {
+				total += c
+			}
+		}
+		if total < opts.MinCount {
+			continue
+		}
+		out = append(out, TagAggregate{
+			Name:       name,
+			Count:      total,
+			CategoryID: dominantCategory(g.categoryHit),
+			Aliases:    aliasesOf(name, g.spellings),
+		})
+	}
+
+	sort.Slice(out, func(i, j int) bool {
+		if out[i].Count != out[j].Count {
+			return out[i].Count > out[j].Count
+		}
+		return out[i].Name < out[j].Name
+	})
+	if opts.Max > 0 && len(out) > opts.Max {
+		out = out[:opts.Max]
+	}
+	return out
+}
+
+// dominantSpelling 取出现次数最多的原始写法；同频取字典序最小的，保证结果确定。
+func dominantSpelling(spellings map[string]int) (string, int) {
+	best, bestCount, total := "", -1, 0
+	for spelling, count := range spellings {
+		total += count
+		if count > bestCount || (count == bestCount && spelling < best) {
+			best, bestCount = spelling, count
+		}
+	}
+	return best, total
+}
+
+// aliasesOf 列出折叠进该知识点的其它写法：不含规范名本身，去重后排序。
+func aliasesOf(canonical string, spellings map[string]int) []string {
+	out := make([]string, 0, len(spellings))
+	for spelling := range spellings {
+		if spelling != canonical {
+			out = append(out, spelling)
+		}
+	}
+	sort.Strings(out)
+	return out
+}
+```
+
+- [ ] **Step 4: 运行测试确认通过**
+
+Run: `cd /home/shionyori/project/edurec-platform/backend && go test ./internal/service/ -run TestAggregate -v`
+Expected: 全部 PASS。
+
+- [ ] **Step 5: 让导入把别名落库**
+
+在 `ImportFromTags` 里，把构造 `model.KnowledgePoint` 的那段改为带上别名（`Aliases` 现在是动态值，不再是固定 `"[]"`）：
+
+```go
+	points := make([]model.KnowledgePoint, 0, len(candidates))
+	for i, c := range candidates {
+		// Aliases 是 MySQL JSON 列，必须永远是合法 JSON：没有别名也要写 "[]"。
+		// Go 零值 "" 会被 MySQL 以 Error 3140 拒绝并回滚整批。
+		aliasesJSON, err := json.Marshal(c.Aliases)
+		if err != nil {
+			aliasesJSON = []byte("[]")
+		}
+		points = append(points, model.KnowledgePoint{
+			Name:       c.Name,
+			CategoryID: c.CategoryID,
+			Aliases:    string(aliasesJSON),
+			Source:     model.KnowledgePointSourceTag,
+			SortOrder:  i,
+		})
+	}
+```
+
+并把 `ImportFromTags` 里调用聚合的那行改为传 `AggregateOptions`：
+
+```go
+	candidates := AggregateKnowledgePointsFromTags(resources, AggregateOptions{
+		Stoplist: effective.TagStoplist,
+		MinCount: effective.MinResourceCount,
+		Max:      effective.MaxKnowledgePoints,
+		Synonyms: effective.Synonyms,
+	})
+```
+
+- [ ] **Step 6: 加 synonyms 配置项**
+
+在 `backend/internal/config/config.go` 的 `KnowledgePointsConfig` 里追加：
+
+```go
+	// Synonyms 把别名归到规范名，键是规范名、值是别名列表。
+	// 例：{"Go": ["Go语言", "Golang", "go"]} —— 四种写法会归成一个知识点「Go」，
+	// 别名写进 aliases 并参与资源检索，因此带别名标签的资源不会丢。
+	Synonyms map[string][]string `mapstructure:"synonyms"`
+```
+
+在 `backend/internal/config/config_test.go` 追加：
+
+```go
+func TestKnowledgePointsSynonyms(t *testing.T) {
+	t.Run("默认无同义词", func(t *testing.T) {
+		if got := config.KnowledgePointsConfig{}.KnowledgePointsOrDefault(); len(got.Synonyms) != 0 {
+			t.Errorf("Synonyms = %v, want 空", got.Synonyms)
+		}
+	})
+
+	t.Run("显式配置原样保留", func(t *testing.T) {
+		syn := map[string][]string{"Go": {"Golang"}}
+		got := config.KnowledgePointsConfig{Synonyms: syn}.KnowledgePointsOrDefault()
+		if len(got.Synonyms["Go"]) != 1 || got.Synonyms["Go"][0] != "Golang" {
+			t.Errorf("Synonyms = %v, want 原样保留", got.Synonyms)
+		}
+	})
+}
+```
+
+在 `backend/configs/config.yaml` 的 `knowledge_points:` 段补齐停用词与同义词：
+
+```yaml
+knowledge_points:
+  # 无区分度的高频标签，聚合成知识点只会制造噪音。
+  # 三类：平台徽章（B 站自动挂）、创作者/机构名、元信息词。
+  tag_stoplist:
+    - 教程
+    - 示例
+    - 合集
+    - 全集
+    - 讲解
+    - 课程
+    - 入门
+    - 系列
+    - 视频
+    - 学习
+    # 平台徽章
+    - 科技猎手
+    - 知识分享官
+    - 野生技术协会
+    - 活动作品
+    # 创作者 / 机构
+    - 吴恩达
+    - 李宏毅
+    - 尚硅谷
+    - 黑马程序员
+    # 元信息词
+    - 视频教程
+    - 教学视频
+    - 快速入门
+    - 自学
+    - 程序员
+    - 代码
+    - IT
+  # 标签至少要出现在多少个资源上才算知识点
+  min_resource_count: 2
+  # 聚合出的知识点上限
+  max_knowledge_points: 60
+  # 同义词归并：键是规范名（会成为知识点展示名），值是别名列表。
+  # 别名会写进知识点的 aliases 并参与资源检索（OR 语义），所以带别名标签的资源不会丢。
+  synonyms:
+    Go:
+      - Go语言
+      - GO语言
+      - go语言
+      - Golang
+      - GOLANG
+      - go
+      - GO
+    人工智能:
+      - AI
+      - ai
+      - 人工智能入门
+    机器学习:
+      - 机器学习入门
+      - 机器学习算法
+    编程:
+      - 编程语言
+    计算机:
+      - 计算机技术
+```
+
+- [ ] **Step 7: 给资源检索加 OR 语义（别名能查到资源）**
+
+在 `backend/internal/repository/resource.go` 的 `ResourceListQuery` 里追加字段：
+
+```go
+	// AnyTags 任一命中即算（OR 语义），与 Tags 的全命中（AND）不同。
+	// 知识点用它：知识点名与它的别名是「同一个东西的不同写法」，
+	// 若按 AND 处理，只带别名标签的资源就查不出来了。
+	AnyTags []string
+```
+
+在 `List` 的 tag 过滤之后（`for _, tag := range query.Tags { ... }` 那段之后）追加：
+
+```go
+	if len(query.AnyTags) > 0 {
+		conds := make([]string, 0, len(query.AnyTags))
+		args := make([]any, 0, len(query.AnyTags))
+		for _, tag := range query.AnyTags {
+			tag = strings.TrimSpace(tag)
+			if tag == "" {
+				continue
+			}
+			tagJSON, _ := json.Marshal(tag)
+			conds = append(conds, "JSON_CONTAINS(tags, ?)")
+			args = append(args, string(tagJSON))
+		}
+		if len(conds) > 0 {
+			db = db.Where("("+strings.Join(conds, " OR ")+")", args...)
+		}
+	}
+```
+
+- [ ] **Step 8: 全量验证**
+
+Run:
+```bash
+cd /home/shionyori/project/edurec-platform/backend
+gofmt -l internal/service/knowledge_point_import.go internal/config/config.go internal/repository/resource.go
+go build ./... && go vet ./... && go test ./...
+```
+Expected: gofmt 无输出；编译/vet/测试全部通过。
+
+- [ ] **Step 9: 重跑闸门并人工复核**
+
+```bash
+cd /home/shionyori/project/edurec-platform/backend
+go run ./cmd/import_knowledge_points --from-tags --preview
+```
+
+**闸门复查要点**（把输出交给用户判断，不要自行认定通过）：
+- `GO`/`Go`/`go`/`Golang`/`GOLANG`/`Go语言`/`go语言`/`GO语言` 是否已归并为**一条**，且计数接近 38、排名靠前
+- 科技猎手 / 吴恩达 / 视频教程 之类是否已消失
+- 候选总数是否明显少于 60（归并与停用都会减条目）
+
+**仍不执行真正的导入**（`--from-tags` 不带 `--preview`/`--dry-run`）——写库时机由用户决定。
+
+- [ ] **Step 10: 提交**
+
+```bash
+cd /home/shionyori/project/edurec-platform
+git add backend/internal/service/knowledge_point_import.go \
+        backend/internal/service/knowledge_point_import_test.go \
+        backend/internal/config/config.go \
+        backend/internal/config/config_test.go \
+        backend/internal/repository/resource.go \
+        backend/configs/config.yaml
+git commit -m "feat(backend): 知识点聚合支持大小写归并与别名合并"
+```
+
+**提交后停下，等待用户确认。**
+
+---
+
 ### Task 5: 目标匹配与分桶（核心）
 
 **Files:**
@@ -1032,7 +1521,8 @@ git commit -m "feat(backend): 新增知识点导入命令"
 - Test: `backend/internal/service/knowledge_point_test.go`
 
 **Interfaces:**
-- Consumes: `repository.KnowledgePointRepository.ListAll`、`repository.ResourceRepository.List`、`RecommendationService.Get(userID uint, limit int) (*RecommendationResult, error)`、`apperror.BadRequest/Internal`
+- Consumes: `repository.KnowledgePointRepository.ListAll`、`repository.ResourceRepository.List`、`RecommendationService.Get(userID uint, limit int) (*RecommendationResult, error)`、`apperror.BadRequest/Internal`、**`repository.ResourceListQuery.AnyTags`（Task 4b 新增的 OR 语义 tag 过滤）**
+- 注意：本 Task 依赖 Task 4b 已落地。若 `AnyTags` 不存在，编译会报 `unknown field AnyTags`——那说明 Task 4b 没做完，先回去补。
 - Produces:
   - `service.KnowledgePointGroup{ KnowledgePoint model.KnowledgePoint; Total int64; Resources []model.Resource }`
   - `service.LearningPlan{ Goal string; Matched bool; Groups []KnowledgePointGroup }`
@@ -1477,10 +1967,12 @@ func (s *KnowledgePointService) PlanForGoal(userID uint, goal string, kpLimit in
 
 	groups := make([]KnowledgePointGroup, 0, len(matched))
 	for i := range matched {
+		// 用 AnyTags（OR）而不是 Tags（AND）：知识点名与它的别名是同一个知识点的
+		// 不同写法，只按规范名查会漏掉只带别名标签的资源（如只挂 "Golang" 的视频）。
 		list, err := s.resources.List(repository.ResourceListQuery{
 			Page:     1,
 			PageSize: resourceCandidateLimit,
-			Tags:     []string{matched[i].Name},
+			AnyTags:  resourceTagsOf(&matched[i]),
 			Sort:     "rating",
 		})
 		if err != nil {
@@ -1598,6 +2090,14 @@ func parseStringJSON(raw string) []string {
 		return nil
 	}
 	return out
+}
+
+// resourceTagsOf 列出检索该知识点资源时用到的全部标签写法：规范名 + 别名。
+// 别名由 Task 4b 的聚合产出（大小写变体 + synonyms 归并进来的写法）。
+func resourceTagsOf(point *model.KnowledgePoint) []string {
+	out := make([]string, 0, 1+len(point.Aliases))
+	out = append(out, point.Name)
+	return append(out, parseStringJSON(point.Aliases)...)
 }
 
 // sortByPreference 组内排序：命中 engine 推荐缓存的资源优先（按缓存顺序），
@@ -3096,7 +3596,7 @@ git commit -m "docs: 回写知识点层对推荐系统边界的修订"
 
 ## 完成标准
 
-全部 12 个 Task 完成后：
+全部 13 个 Task（Task 4b 是人工闸门后新增的）完成后：
 
 ```bash
 cd /home/shionyori/project/edurec-platform/backend  && go test ./... && go vet ./...

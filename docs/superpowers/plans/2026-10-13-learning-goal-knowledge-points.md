@@ -1034,7 +1034,8 @@ git commit -m "feat(backend): 新增知识点导入命令"
 > **为什么有这个 Task**：Task 4 的人工闸门实测 60 个候选知识点，上半段是可用的真知识点
 > （机器学习 35 / 人工智能 28 / 深度学习 21 / 编程 19 / Python 18），但暴露出三类问题：
 > ① 拉丁文大小写未归一把同一个知识点拆成多条（`GO`/`Go`/`go`/`Golang`/`GOLANG`/`Go语言`/`go语言`/`GO语言`
-> 共 8 条，合并后约 38 会排全库第一——即这个缺陷还把真正的头号知识点压到了第 12 位）；
+> 共 8 条）。**实测修正**：归并后是 1 条、计数 17、排名第 6（原为第 12）。注意别把 8 种写法的标签出现次数相加得 38——
+> 12 个资源同时挂了多种写法，在「同一资源只算一次」的不变式下正确值是去重后的**资源数 17**，38 是重复计数；
 > ② 平台徽章/人名/元信息词混入（科技猎手、吴恩达、视频教程…）；③ 语义重叠（机器学习 / 机器学习入门 / 机器学习算法）。
 > ① 是缺陷，② 是配置问题，③ 用 `aliases` 解决。用户已就此拍板：修这三处，不换知识点来源。
 
@@ -1049,10 +1050,12 @@ git commit -m "feat(backend): 新增知识点导入命令"
 **Interfaces:**
 - Consumes: `model.Resource`、`repository.ResourceListQuery`、`config.KnowledgePointsConfig`
 - Produces:
-  - `service.AggregateOptions{ Stoplist []string; MinCount int; Max int; Synonyms map[string][]string }`
+  - `service.AggregateOptions{ Stoplist []string; MinCount int; Max int; Synonyms []SynonymGroup }`
+  - `service.SynonymGroup{ Canonical string; Aliases []string }`
   - `service.AggregateKnowledgePointsFromTags(resources []model.Resource, opts AggregateOptions) []TagAggregate` —**签名变更**（原为四个位置参数）
   - `service.TagAggregate{ Name string; Count int; CategoryID uint; Aliases []string }` —**新增 `Aliases`**
-  - `config.KnowledgePointsConfig.Synonyms map[string][]string`（mapstructure: `synonyms`）
+  - `config.KnowledgePointsConfig.Synonyms []SynonymGroup`（mapstructure: `synonyms`）
+  - `config.SynonymGroup{ Canonical string `mapstructure:"canonical"`; Aliases []string `mapstructure:"aliases"` }`
   - `repository.ResourceListQuery.AnyTags []string`（OR 语义，与既有的 `Tags` AND 语义并存）
 
 - [ ] **Step 1: 写失败的测试 — 大小写归并与别名归并**
@@ -1104,7 +1107,7 @@ func TestAggregate_CaseFoldingAndSynonyms(t *testing.T) {
 		}
 		got := service.AggregateKnowledgePointsFromTags(resources, service.AggregateOptions{
 			MinCount: 2, Max: 60,
-			Synonyms: map[string][]string{"Go": {"Golang", "Go语言", "go"}},
+			Synonyms: []service.SynonymGroup{{Canonical: "Go", Aliases: []string{"Golang", "Go语言", "go"}}},
 		})
 
 		if len(got) != 1 {
@@ -1135,7 +1138,7 @@ func TestAggregate_CaseFoldingAndSynonyms(t *testing.T) {
 		// 别名 "Golang" 被停用 → 不应有任何知识点产出
 		got := service.AggregateKnowledgePointsFromTags(resources, service.AggregateOptions{
 			MinCount: 2, Max: 60, Stoplist: []string{"Golang"},
-			Synonyms: map[string][]string{"Go": {"Golang"}},
+			Synonyms: []service.SynonymGroup{{Canonical: "Go", Aliases: []string{"Golang"}}},
 		})
 		if len(got) != 0 {
 			t.Errorf("停用词应作用于别名，got %+v", got)
@@ -1165,9 +1168,9 @@ type AggregateOptions struct {
 	MinCount int
 	// Max 知识点上限，<=0 表示不限
 	Max int
-	// Synonyms 把别名归到规范名，键是规范名（如 {"Go": ["Golang", "go"]}）。
+	// Synonyms 把别名归到规范名（列表形式，见 config.SynonymGroup——用 map 会被 Viper 转小写，丢展示名）。
 	// 拉丁文即便不在表里，也会按小写再归并一轮，避免同一个词因大小写拆成多条。
-	Synonyms map[string][]string
+	Synonyms []SynonymGroup
 }
 ```
 
@@ -1201,17 +1204,12 @@ func AggregateKnowledgePointsFromTags(resources []model.Resource, opts Aggregate
 		stop[s] = struct{}{}
 	}
 
-	// 别名（已小写）→ 规范名
+	// 别名（已小写）→ 规范名。规范名保留配置里的大小写（见 config.SynonymGroup）。
 	aliasToCanonical := make(map[string]string)
-	for canonical, aliases := range opts.Synonyms {
-		for _, alias := range aliases {
-			aliasToCanonical[strings.ToLower(strings.TrimSpace(alias))] = canonical
+	for _, syn := range opts.Synonyms {
+		for _, alias := range syn.Aliases {
+			aliasToCanonical[strings.ToLower(strings.TrimSpace(alias))] = syn.Canonical
 		}
-	}
-
-	type spelling struct {
-		original string
-		count    int
 	}
 	type group struct {
 		canonical   string // 配了 synonyms 时是规范名；否则为空，由展示名兜底
@@ -1357,10 +1355,17 @@ Expected: 全部 PASS。
 在 `backend/internal/config/config.go` 的 `KnowledgePointsConfig` 里追加：
 
 ```go
-	// Synonyms 把别名归到规范名，键是规范名、值是别名列表。
-	// 例：{"Go": ["Go语言", "Golang", "go"]} —— 四种写法会归成一个知识点「Go」，
-	// 别名写进 aliases 并参与资源检索，因此带别名标签的资源不会丢。
-	Synonyms map[string][]string `mapstructure:"synonyms"`
+	// Synonyms 把别名归到规范名。用「列表 + 显式 canonical 字段」而不是 map：
+	// **Viper 会把 map 的键统一转成小写**，若用 map，规范名 "Go" 到 Go 侧会变成 "go"，
+	// 展示名就丢掉大小写了（实测踩到）。列表形式没有这个问题。
+	Synonyms []SynonymGroup `mapstructure:"synonyms"`
+}
+
+// SynonymGroup 一组同义词：Aliases 里的写法都归到 Canonical。
+type SynonymGroup struct {
+	Canonical string   `mapstructure:"canonical"`
+	Aliases   []string `mapstructure:"aliases"`
+}
 ```
 
 在 `backend/internal/config/config_test.go` 追加：
@@ -1368,15 +1373,16 @@ Expected: 全部 PASS。
 ```go
 func TestKnowledgePointsSynonyms(t *testing.T) {
 	t.Run("默认无同义词", func(t *testing.T) {
-		if got := config.KnowledgePointsConfig{}.KnowledgePointsOrDefault(); len(got.Synonyms) != 0 {
+		// 复合字面量出现在 if 的初始化语句里必须加括号，否则 Go 语法歧义
+		if got := (config.KnowledgePointsConfig{}).KnowledgePointsOrDefault(); len(got.Synonyms) != 0 {
 			t.Errorf("Synonyms = %v, want 空", got.Synonyms)
 		}
 	})
 
 	t.Run("显式配置原样保留", func(t *testing.T) {
-		syn := map[string][]string{"Go": {"Golang"}}
+		syn := []config.SynonymGroup{{Canonical: "Go", Aliases: []string{"Golang"}}}
 		got := config.KnowledgePointsConfig{Synonyms: syn}.KnowledgePointsOrDefault()
-		if len(got.Synonyms["Go"]) != 1 || got.Synonyms["Go"][0] != "Golang" {
+		if len(got.Synonyms) != 1 || got.Synonyms[0].Canonical != "Go" || got.Synonyms[0].Aliases[0] != "Golang" {
 			t.Errorf("Synonyms = %v, want 原样保留", got.Synonyms)
 		}
 	})
@@ -1422,28 +1428,20 @@ knowledge_points:
   min_resource_count: 2
   # 聚合出的知识点上限
   max_knowledge_points: 60
-  # 同义词归并：键是规范名（会成为知识点展示名），值是别名列表。
+  # 同义词归并：canonical 是规范名（会成为知识点展示名），aliases 是别名。
   # 别名会写进知识点的 aliases 并参与资源检索（OR 语义），所以带别名标签的资源不会丢。
+  # 用列表而不是 map：Viper 会把 map 的键统一转小写，规范名 "Go" 会变成 "go"。
   synonyms:
-    Go:
-      - Go语言
-      - GO语言
-      - go语言
-      - Golang
-      - GOLANG
-      - go
-      - GO
-    人工智能:
-      - AI
-      - ai
-      - 人工智能入门
-    机器学习:
-      - 机器学习入门
-      - 机器学习算法
-    编程:
-      - 编程语言
-    计算机:
-      - 计算机技术
+    - canonical: Go
+      aliases: [Go语言, GO语言, go语言, Golang, GOLANG, go, GO]
+    - canonical: 人工智能
+      aliases: [AI, ai, 人工智能入门]
+    - canonical: 机器学习
+      aliases: [机器学习入门, 机器学习算法]
+    - canonical: 编程
+      aliases: [编程语言]
+    - canonical: 计算机
+      aliases: [计算机技术]
 ```
 
 - [ ] **Step 7: 给资源检索加 OR 语义（别名能查到资源）**
@@ -1496,7 +1494,7 @@ go run ./cmd/import_knowledge_points --from-tags --preview
 ```
 
 **闸门复查要点**（把输出交给用户判断，不要自行认定通过）：
-- `GO`/`Go`/`go`/`Golang`/`GOLANG`/`Go语言`/`go语言`/`GO语言` 是否已归并为**一条**，且计数接近 38、排名靠前
+- `GO`/`Go`/`go`/`Golang`/`GOLANG`/`Go语言`/`go语言`/`GO语言` 是否已归并为**一条**（预期计数 17、排名第 6 左右），且**展示名保留大小写**（是 `Go` 而不是 `go`——这正是 Viper 键小写陷阱要验的点）
 - 科技猎手 / 吴恩达 / 视频教程 之类是否已消失
 - 候选总数是否明显少于 60（归并与停用都会减条目）
 

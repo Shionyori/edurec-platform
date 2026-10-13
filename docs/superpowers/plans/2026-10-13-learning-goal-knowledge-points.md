@@ -1109,8 +1109,9 @@ func TestAggregate_CaseFoldingAndSynonyms(t *testing.T) {
 		if got[0].Name != "Go" || got[0].Count != 4 {
 			t.Errorf("got %+v, want Go 计数 4", got[0])
 		}
-		// 别名要去重、且不含规范名本身；顺序稳定
-		want := []string{"Go语言", "Golang", "go"}
+		// 别名要去重、且不含规范名本身；sort.Strings 后顺序确定。
+		// 字节序：'G'(0x47) < 'g'(0x67)，且 "Golang" 的第 3 字节 'l'(0x6C) < "Go语言" 的第 3 字节 0xE8
+		want := []string{"Golang", "Go语言", "go"}
 		if len(got[0].Aliases) != len(want) {
 			t.Fatalf("Aliases = %v, want %v", got[0].Aliases, want)
 		}

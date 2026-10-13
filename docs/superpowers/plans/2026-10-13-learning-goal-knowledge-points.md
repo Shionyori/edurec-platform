@@ -883,9 +883,13 @@ const defaultPreviewLimit = 30
 
 func main() {
 	fromTags := flag.Bool("from-tags", false, "从 resources.tags 聚合知识点（本轮的唯一来源）")
-	filePath := flag.String("file", "", "从 JSON 文件导入知识点（手工/LLM 产出，格式见 -h 与 spec §8.3）")
-	limit := flag.Int("limit", 0, "最多处理多少个知识点；--preview 未指定时默认 30，导入时不限")
-	preview := flag.Bool("preview", false, "只打印将要导入的知识点，不连数据库（优先于 --dry-run）")
+	filePath := flag.String("file", "", "从 JSON 文件导入知识点（手工/LLM 产出，格式见 spec §8.3；本轮未实现）")
+	// 注意：--limit 只截断「打印」，不影响落库范围（落库范围由 max_knowledge_points 配置决定）。
+	// 文案必须说清这一点——import_dataset 的 --limit 是真截断处理范围，两者语义不同。
+	limit := flag.Int("limit", 0, "打印候选知识点时最多展示多少条；--preview 未指定时默认 30")
+	// 注意：--from-tags 必须读 resources 表才能聚合，所以是「只读库、不写库」，
+	// 与 import_dataset 的 --preview（解析本地文件、完全不连库）语义不同。
+	preview := flag.Bool("preview", false, "只读数据库、不写库（优先于 --dry-run）")
 	dryRun := flag.Bool("dry-run", false, "连库走完整聚合，但不写库")
 	flag.Parse()
 
@@ -895,6 +899,10 @@ func main() {
 	}
 	if *fromTags && *filePath != "" {
 		log.Fatalf("%s --from-tags 与 --file 互斥，只能选一个", prefix)
+	}
+	// --file 本轮未实现：在连库之前就拦掉，避免先建立数据库连接再报错
+	if *filePath != "" {
+		log.Fatalf("%s --file 导入本轮尚未实现，请用 --from-tags", prefix)
 	}
 
 	limitSet := false
@@ -932,10 +940,6 @@ func main() {
 		repository.NewResourceRepository(db),
 		repository.NewKnowledgePointRepository(db),
 	)
-
-	if *filePath != "" {
-		log.Fatalf("%s --file 导入本轮尚未实现，请用 --from-tags", prefix)
-	}
 
 	result, candidates, err := importer.ImportFromTags(cfg.KnowledgePoints, !*dryRun && !*preview)
 	if err != nil {

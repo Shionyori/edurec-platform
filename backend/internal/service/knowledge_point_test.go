@@ -2,8 +2,10 @@ package service_test
 
 import (
 	"errors"
+	"strings"
 	"testing"
 
+	"github.com/Shionyori/edurec-platform/backend/internal/apperror"
 	"github.com/Shionyori/edurec-platform/backend/internal/model"
 	"github.com/Shionyori/edurec-platform/backend/internal/repository"
 	"github.com/Shionyori/edurec-platform/backend/internal/service"
@@ -169,8 +171,13 @@ func TestPlanForGoal_MatchByAliasIgnoreCase(t *testing.T) {
 	if err != nil {
 		t.Fatalf("PlanForGoal 报错: %v", err)
 	}
-	if len(plan.Groups) != 1 {
-		t.Fatalf("拉丁文别名应忽略大小写命中，got %+v", plan.Groups)
+	// 必须断言 Matched 与分组名：兜底分支恒好返回 1 个分组，只断言 len(Groups)!=1
+	// 的话，把别名解析整个删掉这条测试照样通过（会静默走兜底）。
+	if !plan.Matched {
+		t.Fatal("应命中知识点而非走兜底：Matched = false")
+	}
+	if len(plan.Groups) != 1 || plan.Groups[0].KnowledgePoint.Name != "机器学习" {
+		t.Fatalf("拉丁文别名应忽略大小写命中「机器学习」，got %+v", plan.Groups)
 	}
 }
 
@@ -222,13 +229,23 @@ func TestPlanForGoal_MatchByCategoryWhenNameMisses(t *testing.T) {
 	if err != nil {
 		t.Fatalf("PlanForGoal 报错: %v", err)
 	}
-	if len(plan.Groups) != 1 {
-		t.Fatalf("应按分类名命中，got %+v", plan.Groups)
+	// 同上：只断言分组数会被兜底分支蒙混过关，必须断言命中而非兜底。
+	if !plan.Matched {
+		t.Fatal("应按分类名命中而非走兜底：Matched = false")
+	}
+	if len(plan.Groups) != 1 || plan.Groups[0].KnowledgePoint.Name != "机器学习" {
+		t.Fatalf("应按分类名命中「机器学习」，got %+v", plan.Groups)
 	}
 }
 
 func TestPlanForGoal_ShortNameIsNotMatched(t *testing.T) {
-	resources := &fakePlanResourceRepository{byTag: map[string][]model.Resource{"": {resource(9, 4, 1)}}}
+	// 必须给 "C" 配一条真实资源：否则「不匹配」与「匹配到但无资源被剔除」两条路径
+	// 都落到兜底、Matched 都是 false，断言无法区分。配上资源后，一旦 minMatchRunes
+	// 守卫被删，"C" 就会命中并产出分组，Matched 变 true，测试才会失败。
+	resources := &fakePlanResourceRepository{byTag: map[string][]model.Resource{
+		"":  {resource(9, 4, 1)},
+		"C": {resource(8, 3, 5)},
+	}}
 	svc := newPlanService([]model.KnowledgePoint{point(1, "C", `[]`, 0)}, resources,
 		&fakeRecommendationRepository{})
 
@@ -309,20 +326,16 @@ func TestPlanForGoal_RejectsBadGoal(t *testing.T) {
 	resources := &fakePlanResourceRepository{byTag: map[string][]model.Resource{}}
 	svc := newPlanService(nil, resources, &fakeRecommendationRepository{})
 
+	// 断言具体错误码（复用 auth_test.go 里的 assertErrorCode）：
+	// 只断言 err != nil 的话，任何错误都能通过，测不出「该是 400 而不是 500」。
 	t.Run("空目标", func(t *testing.T) {
-		if _, err := svc.PlanForGoal(7, "   ", 8); err == nil {
-			t.Error("空目标应当报错")
-		}
+		_, err := svc.PlanForGoal(7, "   ", 8)
+		assertErrorCode(t, err, apperror.CodeBadRequest)
 	})
 
 	t.Run("超长目标", func(t *testing.T) {
-		long := ""
-		for i := 0; i < 101; i++ {
-			long += "学"
-		}
-		if _, err := svc.PlanForGoal(7, long, 8); err == nil {
-			t.Error("超长目标应当报错")
-		}
+		_, err := svc.PlanForGoal(7, strings.Repeat("学", 101), 8)
+		assertErrorCode(t, err, apperror.CodeBadRequest)
 	})
 }
 
@@ -333,9 +346,9 @@ func TestPlanForGoal_RepositoryErrorIsInternal(t *testing.T) {
 		resources,
 		service.NewRecommendationService(&fakeRecommendationRepository{}, resources, &fakeUserRepository{}),
 	)
-	if _, err := svc.PlanForGoal(7, "机器学习", 8); err == nil {
-		t.Error("仓储报错应当向上传递")
-	}
+	_, err := svc.PlanForGoal(7, "机器学习", 8)
+	// 名称说的是 IsInternal：只断言 err != nil 的话，BadRequest 也能通过。
+	assertErrorCode(t, err, apperror.CodeInternal)
 }
 
 // 已接受的已知行为：子串匹配不是语义匹配。把行为钉死，避免将来被当成 bug 反复「修」。

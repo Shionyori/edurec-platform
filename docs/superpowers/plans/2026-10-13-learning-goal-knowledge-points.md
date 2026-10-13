@@ -1574,11 +1574,13 @@ type fakePlanResourceRepository struct {
 
 func (f *fakePlanResourceRepository) List(q repository.ResourceListQuery) (*repository.ResourceListResult, error) {
 	f.queries = append(f.queries, q)
-	if len(q.Tags) == 0 {
+	// 读 AnyTags 而不是 Tags：实现用 AnyTags（OR）查知识点资源。若这里读 Tags，
+	// 所有知识点分组都会因取不到资源而被剔除，测试会成批假失败。
+	if len(q.AnyTags) == 0 {
 		items := f.byTag[""]
 		return &repository.ResourceListResult{Items: items, Total: int64(len(items))}, nil
 	}
-	tag := q.Tags[0]
+	tag := q.AnyTags[0]
 	items := f.byTag[tag]
 	total := f.totals[tag]
 	if total == 0 {
@@ -1742,6 +1744,35 @@ func TestPlanForGoal_ShortNameIsNotMatched(t *testing.T) {
 	}
 }
 
+// 别名必须真的进入资源检索条件：否则「把 Golang 归并到 Go」只是改了个名字，
+// 只带别名标签的资源会查不出来。替身只读 AnyTags[0]，所以断言要看发出的查询本身。
+func TestPlanForGoal_QueriesResourcesByAliasesToo(t *testing.T) {
+	resources := &fakePlanResourceRepository{byTag: map[string][]model.Resource{
+		"机器学习": {resource(1, 4.5, 100)},
+	}}
+	svc := newPlanService([]model.KnowledgePoint{
+		point(1, "机器学习", `["机器学习入门","机器学习算法"]`, 1),
+	}, resources, &fakeRecommendationRepository{})
+
+	if _, err := svc.PlanForGoal(7, "机器学习", 8); err != nil {
+		t.Fatalf("PlanForGoal 报错: %v", err)
+	}
+	if len(resources.queries) == 0 {
+		t.Fatal("没有发出资源查询")
+	}
+	want := []string{"机器学习", "机器学习入门", "机器学习算法"}
+	got := resources.queries[0].AnyTags
+	if len(got) != len(want) {
+		t.Fatalf("AnyTags = %v, want %v", got, want)
+	}
+	for i := range want {
+		if got[i] != want[i] {
+			t.Errorf("AnyTags = %v, want %v", got, want)
+			break
+		}
+	}
+}
+
 func TestPlanForGoal_SkipsKnowledgePointWithoutResources(t *testing.T) {
 	resources := &fakePlanResourceRepository{
 		byTag:  map[string][]model.Resource{"机器学习": {}, "线性代数": {resource(2, 4.0, 50)}},
@@ -1899,7 +1930,8 @@ const (
 	// minGoalRunes / maxGoalRunes 学习目标的字符数区间
 	minGoalRunes = 2
 	maxGoalRunes = 100
-	// minMatchRunes 命中词的最小长度，见 Model.MatchKnowledgePoints 注释
+	// minMatchRunes 命中词的最小长度：短词（尤其单字符）会命中几乎任何目标文本，
+	// 让匹配失去意义。中文与拉丁文都按 rune 计。
 	minMatchRunes = 2
 	// fallbackGroupName 兜底分组的展示名
 	fallbackGroupName = "为你找到的相关资源"

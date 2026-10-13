@@ -472,15 +472,21 @@ func TestParseResourceTags(t *testing.T) {
 		}
 	})
 
-	// 标签来自爬虫与数据集导入，是外部数据：null、类型不对、JSON 损坏都不能 panic
+	// 标签来自爬虫与数据集导入，是外部数据：null、类型不对、JSON 损坏都不能 panic，
+	// 也不能漏出空字符串标签。断言 len==0 而不是「逐个查空」——后者在返回空切片时
+	// 恒真，等于没断言。
 	t.Run("空与损坏一律返回空", func(t *testing.T) {
 		for _, raw := range []string{"", "  ", "null", "not json", `{"a":1}`, `[1,2]`, `["ok",3]`} {
-			got := service.ParseResourceTags(raw)
-			for _, tag := range got {
-				if tag == "" {
-					t.Errorf("raw=%q 解析出空标签", raw)
-				}
+			if got := service.ParseResourceTags(raw); len(got) != 0 {
+				t.Errorf("ParseResourceTags(%q) = %v, want 空切片", raw, got)
 			}
+		}
+	})
+
+	t.Run("数组里的空白标签被剔除", func(t *testing.T) {
+		got := service.ParseResourceTags(`["机器学习","  ",""]`)
+		if len(got) != 1 || got[0] != "机器学习" {
+			t.Errorf("got %v, want [机器学习]", got)
 		}
 	})
 }

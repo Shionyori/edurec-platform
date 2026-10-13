@@ -13,14 +13,15 @@ import (
 
 // Config 是应用的顶层配置
 type Config struct {
-	Server       ServerConfig             `mapstructure:"server"`
-	Database     DatabaseConfig           `mapstructure:"database"`
-	Redis        RedisConfig              `mapstructure:"redis"`
-	JWT          JWTConfig                `mapstructure:"jwt"`
-	Engine       EngineConfig             `mapstructure:"engine"`
-	Bilibili     BilibiliConfig           `mapstructure:"bilibili"`
-	ContentRules ContentRulesConfig       `mapstructure:"content_rules"`
-	Datasets     map[string]DatasetConfig `mapstructure:"datasets"`
+	Server          ServerConfig             `mapstructure:"server"`
+	Database        DatabaseConfig           `mapstructure:"database"`
+	Redis           RedisConfig              `mapstructure:"redis"`
+	JWT             JWTConfig                `mapstructure:"jwt"`
+	Engine          EngineConfig             `mapstructure:"engine"`
+	Bilibili        BilibiliConfig           `mapstructure:"bilibili"`
+	ContentRules    ContentRulesConfig       `mapstructure:"content_rules"`
+	Datasets        map[string]DatasetConfig `mapstructure:"datasets"`
+	KnowledgePoints KnowledgePointsConfig    `mapstructure:"knowledge_points"`
 }
 
 // 数据集字段映射支持的内部字段名。出现词表外的 key 一律报错：
@@ -134,6 +135,45 @@ type EngineConfig struct {
 	RecommendationsFile string `mapstructure:"recommendations_file"` // engine 输出的推荐结果 JSON 路径（路线 B 导入用）
 	DatasetDir          string `mapstructure:"dataset_dir"`          // engine 演示/模拟数据集目录（demo_seed 播种用）
 	SnapshotDir         string `mapstructure:"snapshot_dir"`         // 数据快照导出目录（export_snapshot 输出，engine 训练输入）
+}
+
+// DefaultTagStoplist 默认标签停用词：这些词在 B 站教育视频标签里高频出现，
+// 但没有区分度（几乎每个视频都挂），聚合成知识点只会制造噪音。
+var DefaultTagStoplist = []string{
+	"教程", "示例", "合集", "全集", "讲解", "课程", "入门", "系列", "视频", "学习",
+}
+
+const (
+	// DefaultMinResourceCount 标签至少出现在多少个资源上才算知识点
+	DefaultMinResourceCount = 2
+	// DefaultMaxKnowledgePoints 聚合出的知识点上限
+	DefaultMaxKnowledgePoints = 60
+)
+
+// KnowledgePointsConfig 学习目标·知识点层配置
+type KnowledgePointsConfig struct {
+	// TagStoplist 从资源标签聚合知识点时要丢弃的标签
+	TagStoplist []string `mapstructure:"tag_stoplist"`
+	// MinResourceCount 标签至少要出现在多少个资源上才算知识点
+	MinResourceCount int `mapstructure:"min_resource_count"`
+	// MaxKnowledgePoints 聚合出的知识点上限
+	MaxKnowledgePoints int `mapstructure:"max_knowledge_points"`
+}
+
+// KnowledgePointsOrDefault 返回生效的知识点配置，未配置项回退到默认值。
+// 显式给了 TagStoplist 就完全采用它（不合并默认值），否则用户没法清空默认停用词。
+func (k KnowledgePointsConfig) KnowledgePointsOrDefault() KnowledgePointsConfig {
+	out := k
+	if out.MinResourceCount <= 0 {
+		out.MinResourceCount = DefaultMinResourceCount
+	}
+	if out.MaxKnowledgePoints <= 0 {
+		out.MaxKnowledgePoints = DefaultMaxKnowledgePoints
+	}
+	if len(out.TagStoplist) == 0 {
+		out.TagStoplist = DefaultTagStoplist
+	}
+	return out
 }
 
 // BilibiliConfig 在线 B 站采集配置（搜索/评论实时爬取，见 backend/crawler/online.py）

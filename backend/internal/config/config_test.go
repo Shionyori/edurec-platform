@@ -169,3 +169,39 @@ func TestIsLongCourseRespectsCustomRules(t *testing.T) {
 	}
 }
 
+func TestKnowledgePointsOrDefault(t *testing.T) {
+	t.Run("零值回退到默认", func(t *testing.T) {
+		got := config.KnowledgePointsConfig{}.KnowledgePointsOrDefault()
+		if got.MinResourceCount != config.DefaultMinResourceCount {
+			t.Errorf("MinResourceCount = %d, want %d", got.MinResourceCount, config.DefaultMinResourceCount)
+		}
+		if got.MaxKnowledgePoints != config.DefaultMaxKnowledgePoints {
+			t.Errorf("MaxKnowledgePoints = %d, want %d", got.MaxKnowledgePoints, config.DefaultMaxKnowledgePoints)
+		}
+		if len(got.TagStoplist) != len(config.DefaultTagStoplist) {
+			t.Errorf("TagStoplist 长度 = %d, want %d", len(got.TagStoplist), len(config.DefaultTagStoplist))
+		}
+	})
+
+	t.Run("显式配置不被覆盖", func(t *testing.T) {
+		got := config.KnowledgePointsConfig{
+			MinResourceCount:   5,
+			MaxKnowledgePoints: 10,
+			TagStoplist:        []string{"噪音"},
+		}.KnowledgePointsOrDefault()
+		if got.MinResourceCount != 5 || got.MaxKnowledgePoints != 10 {
+			t.Errorf("显式值被覆盖: %+v", got)
+		}
+		// 显式给了停用词就用它，不能和默认值合并——否则用户无法「清空」默认表
+		if len(got.TagStoplist) != 1 || got.TagStoplist[0] != "噪音" {
+			t.Errorf("TagStoplist = %v, want [噪音]", got.TagStoplist)
+		}
+	})
+
+	t.Run("负数回退到默认", func(t *testing.T) {
+		got := config.KnowledgePointsConfig{MinResourceCount: -1}.KnowledgePointsOrDefault()
+		if got.MinResourceCount != config.DefaultMinResourceCount {
+			t.Errorf("MinResourceCount = %d, want %d", got.MinResourceCount, config.DefaultMinResourceCount)
+		}
+	})
+}

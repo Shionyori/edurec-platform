@@ -52,6 +52,28 @@ bilibili:
   #   - 校园学习
   #   - 计算机技术
 
+# 学习目标·知识点层（cmd/import_knowledge_points）。
+# 本轮知识点由 resources.tags 聚合而来：某个标签至少出现在 min_resource_count
+# 个资源上、且不在 tag_stoplist 里，才会成为一个知识点。
+# 留空/不写各项 → 用代码内默认值（见 config.DefaultTagStoplist 等）。
+knowledge_points:
+  # 无区分度的高频标签，聚合成知识点只会制造噪音
+  tag_stoplist:
+    - 教程
+    - 示例
+    - 合集
+    - 全集
+    - 讲解
+    - 课程
+    - 入门
+    - 系列
+    - 视频
+    - 学习
+  # 标签至少要出现在多少个资源上才算知识点
+  min_resource_count: 2
+  # 聚合出的知识点上限
+  max_knowledge_points: 60
+
 # 内容归类规则：判断 B 站内容是否算「长合集/系统课程」，导入时自动落库为 course（否则 video）。
 # 判定 = （命中 course_keywords 或 collection_markers 或标题形如「全N集/N讲」）且 时长 >= course_min_minutes。
 # 时长条件不可省：B 站大量「17分钟看完XX教程」的短片标题也带「教程/全集」，只看关键词会误判。

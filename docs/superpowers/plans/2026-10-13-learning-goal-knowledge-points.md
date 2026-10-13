@@ -3075,7 +3075,7 @@ Expected: 全部 PASS。
 
 ```vue
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { getRecommendations } from '@/api/recommendation'
 import { recordImpressions } from '@/api/impression'
@@ -3127,10 +3127,18 @@ function resetGoal() {
   router.push({ name: 'home' })
 }
 
-// 未提交目标时才有推荐流——提交后整页切换为知识点面板（决策 #7 / #8）
-onMounted(() => {
-  if (!goal.value) load()
-})
+// 未提交目标时才有推荐流——提交后整页切换为知识点面板（决策 #7 / #8）。
+//
+// 用 watch + immediate 而不是 onMounted：只在挂载时拉一次的话，带 ?goal= 进入
+// （或刷新时正处于计划态）再点「换一个目标」，goal 变空但 resources 仍是 []，
+// 页面会渲染成「暂无推荐内容」并且不再发请求——对已有兴趣的用户没有恢复入口。
+watch(
+  () => goal.value,
+  (current) => {
+    if (!current && resources.value.length === 0 && !loading.value) load()
+  },
+  { immediate: true },
+)
 </script>
 
 <template>
@@ -3287,7 +3295,25 @@ describe('HomePage', () => {
     const wrapper = await mountPage()
 
     expect(mockedGetRecommendations).not.toHaveBeenCalled()
-    expect(wrapper.text()).toContain('为你规划')
+    // 断言计划视图本身渲染了（mock 的 getLearningPlan 返回 matched:false），
+    // 而不是只断言页面上有个静态标题——后者与 LearningPlanView 是否工作无关。
+    expect(wrapper.text()).toContain('没有找到对应知识点')
+  })
+
+  // 回归：带 ?goal= 进入后再「换一个目标」，推荐流必须被补拉，
+  // 否则会停在「暂无推荐内容」且不再发请求。
+  it('从计划态切回推荐流时会补拉推荐', async () => {
+    routeMock.query = { goal: '机器学习' }
+    const wrapper = await mountPage()
+    expect(mockedGetRecommendations).not.toHaveBeenCalled()
+
+    routeMock.query = {}
+    await wrapper.setProps({})
+    // 直接改写 route 不会触发 computed，改由组件暴露的重置入口驱动
+    await wrapper.findComponent({ name: 'LearningPlanView' }).vm.$emit('reset')
+    await flushPromises()
+
+    expect(mockedGetRecommendations).toHaveBeenCalledWith(12)
   })
 })
 ```

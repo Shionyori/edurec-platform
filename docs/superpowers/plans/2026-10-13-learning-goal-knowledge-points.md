@@ -2877,8 +2877,8 @@ Expected: 全部通过。
 - [ ] **Step 7: 手动验证打点不干扰既有 CTR 口径**
 
 ```bash
-cd /home/shionyori/project/edurec-platform/backend
-mysql -h127.0.0.1 -uroot -proot edurec -e \
+# 本机没装 mysql 客户端，走容器内的客户端（已核实 edurec-mysql 容器可用）
+docker exec edurec-mysql mysql -uroot -proot edurec -e \
   "SELECT scene, COUNT(*) FROM resource_impressions GROUP BY scene;"
 ```
 

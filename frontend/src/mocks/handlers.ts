@@ -350,6 +350,56 @@ export const handlers = [
     })
   }),
 
+  // 学习目标 → 知识点（mock：按目标子串匹配标签，无命中即兜底）
+  http.get(`${BASE}/learning-plan`, ({ request }) => {
+    const user = requireUser(request)
+    if (!user) return bizError(10002, '未认证', 401)
+    const url = new URL(request.url)
+    const goal = (url.searchParams.get('goal') ?? '').trim()
+    if (goal.length < 2) return bizError(10001, '请输入学习目标', 400)
+    const limit = Math.min(Number(url.searchParams.get('knowledge_points') ?? '8'), 20)
+
+    const tagCount = new Map<string, number>()
+    for (const r of db.resources) {
+      for (const t of r.tags) tagCount.set(t, (tagCount.get(t) ?? 0) + 1)
+    }
+    const matchedTags = [...tagCount.keys()]
+      .filter((t) => t.length >= 2 && goal.includes(t))
+      .sort((a, b) => b.length - a.length)
+      .slice(0, limit)
+
+    // 未命中：兜底成单一分组，与后端一致（绝不返回空白）
+    if (matchedTags.length === 0) {
+      const list = db.resources.filter(
+        (r) => r.title.includes(goal) || r.description.includes(goal),
+      )
+      return ok({
+        goal,
+        matched: false,
+        groups: [
+          {
+            knowledge_point: { id: 0, name: '为你找到的相关资源', description: '', category: null },
+            total: list.length,
+            resources: list.map(toPublicResource),
+          },
+        ],
+      })
+    }
+
+    return ok({
+      goal,
+      matched: true,
+      groups: matchedTags.map((tag, i) => {
+        const list = db.resources.filter((r) => r.tags.includes(tag))
+        return {
+          knowledge_point: { id: i + 1, name: tag, description: '', category: null },
+          total: list.length,
+          resources: list.slice(0, 6).map(toPublicResource),
+        }
+      }),
+    })
+  }),
+
   // 行为
   http.post(`${BASE}/resources/:id/behaviors`, async ({ request, params }) => {
     const user = requireUser(request)

@@ -133,3 +133,25 @@ export interface RecommendationStats {
   recommendation_users: number
   click_through_rate: number
 }
+
+// 学习目标下的一块知识点（本轮由资源标签聚合而来）
+export interface KnowledgePointSummary {
+  id: number
+  name: string
+  description: string
+  category: Pick<Category, 'id' | 'name'> | null
+}
+
+// 一个知识点及其推荐资源；total 是该知识点关联的资源总数（组内最多展示 6 个）
+export interface LearningPlanGroup {
+  knowledge_point: KnowledgePointSummary
+  total: number
+  resources: Resource[]
+}
+
+// 学习目标 → 知识点规划结果；matched=false 表示未命中知识点，groups 为兜底单一分组
+export interface LearningPlan {
+  goal: string
+  matched: boolean
+  groups: LearningPlanGroup[]
+}

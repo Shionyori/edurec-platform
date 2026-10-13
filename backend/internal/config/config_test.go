@@ -215,9 +215,11 @@ func TestKnowledgePointsSynonyms(t *testing.T) {
 	})
 
 	t.Run("显式配置原样保留", func(t *testing.T) {
-		syn := map[string][]string{"Go": {"Golang"}}
+		syn := []config.SynonymGroup{{Canonical: "Go", Aliases: []string{"Golang"}}}
 		got := config.KnowledgePointsConfig{Synonyms: syn}.KnowledgePointsOrDefault()
-		if len(got.Synonyms["Go"]) != 1 || got.Synonyms["Go"][0] != "Golang" {
+		// 规范名必须是「值」而不是 map 键：键会被 Viper 小写化，"Go" 会变成 "go"。
+		if len(got.Synonyms) != 1 || got.Synonyms[0].Canonical != "Go" ||
+			len(got.Synonyms[0].Aliases) != 1 || got.Synonyms[0].Aliases[0] != "Golang" {
 			t.Errorf("Synonyms = %v, want 原样保留", got.Synonyms)
 		}
 	})

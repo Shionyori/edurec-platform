@@ -173,7 +173,7 @@ func TestAggregate_CaseFoldingAndSynonyms(t *testing.T) {
 		}
 		got := service.AggregateKnowledgePointsFromTags(resources, service.AggregateOptions{
 			MinCount: 2, Max: 60,
-			Synonyms: map[string][]string{"Go": {"Golang", "Go语言", "go"}},
+			Synonyms: []service.SynonymGroup{{Canonical: "Go", Aliases: []string{"Golang", "Go语言", "go"}}},
 		})
 
 		if len(got) != 1 {
@@ -204,7 +204,7 @@ func TestAggregate_CaseFoldingAndSynonyms(t *testing.T) {
 		// 别名 "Golang" 被停用 → 不应有任何知识点产出
 		got := service.AggregateKnowledgePointsFromTags(resources, service.AggregateOptions{
 			MinCount: 2, Max: 60, Stoplist: []string{"Golang"},
-			Synonyms: map[string][]string{"Go": {"Golang"}},
+			Synonyms: []service.SynonymGroup{{Canonical: "Go", Aliases: []string{"Golang"}}},
 		})
 		if len(got) != 0 {
 			t.Errorf("停用词应作用于别名，got %+v", got)

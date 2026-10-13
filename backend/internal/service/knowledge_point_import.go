@@ -46,10 +46,15 @@ type AggregateOptions struct {
 	MinCount int
 	// Max 知识点上限，<=0 表示不限
 	Max int
-	// Synonyms 把别名归到规范名，键是规范名（如 {"Go": ["Golang", "go"]}）。
+	// Synonyms 把别名归到规范名（如 {Canonical: "Go", Aliases: ["Golang", "go"]}）。
 	// 拉丁文即便不在表里，也会按小写再归并一轮，避免同一个词因大小写拆成多条。
-	Synonyms map[string][]string
+	Synonyms []SynonymGroup
 }
+
+// SynonymGroup 一组同义词：Aliases 里的写法都归到 Canonical。
+// 是 config.SynonymGroup 的类型别名（不是新类型），所以配置可以原样透传进来，
+// 无需在调用点做转换。规范名走「值」而不是 map 键：Viper 会把 map 的键小写化。
+type SynonymGroup = config.SynonymGroup
 
 // TagAggregate 一个标签的聚合结果，即一个候选知识点
 type TagAggregate struct {
@@ -75,18 +80,14 @@ func AggregateKnowledgePointsFromTags(resources []model.Resource, opts Aggregate
 		stop[s] = struct{}{}
 	}
 
-	// 别名（已小写）→ 规范名
+	// 别名（已小写）→ 规范名。规范名保留配置里的大小写（见 config.SynonymGroup）。
 	aliasToCanonical := make(map[string]string)
-	for canonical, aliases := range opts.Synonyms {
-		for _, alias := range aliases {
-			aliasToCanonical[strings.ToLower(strings.TrimSpace(alias))] = canonical
+	for _, syn := range opts.Synonyms {
+		for _, alias := range syn.Aliases {
+			aliasToCanonical[strings.ToLower(strings.TrimSpace(alias))] = syn.Canonical
 		}
 	}
 
-	type spelling struct {
-		original string
-		count    int
-	}
 	type group struct {
 		canonical   string // 配了 synonyms 时是规范名；否则为空，由展示名兜底
 		spellings   map[string]int

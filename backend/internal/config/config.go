@@ -158,10 +158,16 @@ type KnowledgePointsConfig struct {
 	MinResourceCount int `mapstructure:"min_resource_count"`
 	// MaxKnowledgePoints 聚合出的知识点上限
 	MaxKnowledgePoints int `mapstructure:"max_knowledge_points"`
-	// Synonyms 把别名归到规范名，键是规范名、值是别名列表。
-	// 例：{"Go": ["Go语言", "Golang", "go"]} —— 四种写法会归成一个知识点「Go」，
-	// 别名写进 aliases 并参与资源检索，因此带别名标签的资源不会丢。
-	Synonyms map[string][]string `mapstructure:"synonyms"`
+	// Synonyms 把别名归到规范名。用「列表 + 显式 canonical 字段」而不是 map：
+	// **Viper 会把 map 的键统一转成小写**，若用 map，规范名 "Go" 到 Go 侧会变成 "go"，
+	// 展示名就丢掉大小写了（实测踩到）。列表形式没有这个问题。
+	Synonyms []SynonymGroup `mapstructure:"synonyms"`
+}
+
+// SynonymGroup 一组同义词：Aliases 里的写法都归到 Canonical。
+type SynonymGroup struct {
+	Canonical string   `mapstructure:"canonical"`
+	Aliases   []string `mapstructure:"aliases"`
 }
 
 // KnowledgePointsOrDefault 返回生效的知识点配置，未配置项回退到默认值。

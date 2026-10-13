@@ -92,28 +92,20 @@ knowledge_points:
   min_resource_count: 2
   # 聚合出的知识点上限
   max_knowledge_points: 60
-  # 同义词归并：键是规范名（会成为知识点展示名），值是别名列表。
+  # 同义词归并：canonical 是规范名（会成为知识点展示名），aliases 是别名。
   # 别名会写进知识点的 aliases 并参与资源检索（OR 语义），所以带别名标签的资源不会丢。
+  # 用列表而不是 map：Viper 会把 map 的键统一转小写，规范名 "Go" 会变成 "go"。
   synonyms:
-    Go:
-      - Go语言
-      - GO语言
-      - go语言
-      - Golang
-      - GOLANG
-      - go
-      - GO
-    人工智能:
-      - AI
-      - ai
-      - 人工智能入门
-    机器学习:
-      - 机器学习入门
-      - 机器学习算法
-    编程:
-      - 编程语言
-    计算机:
-      - 计算机技术
+    - canonical: Go
+      aliases: [Go语言, GO语言, go语言, Golang, GOLANG, go, GO]
+    - canonical: 人工智能
+      aliases: [AI, ai, 人工智能入门]
+    - canonical: 机器学习
+      aliases: [机器学习入门, 机器学习算法]
+    - canonical: 编程
+      aliases: [编程语言]
+    - canonical: 计算机
+      aliases: [计算机技术]
 
 # 内容归类规则：判断 B 站内容是否算「长合集/系统课程」，导入时自动落库为 course（否则 video）。
 # 判定 = （命中 course_keywords 或 collection_markers 或标题形如「全N集/N讲」）且 时长 >= course_min_minutes。

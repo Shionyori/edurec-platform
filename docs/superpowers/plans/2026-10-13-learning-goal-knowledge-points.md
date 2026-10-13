@@ -1260,7 +1260,8 @@ func TestPlanForGoal_RanksByEngineRecommendationOrder(t *testing.T) {
 			resource(2, 3.0, 10),   // 评分最低，但在 engine 推荐里排第一
 		},
 	}}
-	recRepo := &fakeRecommendationRepository{rec: &model.Recommendation{
+	// 字段名是 found（见 recommendation_test.go 里 fakeRecommendationRepository 的定义）
+	recRepo := &fakeRecommendationRepository{found: &model.Recommendation{
 		UserID: 7, ResourceIDs: `[2,1]`, UpdatedAt: 1,
 	}}
 	svc := newPlanService([]model.KnowledgePoint{point(1, "机器学习", `[]`, 1)}, resources, recRepo)
@@ -1347,7 +1348,9 @@ func TestPlanForGoal_SubstringMatchIgnoresNegation(t *testing.T) {
 }
 ```
 
-> 注意：`fakeRecommendationRepository`、`fakeUserRepository` 已存在于 `recommendation_test.go`（同一个 `service_test` 包），**不要重复定义**。若字段名不一致，按该文件里的定义对齐。
+> 注意：`fakeRecommendationRepository` 与 `fakeUserRepository` 已存在于 `recommendation_test.go`（同一个 `service_test` 包），**不要重复定义**。
+> 已核实的字段名：`fakeRecommendationRepository.found *model.Recommendation`、`.findErr error`；`fakeUserRepository.users []*model.User`、`.nextID uint`。
+> 另注意 `fakeResourceRepository` 也已存在，所以本 Task 的资源替身取名 `fakePlanResourceRepository` 以避免重名。
 
 - [ ] **Step 2: 运行测试确认失败**
 

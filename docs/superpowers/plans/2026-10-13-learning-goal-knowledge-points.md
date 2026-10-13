@@ -549,9 +549,12 @@ func TestAggregateKnowledgePointsFromTags(t *testing.T) {
 	})
 
 	t.Run("超出上限时按词频截断，同频按名字稳定排序", func(t *testing.T) {
+		// 注意：fixture 里的词必须是 2 个 rune 以上。单个汉字只占 1 个 rune，
+		// 会被 MinKnowledgePointNameRunes=2 过滤掉（见上一个用例的 "C"），
+		// 用单字当 fixture 会让这个用例恒为 0 个候选、断言永不成立。
 		resources := []model.Resource{
-			resourceWithTags(1, 1, `["甲","乙","丙"]`),
-			resourceWithTags(2, 1, `["甲","乙","丙"]`),
+			resourceWithTags(1, 1, `["甲甲","乙乙","丙丙"]`),
+			resourceWithTags(2, 1, `["甲甲","乙乙","丙丙"]`),
 		}
 		got := service.AggregateKnowledgePointsFromTags(resources, nil, 2, 2)
 		if len(got) != 2 {
@@ -915,7 +918,9 @@ func main() {
 	}
 
 	if *preview {
-		fmt.Printf("%s --preview：未连数据库，未写库\n", prefix)
+		// 注意：--from-tags 必须读 resources 表才能聚合，所以 --preview「只读库、不写库」，
+		// 与 import_dataset 的 --preview（解析本地文件、完全不连库）语义不同。
+		fmt.Printf("%s --preview：只读数据库、不写库\n", prefix)
 	}
 
 	db, err := database.InitMySQL(cfg.Database)

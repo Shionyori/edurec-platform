@@ -3048,7 +3048,9 @@ function panelKey(group: LearningPlanGroup): string {
         <template v-else>没有找到对应知识点，以下是按目标搜索到的资源</template>
       </p>
 
-      <el-empty v-if="plan.groups.every((g) => g.resources.length === 0)" description="暂无相关资源" class="mt-8" />
+      <!-- 组内资源为空时仍要展示知识点本身（这是本功能的核心产出），
+           面板内各自提示无资源；只有整份计划没有任何分组才走空态 -->
+      <el-empty v-if="plan.groups.length === 0" description="暂无相关资源" class="mt-8" />
       <!-- el-collapse 的 model-value 是「展开项 name 的数组」，默认展开第一个知识点 -->
       <el-collapse v-else class="mt-4" :model-value="plan.groups.length ? [panelKey(plan.groups[0])] : []">
         <KnowledgePointPanel v-for="g in plan.groups" :key="panelKey(g)" :group="g" />
@@ -3143,7 +3145,10 @@ onMounted(() => {
       </div>
     </div>
 
-    <LearningPlanView v-if="goal" :goal="goal" @reset="resetGoal" />
+    <div v-if="goal" class="mt-12">
+      <h2 class="text-xl font-bold">为你规划的学习路径</h2>
+      <LearningPlanView :goal="goal" @reset="resetGoal" />
+    </div>
 
     <template v-else>
       <div class="mt-12 flex items-end justify-between">

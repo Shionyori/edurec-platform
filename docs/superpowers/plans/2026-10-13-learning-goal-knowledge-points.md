@@ -788,8 +788,12 @@ func (s *KnowledgePointImportService) ImportFromTags(
 		points = append(points, model.KnowledgePoint{
 			Name:       c.Name,
 			CategoryID: c.CategoryID,
-			Source:     model.KnowledgePointSourceTag,
-			SortOrder:  i,
+			// Aliases 是 MySQL JSON 列，Go 零值 "" 不是合法 JSON，直接落库会报
+			// Error 3140（Invalid JSON text: The document is empty）并回滚整批。
+			// 与 service/resource.go 里 tags 默认 "[]"、metadata 默认 "{}" 同一惯例。
+			Aliases:   "[]",
+			Source:    model.KnowledgePointSourceTag,
+			SortOrder: i,
 		})
 	}
 

@@ -280,25 +280,25 @@ git commit -m "feat(backend): 新增知识点模型与数据访问"
 
 - [ ] **Step 1: 写失败的测试**
 
-追加到 `backend/internal/config/config_test.go`（沿用文件里已有的 `package config` 与 import 风格）：
+追加到 `backend/internal/config/config_test.go`。**注意该文件是外部测试包 `package config_test`**（已核实），所以所有导出标识符都要带 `config.` 前缀；文件已 import 了 `testing` 与 `config`，无需新增 import：
 
 ```go
 func TestKnowledgePointsOrDefault(t *testing.T) {
 	t.Run("零值回退到默认", func(t *testing.T) {
-		got := KnowledgePointsConfig{}.KnowledgePointsOrDefault()
-		if got.MinResourceCount != DefaultMinResourceCount {
-			t.Errorf("MinResourceCount = %d, want %d", got.MinResourceCount, DefaultMinResourceCount)
+		got := config.KnowledgePointsConfig{}.KnowledgePointsOrDefault()
+		if got.MinResourceCount != config.DefaultMinResourceCount {
+			t.Errorf("MinResourceCount = %d, want %d", got.MinResourceCount, config.DefaultMinResourceCount)
 		}
-		if got.MaxKnowledgePoints != DefaultMaxKnowledgePoints {
-			t.Errorf("MaxKnowledgePoints = %d, want %d", got.MaxKnowledgePoints, DefaultMaxKnowledgePoints)
+		if got.MaxKnowledgePoints != config.DefaultMaxKnowledgePoints {
+			t.Errorf("MaxKnowledgePoints = %d, want %d", got.MaxKnowledgePoints, config.DefaultMaxKnowledgePoints)
 		}
-		if len(got.TagStoplist) != len(DefaultTagStoplist) {
-			t.Errorf("TagStoplist 长度 = %d, want %d", len(got.TagStoplist), len(DefaultTagStoplist))
+		if len(got.TagStoplist) != len(config.DefaultTagStoplist) {
+			t.Errorf("TagStoplist 长度 = %d, want %d", len(got.TagStoplist), len(config.DefaultTagStoplist))
 		}
 	})
 
 	t.Run("显式配置不被覆盖", func(t *testing.T) {
-		got := KnowledgePointsConfig{
+		got := config.KnowledgePointsConfig{
 			MinResourceCount:   5,
 			MaxKnowledgePoints: 10,
 			TagStoplist:        []string{"噪音"},
@@ -313,9 +313,9 @@ func TestKnowledgePointsOrDefault(t *testing.T) {
 	})
 
 	t.Run("负数回退到默认", func(t *testing.T) {
-		got := KnowledgePointsConfig{MinResourceCount: -1}.KnowledgePointsOrDefault()
-		if got.MinResourceCount != DefaultMinResourceCount {
-			t.Errorf("MinResourceCount = %d, want %d", got.MinResourceCount, DefaultMinResourceCount)
+		got := config.KnowledgePointsConfig{MinResourceCount: -1}.KnowledgePointsOrDefault()
+		if got.MinResourceCount != config.DefaultMinResourceCount {
+			t.Errorf("MinResourceCount = %d, want %d", got.MinResourceCount, config.DefaultMinResourceCount)
 		}
 	})
 }
@@ -2172,12 +2172,20 @@ function group(overrides: Partial<LearningPlanGroup> = {}): LearningPlanGroup {
   }
 }
 
-// el-collapse-item 必须挂在 el-collapse 里才有正确的注入上下文
+// el-collapse-item 必须挂在 el-collapse 里才有正确的注入上下文。
+// 注意 props 的写法：组件定义里的 props 是「声明」，不是「值」——
+// 值要从 mount 的第二个参数传进去，否则 :group 拿到 undefined。
+const PanelHarness = {
+  components: { KnowledgePointPanel },
+  props: ['g'],
+  template: '<el-collapse><KnowledgePointPanel :group="g" /></el-collapse>',
+}
+
 function mountPanel(g: LearningPlanGroup) {
-  return mount(
-    { components: { KnowledgePointPanel }, template: '<el-collapse><KnowledgePointPanel :group="g" /></el-collapse>', props: { g } },
-    { global: { plugins: [ElementPlus], stubs: { RouterLink: RouterLinkStub } } },
-  )
+  return mount(PanelHarness, {
+    props: { g },
+    global: { plugins: [ElementPlus], stubs: { RouterLink: RouterLinkStub } },
+  })
 }
 
 describe('KnowledgePointPanel', () => {

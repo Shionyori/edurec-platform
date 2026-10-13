@@ -37,33 +37,62 @@ func ParseResourceTags(raw string) []string {
 	return out
 }
 
+// AggregateOptions 标签聚合的配置。用结构体而非散参：字段还会增加，
+// 散参每次都要改所有调用点。
+type AggregateOptions struct {
+	// Stoplist 丢弃这些标签（平台徽章、人名、元信息词等无区分度的噪音）
+	Stoplist []string
+	// MinCount 标签至少要出现多少次才算知识点
+	MinCount int
+	// Max 知识点上限，<=0 表示不限
+	Max int
+	// Synonyms 把别名归到规范名，键是规范名（如 {"Go": ["Golang", "go"]}）。
+	// 拉丁文即便不在表里，也会按小写再归并一轮，避免同一个词因大小写拆成多条。
+	Synonyms map[string][]string
+}
+
 // TagAggregate 一个标签的聚合结果，即一个候选知识点
 type TagAggregate struct {
 	Name       string
 	Count      int
 	CategoryID uint
+	// Aliases 折叠进这个知识点的其它写法（大小写变体 + synonyms 里配的别名），
+	// 去重、不含 Name 本身、已排序。落库进 knowledge_points.aliases，
+	// 并参与资源检索（见 ResourceListQuery.AnyTags）。
+	Aliases []string
 }
 
 // AggregateKnowledgePointsFromTags 从资源标签聚合知识点候选。
 //
-// stoplist 内的标签、长度不足 MinKnowledgePointNameRunes 的标签、出现次数
-// 少于 minCount 的标签都会被丢弃。结果按词频降序、同频按名字升序排列——
-// map 迭代本身无序，不显式定序的话每次运行产出的知识点顺序都不同。
-func AggregateKnowledgePointsFromTags(
-	resources []model.Resource,
-	stoplist []string,
-	minCount, max int,
-) []TagAggregate {
-	stop := make(map[string]struct{}, len(stoplist))
-	for _, s := range stoplist {
+// 归并规则（两级）：
+//  1. synonyms 里配了别名 → 归到规范名（"Golang" → "Go"）
+//  2. 其余按小写归并（"python" → "Python"），避免同一个词因大小写拆成多条
+//
+// 展示名取该组内出现次数最多的原始写法；同频取字典序最小的，保证多次运行结果一致。
+func AggregateKnowledgePointsFromTags(resources []model.Resource, opts AggregateOptions) []TagAggregate {
+	stop := make(map[string]struct{}, len(opts.Stoplist))
+	for _, s := range opts.Stoplist {
 		stop[s] = struct{}{}
 	}
 
-	type accumulator struct {
-		count       int
+	// 别名（已小写）→ 规范名
+	aliasToCanonical := make(map[string]string)
+	for canonical, aliases := range opts.Synonyms {
+		for _, alias := range aliases {
+			aliasToCanonical[strings.ToLower(strings.TrimSpace(alias))] = canonical
+		}
+	}
+
+	type spelling struct {
+		original string
+		count    int
+	}
+	type group struct {
+		canonical   string // 配了 synonyms 时是规范名；否则为空，由展示名兜底
+		spellings   map[string]int
 		categoryHit map[uint]int
 	}
-	accs := make(map[string]*accumulator)
+	groups := make(map[string]*group) // key = 归并键（小写后的规范名）
 
 	for i := range resources {
 		seen := make(map[string]struct{})
@@ -74,33 +103,50 @@ func AggregateKnowledgePointsFromTags(
 			if _, blocked := stop[tag]; blocked {
 				continue
 			}
+			lowered := strings.ToLower(tag)
+			key := lowered
+			canonical := ""
+			if c, ok := aliasToCanonical[lowered]; ok {
+				canonical = c
+				key = strings.ToLower(c)
+			}
 			// 同一资源里重复挂同一个标签只算一次，否则词频会被单个资源刷高
-			if _, dup := seen[tag]; dup {
+			if _, dup := seen[key]; dup {
 				continue
 			}
-			seen[tag] = struct{}{}
+			seen[key] = struct{}{}
 
-			acc, ok := accs[tag]
+			g, ok := groups[key]
 			if !ok {
-				acc = &accumulator{categoryHit: make(map[uint]int)}
-				accs[tag] = acc
+				g = &group{canonical: canonical, spellings: make(map[string]int), categoryHit: make(map[uint]int)}
+				groups[key] = g
 			}
-			acc.count++
+			g.spellings[tag]++
 			if resources[i].CategoryID != 0 {
-				acc.categoryHit[resources[i].CategoryID]++
+				g.categoryHit[resources[i].CategoryID]++
 			}
 		}
 	}
 
-	out := make([]TagAggregate, 0, len(accs))
-	for name, acc := range accs {
-		if acc.count < minCount {
+	out := make([]TagAggregate, 0, len(groups))
+	for _, g := range groups {
+		name := g.canonical
+		total := 0
+		if name == "" {
+			name, total = dominantSpelling(g.spellings)
+		} else {
+			for _, c := range g.spellings {
+				total += c
+			}
+		}
+		if total < opts.MinCount {
 			continue
 		}
 		out = append(out, TagAggregate{
 			Name:       name,
-			Count:      acc.count,
-			CategoryID: dominantCategory(acc.categoryHit),
+			Count:      total,
+			CategoryID: dominantCategory(g.categoryHit),
+			Aliases:    aliasesOf(name, g.spellings),
 		})
 	}
 
@@ -110,9 +156,33 @@ func AggregateKnowledgePointsFromTags(
 		}
 		return out[i].Name < out[j].Name
 	})
-	if max > 0 && len(out) > max {
-		out = out[:max]
+	if opts.Max > 0 && len(out) > opts.Max {
+		out = out[:opts.Max]
 	}
+	return out
+}
+
+// dominantSpelling 取出现次数最多的原始写法；同频取字典序最小的，保证结果确定。
+func dominantSpelling(spellings map[string]int) (string, int) {
+	best, bestCount, total := "", -1, 0
+	for spelling, count := range spellings {
+		total += count
+		if count > bestCount || (count == bestCount && spelling < best) {
+			best, bestCount = spelling, count
+		}
+	}
+	return best, total
+}
+
+// aliasesOf 列出折叠进该知识点的其它写法：不含规范名本身，去重后排序。
+func aliasesOf(canonical string, spellings map[string]int) []string {
+	out := make([]string, 0, len(spellings))
+	for spelling := range spellings {
+		if spelling != canonical {
+			out = append(out, spelling)
+		}
+	}
+	sort.Strings(out)
 	return out
 }
 
@@ -161,9 +231,12 @@ func (s *KnowledgePointImportService) ImportFromTags(
 		return nil, nil, apperror.Internal(err)
 	}
 
-	candidates := AggregateKnowledgePointsFromTags(
-		resources, effective.TagStoplist, effective.MinResourceCount, effective.MaxKnowledgePoints,
-	)
+	candidates := AggregateKnowledgePointsFromTags(resources, AggregateOptions{
+		Stoplist: effective.TagStoplist,
+		MinCount: effective.MinResourceCount,
+		Max:      effective.MaxKnowledgePoints,
+		Synonyms: effective.Synonyms,
+	})
 
 	result := &KnowledgePointImportResult{Candidates: len(candidates)}
 	if !write || len(candidates) == 0 {
@@ -172,15 +245,18 @@ func (s *KnowledgePointImportService) ImportFromTags(
 
 	points := make([]model.KnowledgePoint, 0, len(candidates))
 	for i, c := range candidates {
+		// Aliases 是 MySQL JSON 列，必须永远是合法 JSON：没有别名也要写 "[]"。
+		// Go 零值 "" 会被 MySQL 以 Error 3140 拒绝并回滚整批。
+		aliasesJSON, err := json.Marshal(c.Aliases)
+		if err != nil {
+			aliasesJSON = []byte("[]")
+		}
 		points = append(points, model.KnowledgePoint{
 			Name:       c.Name,
 			CategoryID: c.CategoryID,
-			// Aliases 是 MySQL JSON 列，Go 零值 "" 不是合法 JSON，直接落库会报
-			// Error 3140（Invalid JSON text: The document is empty）并回滚整批。
-			// 与 service/resource.go 里 tags 默认 "[]"、metadata 默认 "{}" 同一惯例。
-			Aliases:   "[]",
-			Source:    model.KnowledgePointSourceTag,
-			SortOrder: i,
+			Aliases:    string(aliasesJSON),
+			Source:     model.KnowledgePointSourceTag,
+			SortOrder:  i,
 		})
 	}
 

@@ -158,6 +158,10 @@ type KnowledgePointsConfig struct {
 	MinResourceCount int `mapstructure:"min_resource_count"`
 	// MaxKnowledgePoints 聚合出的知识点上限
 	MaxKnowledgePoints int `mapstructure:"max_knowledge_points"`
+	// Synonyms 把别名归到规范名，键是规范名、值是别名列表。
+	// 例：{"Go": ["Go语言", "Golang", "go"]} —— 四种写法会归成一个知识点「Go」，
+	// 别名写进 aliases 并参与资源检索，因此带别名标签的资源不会丢。
+	Synonyms map[string][]string `mapstructure:"synonyms"`
 }
 
 // KnowledgePointsOrDefault 返回生效的知识点配置，未配置项回退到默认值。

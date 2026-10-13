@@ -30,6 +30,10 @@ type ResourceListQuery struct {
 	CategoryID uint
 	Type       string
 	Tags       []string
+	// AnyTags 任一命中即算（OR 语义），与 Tags 的全命中（AND）不同。
+	// 知识点用它：知识点名与它的别名是「同一个东西的不同写法」，
+	// 若按 AND 处理，只带别名标签的资源就查不出来了。
+	AnyTags    []string
 	Sort       string
 	OnlinePage int // >0 表示在线翻页：爬 B 站第 OnlinePage 页并返回新导入资源（不参与 SQL）
 }
@@ -85,6 +89,22 @@ func (r *ResourceRepo) List(query ResourceListQuery) (*ResourceListResult, error
 		}
 		tagJSON, _ := json.Marshal(tag)
 		db = db.Where("JSON_CONTAINS(tags, ?)", string(tagJSON))
+	}
+	if len(query.AnyTags) > 0 {
+		conds := make([]string, 0, len(query.AnyTags))
+		args := make([]any, 0, len(query.AnyTags))
+		for _, tag := range query.AnyTags {
+			tag = strings.TrimSpace(tag)
+			if tag == "" {
+				continue
+			}
+			tagJSON, _ := json.Marshal(tag)
+			conds = append(conds, "JSON_CONTAINS(tags, ?)")
+			args = append(args, string(tagJSON))
+		}
+		if len(conds) > 0 {
+			db = db.Where("("+strings.Join(conds, " OR ")+")", args...)
+		}
 	}
 
 	var total int64

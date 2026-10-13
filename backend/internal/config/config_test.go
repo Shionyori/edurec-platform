@@ -205,3 +205,20 @@ func TestKnowledgePointsOrDefault(t *testing.T) {
 		}
 	})
 }
+
+func TestKnowledgePointsSynonyms(t *testing.T) {
+	t.Run("默认无同义词", func(t *testing.T) {
+		// 括号不可省：if 的 init 语句里裸写复合字面量会被 Go 解析成赋值语句
+		if got := (config.KnowledgePointsConfig{}).KnowledgePointsOrDefault(); len(got.Synonyms) != 0 {
+			t.Errorf("Synonyms = %v, want 空", got.Synonyms)
+		}
+	})
+
+	t.Run("显式配置原样保留", func(t *testing.T) {
+		syn := map[string][]string{"Go": {"Golang"}}
+		got := config.KnowledgePointsConfig{Synonyms: syn}.KnowledgePointsOrDefault()
+		if len(got.Synonyms["Go"]) != 1 || got.Synonyms["Go"][0] != "Golang" {
+			t.Errorf("Synonyms = %v, want 原样保留", got.Synonyms)
+		}
+	})
+}

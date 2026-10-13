@@ -49,7 +49,9 @@ func TestAggregateKnowledgePointsFromTags(t *testing.T) {
 			resourceWithTags(4, 2, `["深度学习"]`),
 		}
 
-		got := service.AggregateKnowledgePointsFromTags(resources, []string{"教程"}, 2, 60)
+		got := service.AggregateKnowledgePointsFromTags(resources, service.AggregateOptions{
+			Stoplist: []string{"教程"}, MinCount: 2, Max: 60,
+		})
 
 		if len(got) != 1 {
 			t.Fatalf("聚合出 %d 个知识点，want 1: %+v", len(got), got)
@@ -68,7 +70,7 @@ func TestAggregateKnowledgePointsFromTags(t *testing.T) {
 			resourceWithTags(1, 1, `["机器学习","机器学习"]`),
 			resourceWithTags(2, 1, `["机器学习"]`),
 		}
-		got := service.AggregateKnowledgePointsFromTags(resources, nil, 2, 60)
+		got := service.AggregateKnowledgePointsFromTags(resources, service.AggregateOptions{MinCount: 2, Max: 60})
 		if len(got) != 1 || got[0].Count != 2 {
 			t.Fatalf("got %+v, want 机器学习 x2（重复标签不该把词频刷到 3）", got)
 		}
@@ -79,7 +81,7 @@ func TestAggregateKnowledgePointsFromTags(t *testing.T) {
 			resourceWithTags(1, 1, `["C"]`),
 			resourceWithTags(2, 1, `["C"]`),
 		}
-		if got := service.AggregateKnowledgePointsFromTags(resources, nil, 2, 60); len(got) != 0 {
+		if got := service.AggregateKnowledgePointsFromTags(resources, service.AggregateOptions{MinCount: 2, Max: 60}); len(got) != 0 {
 			t.Errorf("单字符标签不该成为知识点: %+v", got)
 		}
 	})
@@ -91,7 +93,7 @@ func TestAggregateKnowledgePointsFromTags(t *testing.T) {
 			resourceWithTags(3, 1, `["机器学习"]`),
 			resourceWithTags(4, 1, `["机器学习"]`),
 		}
-		got := service.AggregateKnowledgePointsFromTags(resources, nil, 2, 60)
+		got := service.AggregateKnowledgePointsFromTags(resources, service.AggregateOptions{MinCount: 2, Max: 60})
 		if len(got) != 1 || got[0].Name != "机器学习" {
 			t.Fatalf("got %+v, want 仅 机器学习", got)
 		}
@@ -105,7 +107,7 @@ func TestAggregateKnowledgePointsFromTags(t *testing.T) {
 			resourceWithTags(1, 1, `["甲甲","乙乙","丙丙"]`),
 			resourceWithTags(2, 1, `["甲甲","乙乙","丙丙"]`),
 		}
-		got := service.AggregateKnowledgePointsFromTags(resources, nil, 2, 2)
+		got := service.AggregateKnowledgePointsFromTags(resources, service.AggregateOptions{MinCount: 2, Max: 2})
 		if len(got) != 2 {
 			t.Fatalf("got %d 个，want 2", len(got))
 		}
@@ -120,9 +122,92 @@ func TestAggregateKnowledgePointsFromTags(t *testing.T) {
 			resourceWithTags(1, 0, `["机器学习"]`),
 			resourceWithTags(2, 0, `["机器学习"]`),
 		}
-		got := service.AggregateKnowledgePointsFromTags(resources, nil, 2, 60)
+		got := service.AggregateKnowledgePointsFromTags(resources, service.AggregateOptions{MinCount: 2, Max: 60})
 		if len(got) != 1 || got[0].CategoryID != 0 {
 			t.Fatalf("got %+v, want CategoryID=0", got)
+		}
+	})
+}
+
+func TestAggregate_CaseFoldingAndSynonyms(t *testing.T) {
+	t.Run("拉丁文大小写归并到同一条，展示名取出现最多的写法", func(t *testing.T) {
+		resources := []model.Resource{
+			resourceWithTags(1, 1, `["Python"]`),
+			resourceWithTags(2, 1, `["Python"]`),
+			resourceWithTags(3, 1, `["python"]`),
+		}
+		got := service.AggregateKnowledgePointsFromTags(resources, service.AggregateOptions{MinCount: 2, Max: 60})
+
+		if len(got) != 1 {
+			t.Fatalf("got %d 条，want 1（Python/python 应归并）: %+v", len(got), got)
+		}
+		if got[0].Name != "Python" {
+			t.Errorf("展示名 = %q, want Python（出现次数多的写法胜出）", got[0].Name)
+		}
+		if got[0].Count != 3 {
+			t.Errorf("Count = %d, want 3（归并后应累加）", got[0].Count)
+		}
+		if len(got[0].Aliases) != 1 || got[0].Aliases[0] != "python" {
+			t.Errorf("Aliases = %v, want [python]（折叠进来的原始写法要留作别名）", got[0].Aliases)
+		}
+	})
+
+	t.Run("同频时展示名取字典序最小，保证确定", func(t *testing.T) {
+		resources := []model.Resource{
+			resourceWithTags(1, 1, `["Go"]`),
+			resourceWithTags(2, 1, `["go"]`),
+		}
+		got := service.AggregateKnowledgePointsFromTags(resources, service.AggregateOptions{MinCount: 2, Max: 60})
+		// "Go" < "go"（大写字母字节序在前）
+		if len(got) != 1 || got[0].Name != "Go" {
+			t.Fatalf("got %+v, want 展示名 Go", got)
+		}
+	})
+
+	t.Run("synonyms 把别名归到规范名", func(t *testing.T) {
+		resources := []model.Resource{
+			resourceWithTags(1, 1, `["Golang"]`),
+			resourceWithTags(2, 1, `["Go语言"]`),
+			resourceWithTags(3, 1, `["Go"]`),
+			resourceWithTags(4, 1, `["go"]`),
+		}
+		got := service.AggregateKnowledgePointsFromTags(resources, service.AggregateOptions{
+			MinCount: 2, Max: 60,
+			Synonyms: map[string][]string{"Go": {"Golang", "Go语言", "go"}},
+		})
+
+		if len(got) != 1 {
+			t.Fatalf("got %d 条，want 1（四种写法应归到 Go）: %+v", len(got), got)
+		}
+		if got[0].Name != "Go" || got[0].Count != 4 {
+			t.Errorf("got %+v, want Go 计数 4", got[0])
+		}
+		// 别名要去重、且不含规范名本身；sort.Strings 后顺序确定。
+		// 字节序：'G'(0x47) < 'g'(0x67)，且 "Golang" 的第 3 字节 'l'(0x6C) < "Go语言" 的第 3 字节 0xE8
+		want := []string{"Golang", "Go语言", "go"}
+		if len(got[0].Aliases) != len(want) {
+			t.Fatalf("Aliases = %v, want %v", got[0].Aliases, want)
+		}
+		for i := range want {
+			if got[0].Aliases[i] != want[i] {
+				t.Errorf("Aliases = %v, want %v", got[0].Aliases, want)
+				break
+			}
+		}
+	})
+
+	t.Run("synonyms 的别名也受停用词与长度规则约束", func(t *testing.T) {
+		resources := []model.Resource{
+			resourceWithTags(1, 1, `["Golang"]`),
+			resourceWithTags(2, 1, `["Golang"]`),
+		}
+		// 别名 "Golang" 被停用 → 不应有任何知识点产出
+		got := service.AggregateKnowledgePointsFromTags(resources, service.AggregateOptions{
+			MinCount: 2, Max: 60, Stoplist: []string{"Golang"},
+			Synonyms: map[string][]string{"Go": {"Golang"}},
+		})
+		if len(got) != 0 {
+			t.Errorf("停用词应作用于别名，got %+v", got)
 		}
 	})
 }

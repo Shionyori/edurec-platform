@@ -71,7 +71,7 @@ chore: 更新 docker-compose 配置
 | 语言 | Go 1.21+ | |
 | HTTP 框架 | **Gin** | 高性能，中间件生态丰富 |
 | ORM | **GORM** | Go 生态 ORM 事实标准，跨语言 ORM 概念一致 |
-| 迁移工具 | **golang-migrate** | 独立 SQL up/down 脚本，版本化管理 |
+| 迁移工具 | **GORM AutoMigrate** | 启动时自动建表/改表，见 `internal/database/mysql.go` |
 | 配置管理 | **Viper + 环境变量** | YAML 文件 + 环境变量覆盖，适配 Docker 部署 |
 | 认证 | **JWT (Access + Refresh Token)** | Refresh token 存 Redis |
 | 日志 | **log/slog** | Go 1.21+ 标准库，结构化日志，零依赖 |
@@ -116,7 +116,6 @@ internal/
   repository/                # 数据访问层（GORM 操作）
   model/                     # 数据模型 struct 定义
   middleware/                 # 认证、错误处理、CORS 等中间件
-migrations/                  # golang-migrate SQL 脚本
 configs/                     # YAML 配置模板
 ```
 
@@ -281,7 +280,7 @@ users ──1:N── recommendations
 
 | 页面 | 路由 | 说明 | 认证要求 |
 |------|------|------|---------|
-| 首页 | `/` | 推荐流、热门资源、分类入口 | 是 |
+| 首页 | `/` | 提问框（学习目标）+ 推荐流；提交目标后切换为知识点面板（`?goal=` 同步） | 是 |
 | 登录 | `/login` | 用户登录 | 否 |
 | 注册 | `/register` | 用户注册 | 否 |
 | 资源详情 | `/resources/:id` | 内容展示、评分评论 | 是 |
@@ -360,7 +359,7 @@ services:
 | 6 | API 设计规范 | 混合（CRUD RESTful + 操作 RPC），统一规范 |
 | 7 | 状态管理 | Pinia |
 | 8 | 数据库 ORM | GORM |
-| 9 | 数据库迁移 | golang-migrate |
+| 9 | 数据库迁移 | GORM AutoMigrate（启动时自动建表/改表，无迁移脚本） |
 | 10 | API 文档 | 手写设计文档先行 |
 | 11 | UI 组件库 | Element Plus |
 | 12 | Mock 方案 | MSW |
@@ -384,3 +383,4 @@ services:
 | 30 | 在线搜索 + 评论爬取 | 在线实时（落地）：搜索在本地无结果（`total==0` 且只有 keyword）时 `exec` 调用 `crawler/online.py search` 实时抓取并复用导入落库；打开 B 站视频详情页时 `GET /resources/:id/comments` 无缓存则 `exec` 调用 `online.py comments` 抓评论，落独立 `resource_comments` 表。评论独立建模不污染站内评分；子进程 stdout 只输出 UTF-8 JSON、30s 超时、风控（-352/-412）不重试。搜索后演进为**无限滚动**：本地翻完（`resources.length >= total`）且纯关键词搜索时改带 `online_page=M` 逐页爬取，受 `search_max_pages` 上限约束 |
 | 31 | 第三方数据集（慕课等）导入 | 纯离线导入（落地）：给慕课网做在线爬虫的方案**已验证不可行**——全站由腾讯 EdgeOne 机器人管理接管，对非浏览器客户端下发混淆 JS 挑战页，同机同 IP 同 UA 下 `curl` 拿到真 JSON 而 Python（requests/httpx/urllib）只拿到挑战页，换任何 UA 与 HTTP 头均无效，说明拦在 **TLS 指纹**层；打通只能解 JS 挑战或伪造指纹，违反合规红线，故放弃。改为导入用户自行下载的本地数据集：`DatasetConfig` 把「外部字段 → 平台采集契约」的映射外置到 YAML（`datasets.<名称>`，未知字段名在启动时硬报错），`cmd/import_dataset` 提供 `--preview`（不连库）/ `--dry-run`（连库不写）/ 真导入三步走。落库以 `type=course` 的普通资源身份混入，**复用与 B 站完全相同的 `ImportItems` 内核**（泛化见 #32），判重与幂等语义沿用 #29。据此不引入任何新的 Python 代码 |
 | 32 | 采集落库契约泛化 | 泛化（落地）：B 站导入的主体（`FindBySourceURLs` 判重、分类 find-or-create、`truncateRunes` 截断）本就通用，唯二的来源耦合是「`bvid` 为必填身份键」与「`toResource` 写死 `type=video`」，故抽为通用契约 `CrawlImportService.ImportItems(items, CrawlImportOptions{ResourceType, SourceURLTemplate}, write)`。身份键改为 `SourceID` 并保留 `bvid` 兼容别名（采集脚本仍只发 `bvid`）；校验口径由「必须有身份键」放宽为「`source_url` 必须能确定」——它才是判重依据。落库类型经 `model.IsValidResourceType` 在写库前校验，杜绝写入枚举外的值 |
+| 33 | 学习目标·知识点层 | 分块而非排序（落地）：用户表达学习目标 → 知识点 → 每组资源。知识点由 `resources.tags` 聚合而来（`cmd/import_knowledge_points`），组内资源用知识点标签过滤资源池、按既有推荐信号排序。不做知识点之间的先后/依赖排序，不做掌握度；平台侧仍不做推理 |

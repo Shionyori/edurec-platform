@@ -105,6 +105,15 @@ bash scripts/handoff.sh
 | `scripts/mock-users.sh` | 生成模拟用户 + 对现有资源的行为（不引入 sim 资源） |
 | `scripts/clean.sh` | 清空数据库所有表数据（保留表结构） |
 
+知识点层需要先聚合一次（也可通过 `bash scripts/start.sh` 起服务后单独执行）：
+
+```bash
+cd backend && go run ./cmd/import_knowledge_points --from-tags --preview  # 先人工检视聚合质量
+cd backend && go run ./cmd/import_knowledge_points --from-tags            # 确认后落库
+```
+
+> `--preview` 只读数据库、不写库（`--from-tags` 必须读 `resources` 表才能聚合）；命令幂等，重复执行按知识点名 upsert，不会重复插入。
+
 ## 功能模块
 
 ### 已实现
@@ -123,6 +132,7 @@ bash scripts/handoff.sh
 | 推荐运营 | 运行记录、效果看板（曝光/点击/CTR）、离线评估（vs 热门基线） |
 | 管理后台 | 用户/资源/分类管理、推荐导入与推荐管理 |
 | B 站采集 | 离线批量采集 + 在线搜索/评论爬取 |
+| 学习计划 | 学习目标 → 知识点 → 每组资源（知识点由资源标签聚合，组内复用推荐信号排序） |
 
 ### 待实现
 

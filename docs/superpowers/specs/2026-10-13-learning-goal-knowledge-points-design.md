@@ -64,7 +64,7 @@ engine 产出的是每用户 top-N（默认 20）的扁平列表。若拿它与�
 | 4 | 匹配不到时 | 兜底为按目标做资源关键词搜索，返回单一分组 | 绝不返回空白页 |
 | 5 | 组内排序 | engine 推荐序 > `avg_rating` > `view_count` | 复用既有信号，实现"个性化"而不引入新模型 |
 | 6 | 空组处理 | 关联资源为 0 的知识点**从响应中剔除** | 杜绝"空头支票"——点开却没内容比不展示更伤 |
-| 7 | 首页初始态 | 保留现有推荐流，提问框置于其上方 | 改动最小；`home` 场景曝光打点不断流，管理后台 CTR 看板不受影响 |
+| 7 | 首页初始态 | 保留现有推荐流，提问框置于其上方 | 改动最小；`home` 场景曝光打点不断流（`home` 自身的行不受影响；但新场景会进入全表 CTR 分母，见 §11.3） |
 | 8 | 提交目标后 | 整页切换为知识点面板 | 对应需求原文"页面变化为知识点列表的界面" |
 | 9 | 路由 | 不新增路由，复用 `/`，状态驱动；`?goal=` 同步到 URL | 刷新/分享可恢复；无需新页面骨架 |
 | 10 | 鉴权 | 需要登录 | 与全站一致，且排序信号依赖用户个性化数据 |
@@ -190,12 +190,14 @@ ResourceRepo.List(Keyword=goal, Sort="rating", PageSize=12)
 ### 8.1 命令
 
 ```
-go run ./cmd/import_knowledge_points --from-tags            # 从 resources.tags 聚合
-go run ./cmd/import_knowledge_points --from-tags --preview  # 不连库，打印将要导入的知识点
-go run ./cmd/import_knowledge_points --file data/knowledge_points.json   # 手工/LLM 产出（本轮预留）
+go run ./cmd/import_knowledge_points --from-tags            # 从 resources.tags 聚合（本轮实现）
+go run ./cmd/import_knowledge_points --from-tags --preview  # 只读库、不写库，打印将要导入的知识点（本轮实现）
+# --file data/knowledge_points.json                          # 手工/LLM 产出（本轮不实现，见 §10 演进）
 ```
 
-沿用 `cmd/import_dataset` 的三步走惯例：`--preview`（不连库）/ `--dry-run`（连库不写）/ 真导入。幂等语义按 `name` upsert（存在则更新 `description`/`aliases`/`category_id`/`sort_order`，不重复插入）。
+沿用 `cmd/import_dataset` 的三步走惯例，但语义有一处不同：`--from-tags` 必须读 `resources` 表才能聚合，故其 `--preview` 是**只读库、不写库**（仍会建立数据库连接），并非 `import_dataset` 那种「完全不连库」。`--dry-run`（连库走完整聚合、不写）与真导入语义不变。幂等语义按 `name` upsert（存在则更新 `description`/`aliases`/`category_id`/`sort_order`，不重复插入）。
+
+> `--file` 手工/LLM 产出路径**本轮刻意未实现**：`cmd/import_knowledge_points` 在建立数据库连接前即拒绝 `--file`（见 `main.go` 的 `log.Fatalf`）。保留该开关与 §8.3 契约是为将来换产出方留缝，但读取端要等真有第二个产出方时再落地。
 
 ### 8.2 `--from-tags` 算法
 
@@ -204,7 +206,7 @@ go run ./cmd/import_knowledge_points --file data/knowledge_points.json   # 手�
 3. 按词频 desc 排序，取前 `knowledge_points.max_knowledge_points`（默认 60）
 4. `category_id` = 携带该标签的资源中最常见的分类
 5. `name` = 标签原文，`aliases` 为空，`source = "tag"`
-6. 写入 `data/knowledge_points.json`（`--preview` 时仅打印），再落库
+6. 直接落库（本轮不产生中间 JSON 文件；契约见 §8.3，实现时再落地）
 
 ### 8.3 导入契约（将来换 LLM 打标的关键缝）
 
@@ -223,6 +225,10 @@ go run ./cmd/import_knowledge_points --file data/knowledge_points.json   # 手�
 ```
 
 `--from-tags` 产出**同一种格式**。将来换成 LLM 打标脚本，只需它产出同一格式，导入命令与下游全部不动。
+
+> 本契约在**有第二个产出方时**才实现读取端。本轮只有 `--from-tags` 一个产出方，
+> 写一个无法端到端验证的读取器只会留下没被测过的代码（YAGNI）。缝保留在
+> 「聚合是独立纯函数、落库是独立 service 方法」这两个接缝上。
 
 ### 8.4 阶段 0：先验证质量，再往下做
 
@@ -311,7 +317,9 @@ go run ./cmd/import_knowledge_points --file data/knowledge_points.json   # 手�
 
 面板内资源展示时调用 `recordImpressions('learning-plan', items)`，`scene` 用新值。
 
-- 与首页 `home` 场景并存，**不干扰现有 CTR 看板**
+- 与首页 `home` 场景并存：**行级隔离**——`learning-plan` 与 `home` 是 `resource_impressions` 里两批不同的行，`home` 自身的行不被改动
+- **但看板数值会变**：管理后台 CTR（`GET /api/v1/admin/recommendation-stats`）由 `StatsRepo.RecommendationStats` 对 `resource_impressions` **全表计数、不按 scene 过滤**算出（`backend/internal/repository/stats.go`），新增的 `learning-plan` 行会抬高分母、拉低看板 CTR。即「不干扰看板」只在**行级**成立，不在**数值级**成立
+- 这是产品口径选择，三种做法择一：① 保持现状（新入口计入整体 CTR）；② 在 `RecommendationStats` 中排除该场景；③ 增加按 scene 的分场景统计。本轮不改统计代码，保留现状
 - 新增一个可度量的场景，将来可在管理后台对比"两个入口"的效果
 - 打点失败静默，不阻塞渲染（沿用现状）
 
@@ -335,7 +343,7 @@ go run ./cmd/import_knowledge_points --file data/knowledge_points.json   # 手�
 
 **交付物**
 - `model/knowledge_point.go` + `AutoMigrate` 追加
-- `cmd/import_knowledge_points/`（`--from-tags` / `--file` / `--preview` / `--dry-run`）
+- `cmd/import_knowledge_points/`（本轮实现 `--from-tags` / `--preview` / `--dry-run`；`--file` 刻意不实现，见 §8.1）
 - `repository/knowledge_point.go`、`service/knowledge_point.go`、`handler/knowledge_point.go`、`router.go` 注册
 - `configs/config.yaml` 新增 `knowledge_points.{tag_stoplist,min_resource_count,max_knowledge_points}`
 - 前端：`GoalInput.vue`、`KnowledgePointPanel.vue`、`LearningPlanView.vue`、`api/learningPlan.ts`、`pages/home/index.vue` 改造、MSW handler
@@ -364,7 +372,7 @@ cd frontend && pnpm test && pnpm type-check && pnpm lint
 | 组内候选池受 `List` 上限 100 限制 | 关联资源极多时，低分但命中 engine 推荐的资源可能落选 | 本轮接受：库内资源量级有限，且 `Sort="rating"` 已优先召回高质量候选 |
 | 知识点身份绑定标签字符串 | 标签被改写或清理会导致知识点失联 | 导入按 `name` upsert 幂等；标签清理属资源侧操作，本轮不改 |
 | 中文子串匹配误召回 | 短名或通用词过度命中 | 已加长度 ≥2 门槛（§6.2 第 3 步），停用词表兜底 |
-| 新入口进入曝光统计 | 可能扰动既有 CTR 口径 | 独立 `scene=learning-plan`，与 `home` 分开统计，不改现有口径 |
+| 新入口进入曝光统计 | 会改变管理后台 CTR 数值 | 独立 `scene=learning-plan`：行级与 `home` 分开；但 CTR 由全表 `resource_impressions` 计数得出（无 scene 过滤），新场景会抬高分母、拉低看板 CTR。口径取舍见 §11.3 |
 
 ## 15. 里程碑
 

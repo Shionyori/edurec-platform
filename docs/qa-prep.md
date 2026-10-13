@@ -21,7 +21,7 @@
 | 缓存介质 | 推荐结果缓存在 **MySQL `recommendations` 表**，Redis 只放 refresh token（`backend/internal/repository/refresh_token_store.go:22-35`） |
 | 效果评估 | **完全没有**：无离线指标、无 AB 实验、无曝光打点、无线上监控（全仓 grep `impression|exposure|AUC|CTR` 零命中） |
 | 测试 | 后端 `go test ./...` 通过，均为单测（fake 仓库），`handler/`、`repository/` 目录**无测试文件**；前端 25 个测试文件约 156 条用例（本机沙箱无法启动 vitest，见 §10.1） |
-| 迁移 | 仓库**没有** `migrations/` 目录，实际靠 GORM `AutoMigrate`（`backend/internal/database/mysql.go:41-53`）；`docs/design.md:74` 写的 golang-migrate 属规划未落地 |
+| 迁移 | 仓库**没有** `migrations/` 目录，实际靠 GORM `AutoMigrate`（`backend/internal/database/mysql.go:41-53`）；`docs/design.md` 迁移工具行原写 golang-migrate（规划未落地），已在文档回写时改为 GORM AutoMigrate |
 | 部署 | 仓库内**没有** Dockerfile / docker-compose.yml（`docs/design.md:308-328` 写的是规划） |
 
 ---

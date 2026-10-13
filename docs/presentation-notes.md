@@ -120,7 +120,7 @@
 `docs/design.md` §3 技术栈表把 Redis 写成「JWT refresh token 存储 **+ 推荐结果缓存**」，但**代码里推荐结果缓存是 MySQL 的 `Recommendation` 表**（`model/recommendation.go`），Redis 实际只承载 refresh token（`repository/refresh_token_store.go`）。
 
 - 这不算 bug，但**是文档口径没跟上实现**，建议对齐（也正好说明「缓存」一词在讨论里要区分：Redis 是 token 存储，推荐缓存是关系表）。
-- 顺带：`docs/design.md` §4.2 / §8.1 提到 `migrations/`（golang-migrate）与 `docker/`、`docker-compose.yml`、`api/` 目录，**当前仓库里都不存在**；建表实际走 GORM `AutoMigrate`（`backend/internal/database/mysql.go:42`）。这类「设计意图 vs 落地范围」的差距建议在汇报时明确，避免被追问时被动。
+- 顺带：`docs/design.md` 原提到 `migrations/`（golang-migrate），**当前仓库里不存在**（建表实际走 GORM `AutoMigrate`，`backend/internal/database/mysql.go:42`）；该处已在文档回写时更正。`docker/`、`docker-compose.yml`、`api/` 目录同样不存在，仍属规划。这类「设计意图 vs 落地范围」的差距建议在汇报时明确，避免被追问时被动。
 
 ---
 
@@ -522,7 +522,7 @@
 6. **时效性与调度**：batch 刷新靠手工/外部触发，没有定时任务；近线增强（过滤最近已看、新资源曝光通道）已识别未实现。
 7. **工程口径偏差（文档 ↔ 代码）**：
    - `design.md` §3 把 Redis 写成也做「推荐结果缓存」，实际推荐缓存是 MySQL 表，Redis 只存 refresh token；
-   - `design.md` §4.2 / §8.1 提到的 `migrations/`（golang-migrate）、`docker/`、`docker-compose.yml`、`api/` 目录在当前仓库**不存在**，建表走 GORM `AutoMigrate`（决策 #9 未落地）；
+   - `design.md` 原提到的 `migrations/`（golang-migrate）在当前仓库**不存在**，建表走 GORM `AutoMigrate`（决策 #9 已更正为 AutoMigrate）；`docker/`、`docker-compose.yml`、`api/` 目录仍不存在；
    - `service/recommendation_import.go:44-45` 的注释仍是旧口径（说 engine ID 与平台不一一对应），与 `engine-integration.md`「platform 数据源全程使用平台原始 ID」不一致；
    - `design.md` 决策表编号缺 11、且 12 被两个决策项重号。
 8. **无 `source_url` 唯一索引**：两条导入链路都靠「单进程串行」保证不重复，并发导入会产生重复行（文档已列为已知限制）。

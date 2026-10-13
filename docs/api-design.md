@@ -1,7 +1,7 @@
 # edurec-platform API 设计文档
 
 > 版本：0.2.0 | 基础 URL：`/api/v1`
-> 实现状态：认证、用户、分类、资源、行为、评分、管理、推荐模块均已实现，含 engine 推荐结果导入接口（2026-08-27）
+> 实现状态：认证、用户、分类、资源、行为、评分、管理、推荐、学习计划模块均已实现，含 engine 推荐结果导入接口（2026-08-27）
 
 ## 规范约定
 
@@ -624,6 +624,8 @@ GET /api/v1/recommendations
 ```
 
 > 后端先查缓存，命中即返回；未命中时兜底按评分降序取热门资源并写入缓存。个性化结果由 engine 离线批量训练/推理产出（平台原始 ID），经 6.2 导入接口写入缓存表——platform 侧不做模型推理。
+>
+> 相关：以「学习目标」为入口的知识点规划见 §9 学习计划模块，其组内排序复用本接口的推荐顺序作为第一优先级。
 
 ---
 
@@ -830,6 +832,89 @@ GET /api/v1/admin/resources
 
 ---
 
+### 9. 学习计划模块
+
+#### 9.1 生成学习计划
+
+```
+GET /api/v1/learning-plan
+```
+
+**需要认证：是**
+
+以“学习目标”为入口：先匹配知识点，再给每个知识点挂一组资源，让用户从“不知道学什么”直接落到“先学这几块、每块看这些”。
+
+**Query Parameters**
+
+| 参数 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| goal | string | 是 | 学习目标，去空白后 2–100 字符 |
+| knowledge_points | int | 否 | 返回的知识点数，默认 8，超过 20 时按 20 处理（非整数或为负返回 400） |
+
+**Response (200)**
+
+```json
+{
+  "code": 0,
+  "message": "ok",
+  "data": {
+    "goal": "我想入门机器学习",
+    "matched": true,
+    "groups": [
+      {
+        "knowledge_point": {
+          "id": 3,
+          "name": "监督学习",
+          "description": "",
+          "category": { "id": 1, "name": "人工智能" }
+        },
+        "total": 12,
+        "resources": [
+          {
+            "id": 12,
+            "title": "机器学习入门：线性回归",
+            "description": "面向零基础",
+            "cover_url": "https://example.com/c1.jpg",
+            "type": "video",
+            "category": { "id": 1, "name": "人工智能" },
+            "tags": ["监督学习", "回归"],
+            "avg_rating": 4.6,
+            "view_count": 3182,
+            "author": "某UP主",
+            "difficulty": "beginner",
+            "duration_minutes": 42,
+            "created_at": "2026-06-15T08:00:00Z"
+          }
+        ]
+      }
+    ]
+  }
+}
+```
+
+| 字段 | 说明 |
+|------|------|
+| matched | `false` 表示未匹配到知识点，`groups` 为兜底单一分组 |
+| groups[].knowledge_point | 知识点摘要；兜底分组时 `id` 为 0、`description` 为空、`name` 为占位名“为你找到的相关资源”，`category` 为 `null` |
+| groups[].total | 该知识点关联的资源总数（不受组内展示上限影响） |
+| groups[].resources | 组内资源，最多 6 条，字段与 §3.1 资源列表项一致；已按「engine 推荐序 > 平均分 > 浏览量」排序 |
+
+**错误**
+
+| 状态码 | 说明 |
+|--------|------|
+| 400 | goal 去空白后为空 / 少于 2 字符 / 超过 100 字符；或 knowledge_points 不是有效的非负整数 |
+| 401 | 未认证 |
+
+> 知识点由 `resources.tags` 聚合而来（离线导入，见 `cmd/import_knowledge_points --from-tags`），
+> 目标匹配为确定性子串匹配（知识点名/别名/分类名，忽略拉丁文大小写）；匹配不到时兜底为按目标的关键词搜索、返回单一分组，不返回空白。
+
+> **曝光场景与 CTR 口径**：知识点面板的资源曝光使用独立场景 `learning-plan`（`POST /api/v1/impressions` 的 `scene`），与首页 `home` 场景的行分开落库。
+> 但管理后台的 CTR（`GET /api/v1/admin/recommendation-stats`）由 `StatsRepo.RecommendationStats` 对 `resource_impressions` **全表计数、不按 scene 过滤**得出，因此新增的 `learning-plan` 行会抬高 CTR 的分母，看板数值会随之变化（`home` 自身的行不被改动）。
+> 这是产品口径选择，三种做法供取舍：保持现状（新入口计入整体 CTR）/ 在 `RecommendationStats` 中排除该场景 / 增加按 scene 的分场景统计。本轮未改统计代码。
+
+---
+
 ## 附录：接口总览
 
 | # | 方法 | 路径 | 认证 | 管理员 | 说明 |
@@ -854,3 +939,4 @@ GET /api/v1/admin/resources
 | 18 | GET | `/api/v1/admin/users` | 是 | 是 | 用户管理 |
 | 19 | GET | `/api/v1/admin/resources` | 是 | 是 | 资源管理 |
 | 20 | POST | `/api/v1/admin/recommendations/import` | 是 | 是 | 导入 engine 推荐结果 |
+| 21 | GET | `/api/v1/learning-plan` | 是 | — | 学习目标 → 知识点 → 分组资源 |

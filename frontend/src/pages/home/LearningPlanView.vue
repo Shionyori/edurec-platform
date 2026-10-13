@@ -23,7 +23,9 @@ async function load(goal: string) {
     const data = await getLearningPlan(goal)
     if (current !== generation) return // 已被更新的请求取代，丢弃
     plan.value = data
-    // 面板展开即曝光：记录本屏知识点下的资源。用独立场景，避免扰动首页 CTR 口径。
+    // 面板展开即曝光：记录本屏知识点下的资源。用独立场景区分入口。
+    // 注意：这里**不能**说「不影响首页 CTR」——后台看板的 CTR 分母不过滤 scene
+    // （repository/stats.go 统计全部 resource_impressions），新增本场景会让看板 CTR 下降。
     // 失败静默，埋点不影响页面。
     const shown = data.groups.flatMap((g) => g.resources.map((r) => r.id))
     // 无可见资源时跳过：避免一次空曝光调用（服务端没有任何资源可记录）

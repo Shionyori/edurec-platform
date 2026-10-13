@@ -59,7 +59,7 @@ engine 产出的是每用户 top-N（默认 20）的扁平列表。若拿它与�
 | # | 决策 | 选择 | 理由 |
 |---|---|---|---|
 | 1 | 知识点来源（本轮） | 从 `resources.tags` 聚合 + 停用词过滤 | 零外部依赖、零 LLM。导入契约固定，将来换 LLM 打标时消费方不变 |
-| 2 | 知识点存储 | **单表** `knowledge_points`，不建资源关联表 | 本轮知识点即标签，关联关系由标签隐式承载，`List(Tags=[kp.name])` 直接可查；关联表属第 10 节的演进项 |
+| 2 | 知识点存储 | **单表** `knowledge_points`，不建资源关联表 | 本轮知识点即标签，关联关系由标签隐式承载，服务层用 `List(AnyTags=[规范名+别名])`（OR 语义）直接可查；关联表属第 10 节的演进项 |
 | 3 | 目标匹配算法 | 子串匹配（知识点名/别名 → 目标文本） | 中文无需分词，`"我想学机器学习"` 直接包含 `"机器学习"`；确定性、可测 |
 | 4 | 匹配不到时 | 兜底为按目标做资源关键词搜索，返回单一分组 | 绝不返回空白页 |
 | 5 | 组内排序 | engine 推荐序 > `avg_rating` > `view_count` | 复用既有信号，实现"个性化"而不引入新模型 |
@@ -87,7 +87,8 @@ engine 产出的是每用户 top-N（默认 20）的扁平列表。若拿它与�
 | sort_order | INT DEFAULT 0 | 展示与匹配的稳定排序 |
 | created_at / updated_at | DATETIME | |
 
-> `name` 与 `resources.tags` 中的字符串**按原值对应**——这是本轮 `List(Tags=[kp.name])` 能直接工作的前提。alias 不参与资源过滤，只参与目标匹配。
+> `name` 与 `resources.tags` 中的字符串**按原值对应**。别名**同时参与**目标匹配与资源检索：
+> 服务层以 `AnyTags`（OR）把「规范名 + 别名」一起作为过滤条件，因此只带别名标签的资源也不会丢。
 
 ## 6. 接口
 
@@ -166,7 +167,7 @@ PlanForGoal(userID, goal, nKP, mRes):
   6. matched 排序：(命中词长度 desc, sort_order asc, id asc)，取前 nKP
   7. recRank = map[resourceID]rank，来自 RecommendationService.Get(userID, 50)
   8. 对每个 kp：
-       res = ResourceRepo.List(Tags=[kp.name], PageSize=100, Sort="rating")   # 100 为 List 的上限
+       res = ResourceRepo.List(AnyTags=[kp.Name] + kp.Aliases, PageSize=100, Sort="rating")  # 100 为上限
        若 res.Total == 0 → 剔除该 kp
        排序键：(recRank 存在 ? recRank : +∞) asc, avg_rating desc, view_count desc
        取前 mRes；组内 total 字段直接透传 res.Total

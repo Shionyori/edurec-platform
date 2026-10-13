@@ -6,6 +6,8 @@ import (
 	"strings"
 	"unicode/utf8"
 
+	"github.com/Shionyori/edurec-platform/backend/internal/apperror"
+	"github.com/Shionyori/edurec-platform/backend/internal/config"
 	"github.com/Shionyori/edurec-platform/backend/internal/model"
 	"github.com/Shionyori/edurec-platform/backend/internal/repository"
 )
@@ -137,4 +139,74 @@ func NewKnowledgePointImportService(
 	points repository.KnowledgePointRepository,
 ) *KnowledgePointImportService {
 	return &KnowledgePointImportService{resources: resources, points: points}
+}
+
+// KnowledgePointImportResult 一次导入的统计
+type KnowledgePointImportResult struct {
+	Candidates int
+	Created    int
+	Updated    int
+}
+
+// ImportFromTags 从库内资源的标签聚合知识点并幂等落库。
+// write 为 false 时只计算不写库（--dry-run）。
+func (s *KnowledgePointImportService) ImportFromTags(
+	cfg config.KnowledgePointsConfig,
+	write bool,
+) (*KnowledgePointImportResult, []TagAggregate, error) {
+	effective := cfg.KnowledgePointsOrDefault()
+
+	resources, err := s.loadAllResources()
+	if err != nil {
+		return nil, nil, apperror.Internal(err)
+	}
+
+	candidates := AggregateKnowledgePointsFromTags(
+		resources, effective.TagStoplist, effective.MinResourceCount, effective.MaxKnowledgePoints,
+	)
+
+	result := &KnowledgePointImportResult{Candidates: len(candidates)}
+	if !write || len(candidates) == 0 {
+		return result, candidates, nil
+	}
+
+	points := make([]model.KnowledgePoint, 0, len(candidates))
+	for i, c := range candidates {
+		points = append(points, model.KnowledgePoint{
+			Name:       c.Name,
+			CategoryID: c.CategoryID,
+			// Aliases 是 MySQL JSON 列，Go 零值 "" 不是合法 JSON，直接落库会报
+			// Error 3140（Invalid JSON text: The document is empty）并回滚整批。
+			// 与 service/resource.go 里 tags 默认 "[]"、metadata 默认 "{}" 同一惯例。
+			Aliases:   "[]",
+			Source:    model.KnowledgePointSourceTag,
+			SortOrder: i,
+		})
+	}
+
+	created, updated, err := s.points.UpsertByName(points)
+	if err != nil {
+		return nil, nil, apperror.Internal(err)
+	}
+	result.Created, result.Updated = created, updated
+	return result, candidates, nil
+}
+
+// loadAllResources 翻页取回全部资源。
+//
+// 必须翻页：ResourceRepo.List 的 PageSize 上限是 100（repository/resource.go:66-68），
+// 只取一页会让资源数超过 100 的库**静默丢掉后面的标签**，聚合出的知识点因人而异却毫无提示。
+func (s *KnowledgePointImportService) loadAllResources() ([]model.Resource, error) {
+	const pageSize = 100
+	all := make([]model.Resource, 0)
+	for page := 1; ; page++ {
+		list, err := s.resources.List(repository.ResourceListQuery{Page: page, PageSize: pageSize})
+		if err != nil {
+			return nil, err
+		}
+		all = append(all, list.Items...)
+		if len(list.Items) < pageSize || int64(len(all)) >= list.Total {
+			return all, nil
+		}
+	}
 }

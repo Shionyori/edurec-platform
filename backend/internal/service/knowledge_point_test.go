@@ -174,6 +174,41 @@ func TestPlanForGoal_MatchByAliasIgnoreCase(t *testing.T) {
 	}
 }
 
+// 别名必须真的进入资源检索条件：否则「把 Golang 归并到 Go」只是改了个名字，
+// 只带别名标签的资源会查不出来。替身只读 AnyTags[0]，所以断言要看发出的查询本身。
+func TestPlanForGoal_QueriesResourcesByAliasesToo(t *testing.T) {
+	resources := &fakePlanResourceRepository{byTag: map[string][]model.Resource{
+		"机器学习": {resource(1, 4.5, 100)},
+	}}
+	// 这里给一张命中的推荐缓存：缓存命中时 Get 只走 FindByIDs，不再自己发
+	// resources.List 冷启动兜底查询。若用空缓存，替身记录的 queries[0] 会是 engine
+	// 那条兜底查询（AnyTags 为空），要断言的规划查询就退到 queries[1]。
+	recRepo := &fakeRecommendationRepository{found: &model.Recommendation{
+		UserID: 7, ResourceIDs: `[1]`, UpdatedAt: 1,
+	}}
+	svc := newPlanService([]model.KnowledgePoint{
+		point(1, "机器学习", `["机器学习入门","机器学习算法"]`, 1),
+	}, resources, recRepo)
+
+	if _, err := svc.PlanForGoal(7, "机器学习", 8); err != nil {
+		t.Fatalf("PlanForGoal 报错: %v", err)
+	}
+	if len(resources.queries) == 0 {
+		t.Fatal("没有发出资源查询")
+	}
+	want := []string{"机器学习", "机器学习入门", "机器学习算法"}
+	got := resources.queries[0].AnyTags
+	if len(got) != len(want) {
+		t.Fatalf("AnyTags = %v, want %v", got, want)
+	}
+	for i := range want {
+		if got[i] != want[i] {
+			t.Errorf("AnyTags = %v, want %v", got, want)
+			break
+		}
+	}
+}
+
 func TestPlanForGoal_MatchByCategoryWhenNameMisses(t *testing.T) {
 	resources := &fakePlanResourceRepository{byTag: map[string][]model.Resource{
 		"机器学习": {resource(1, 4.5, 100)},

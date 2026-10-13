@@ -6,14 +6,21 @@ import { getRecommendations } from '@/api/recommendation'
 import { recordImpressions } from '@/api/impression'
 import HomePage from '../index.vue'
 
+// route 可变，用来驱动「推荐流 / 学习计划」两态
+const routeMock = vi.hoisted(() => ({ query: {} as Record<string, string> }))
+const pushMock = vi.hoisted(() => vi.fn())
+
 vi.mock('vue-router', () => ({
   RouterLink: { template: '<a><slot /></a>' },
+  useRoute: () => routeMock,
+  useRouter: () => ({ push: pushMock }),
 }))
 vi.mock('@/api/recommendation', () => ({ getRecommendations: vi.fn() }))
 vi.mock('@/api/impression', () => ({ recordImpressions: vi.fn(() => Promise.resolve(null)) }))
 vi.mock('@/api/category', () => ({ listCategories: vi.fn(() => Promise.resolve([])) }))
+vi.mock('@/api/learningPlan', () => ({ getLearningPlan: vi.fn(() => Promise.resolve({ goal: '', matched: false, groups: [] })) }))
+vi.mock('@/api/behavior', () => ({ recordBehavior: vi.fn(() => Promise.resolve(null)) }))
 
-// 用可变的 auth mock 控制「是否展示冷启动兴趣引导」
 const authMock = vi.hoisted(() => ({ user: null as unknown }))
 vi.mock('@/stores/auth', () => ({ useAuthStore: () => authMock }))
 
@@ -41,6 +48,7 @@ async function mountPage() {
 describe('HomePage', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    routeMock.query = {}
     authMock.user = { interests: [1] } // 默认已有兴趣 → 不展示引导
     mockedGetRecommendations.mockResolvedValue(recResult)
   })
@@ -71,5 +79,26 @@ describe('HomePage', () => {
   it('已有兴趣的用户不展示兴趣引导', async () => {
     const wrapper = await mountPage()
     expect(wrapper.text()).not.toContain('选择你感兴趣的方向')
+  })
+
+  it('始终展示提问框', async () => {
+    const wrapper = await mountPage()
+    expect(wrapper.text()).toContain('想学点什么？')
+  })
+
+  it('提交目标后跳转到带 ?goal= 的首页', async () => {
+    const wrapper = await mountPage()
+    await wrapper.find('input').setValue('机器学习')
+    await wrapper.find('form').trigger('submit')
+
+    expect(pushMock).toHaveBeenCalledWith({ name: 'home', query: { goal: '机器学习' } })
+  })
+
+  it('URL 带 goal 时进入学习计划态，不拉推荐流', async () => {
+    routeMock.query = { goal: '机器学习' }
+    const wrapper = await mountPage()
+
+    expect(mockedGetRecommendations).not.toHaveBeenCalled()
+    expect(wrapper.text()).toContain('为你规划')
   })
 })

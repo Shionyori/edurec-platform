@@ -1750,9 +1750,15 @@ func TestPlanForGoal_QueriesResourcesByAliasesToo(t *testing.T) {
 	resources := &fakePlanResourceRepository{byTag: map[string][]model.Resource{
 		"机器学习": {resource(1, 4.5, 100)},
 	}}
+	// 这里给一张命中的推荐缓存：缓存命中时 Get 只走 FindByIDs，不再自己发
+	// resources.List 冷启动兜底查询。若用空缓存，替身记录的 queries[0] 会是 engine
+	// 那条兜底查询（AnyTags 为空），要断言的规划查询就退到 queries[1]。
+	recRepo := &fakeRecommendationRepository{found: &model.Recommendation{
+		UserID: 7, ResourceIDs: `[1]`, UpdatedAt: 1,
+	}}
 	svc := newPlanService([]model.KnowledgePoint{
 		point(1, "机器学习", `["机器学习入门","机器学习算法"]`, 1),
-	}, resources, &fakeRecommendationRepository{})
+	}, resources, recRepo)
 
 	if _, err := svc.PlanForGoal(7, "机器学习", 8); err != nil {
 		t.Fatalf("PlanForGoal 报错: %v", err)

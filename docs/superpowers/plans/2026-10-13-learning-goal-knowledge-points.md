@@ -3202,15 +3202,34 @@ import { getRecommendations } from '@/api/recommendation'
 import { recordImpressions } from '@/api/impression'
 import HomePage from '../index.vue'
 
-// route 可变，用来驱动「推荐流 / 学习计划」两态
-const routeMock = vi.hoisted(() => ({ query: {} as Record<string, string> }))
-const pushMock = vi.hoisted(() => vi.fn())
+// route 必须是**响应式**的：组件的 goal 是 computed(() => route.query.goal)，
+// 若用普通对象，改写 query 不会触发重新求值，「切回推荐流」这条路径就测不到。
+// 同时让 mock 的 push 真的改写 route——否则点「换一个目标」时 goal 不会变空。
+vi.mock('vue-router', async () => {
+  const { reactive } = await import('vue')
+  const route = reactive({ query: {} as Record<string, string> })
+  const push = vi.fn((to: { query?: Record<string, string> }) => {
+    route.query = to?.query ?? {}
+  })
+  return {
+    RouterLink: { template: '<a><slot /></a>' },
+    useRoute: () => route,
+    useRouter: () => ({ push }),
+    __route: route,
+    __push: push,
+  }
+})
 
-vi.mock('vue-router', () => ({
-  RouterLink: { template: '<a><slot /></a>' },
-  useRoute: () => routeMock,
-  useRouter: () => ({ push: pushMock }),
-}))
+import * as routerMock from 'vue-router'
+const routerInternals = routerMock as unknown as {
+  __route: { query: Record<string, string> }
+  __push: ReturnType<typeof vi.fn>
+}
+// 通过 setQuery 驱动路由变化（等价于用户导航/点击「换一个目标」）
+const setQuery = (query: Record<string, string>) => {
+  routerInternals.__route.query = query
+}
+const pushMock = routerInternals.__push
 vi.mock('@/api/recommendation', () => ({ getRecommendations: vi.fn() }))
 vi.mock('@/api/impression', () => ({ recordImpressions: vi.fn(() => Promise.resolve(null)) }))
 vi.mock('@/api/category', () => ({ listCategories: vi.fn(() => Promise.resolve([])) }))
@@ -3244,7 +3263,7 @@ async function mountPage() {
 describe('HomePage', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    routeMock.query = {}
+    setQuery({})
     authMock.user = { interests: [1] } // 默认已有兴趣 → 不展示引导
     mockedGetRecommendations.mockResolvedValue(recResult)
   })
@@ -3291,7 +3310,7 @@ describe('HomePage', () => {
   })
 
   it('URL 带 goal 时进入学习计划态，不拉推荐流', async () => {
-    routeMock.query = { goal: '机器学习' }
+    setQuery({ goal: '机器学习' })
     const wrapper = await mountPage()
 
     expect(mockedGetRecommendations).not.toHaveBeenCalled()
@@ -3300,17 +3319,15 @@ describe('HomePage', () => {
     expect(wrapper.text()).toContain('没有找到对应知识点')
   })
 
-  // 回归：带 ?goal= 进入后再「换一个目标」，推荐流必须被补拉，
-  // 否则会停在「暂无推荐内容」且不再发请求。
+  // 回归：带 ?goal= 进入（或刷新时正处于计划态）后再「换一个目标」，
+  // 推荐流必须被补拉，否则会停在「暂无推荐内容」且不再发请求。
   it('从计划态切回推荐流时会补拉推荐', async () => {
-    routeMock.query = { goal: '机器学习' }
+    setQuery({ goal: '机器学习' })
     const wrapper = await mountPage()
     expect(mockedGetRecommendations).not.toHaveBeenCalled()
 
-    routeMock.query = {}
-    await wrapper.setProps({})
-    // 直接改写 route 不会触发 computed，改由组件暴露的重置入口驱动
-    await wrapper.findComponent({ name: 'LearningPlanView' }).vm.$emit('reset')
+    // 点「换一个目标」→ 组件 router.push({ name: 'home' }) → mock 把 query 清空
+    await wrapper.find('button').trigger('click')
     await flushPromises()
 
     expect(mockedGetRecommendations).toHaveBeenCalledWith(12)

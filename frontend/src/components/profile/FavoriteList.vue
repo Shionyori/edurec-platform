@@ -44,7 +44,8 @@ onMounted(fetchFavorites)
 </script>
 
 <template>
-  <div class="rounded-[4px] border border-border bg-surface p-6">
+  <div class="relative overflow-hidden rounded-[4px] border border-border bg-surface p-6">
+    <span class="absolute inset-x-0 top-0 h-[2px]" style="background: var(--color-line-amber)" aria-hidden="true"></span>
     <div class="flex items-center justify-between">
       <h2 class="text-lg font-semibold text-ink">我的收藏</h2>
       <span v-if="total > 0" class="text-xs text-ink-muted">共 {{ total }} 个</span>

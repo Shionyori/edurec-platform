@@ -39,6 +39,23 @@ onMounted(load)
 <template>
   <div class="mx-auto max-w-7xl px-4 py-8 sm:px-6 sm:py-10">
     <section class="relative overflow-hidden rounded-[4px] border border-border bg-surface px-6 py-8 sm:px-10 sm:py-12">
+      <!-- 线路网络底纹：只做世界肌理，不承载数据 -->
+      <svg
+        class="pointer-events-none absolute -right-24 -top-24 hidden h-[140%] w-[62%] opacity-[0.14] lg:block"
+        viewBox="0 0 640 420"
+        fill="none"
+        aria-hidden="true"
+      >
+        <path d="M-20 300H180Q230 300 230 250V90Q230 50 270 50H660" stroke="var(--color-line-teal)" stroke-width="3" />
+        <path d="M660 340H430Q380 340 380 300V150Q380 110 340 110H-20" stroke="var(--color-line-blue)" stroke-width="3" />
+        <path d="M120 -20V160Q120 200 160 200H660" stroke="var(--color-line-amber)" stroke-width="3" />
+        <path d="M520 -20V90Q520 130 480 130H-20" stroke="var(--color-line-rose)" stroke-width="3" />
+        <circle cx="230" cy="250" r="7" fill="var(--color-surface)" stroke="var(--color-line-teal)" stroke-width="3" />
+        <circle cx="380" cy="300" r="7" fill="var(--color-surface)" stroke="var(--color-line-blue)" stroke-width="3" />
+        <circle cx="160" cy="200" r="7" fill="var(--color-surface)" stroke="var(--color-line-amber)" stroke-width="3" />
+        <circle cx="480" cy="130" r="7" fill="var(--color-surface)" stroke="var(--color-line-rose)" stroke-width="3" />
+      </svg>
+
       <div class="relative z-10 flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
         <div class="max-w-2xl">
           <h1 class="text-3xl font-bold leading-[1.1] tracking-tight text-ink sm:text-5xl">
@@ -81,21 +98,22 @@ onMounted(load)
 
       <!-- 线路母题：品牌动作，不承载数据 -->
       <div class="pointer-events-none absolute bottom-0 left-0 right-0 hidden items-center gap-0 lg:flex" aria-hidden="true">
-        <span class="h-[2px] flex-1 bg-line-teal/25"></span>
+        <span class="h-[2px] flex-1 bg-line-teal/40"></span>
         <span class="mx-2 h-2.5 w-2.5 rounded-full border-[3px] border-line-teal"></span>
-        <span class="h-[2px] w-24 bg-line-teal/25"></span>
-        <span class="mx-2 h-2.5 w-2.5 rounded-full border-[3px] border-line-teal"></span>
-        <span class="h-[2px] w-16 bg-line-teal/25"></span>
+        <span class="h-[2px] w-24 bg-line-blue/40"></span>
+        <span class="mx-2 h-2.5 w-2.5 rounded-full border-[3px] border-line-blue"></span>
+        <span class="h-[2px] w-16 bg-line-amber/40"></span>
         <span class="mx-2 h-2.5 w-2.5 rounded-full border-[3px] border-primary bg-primary"></span>
-        <span class="h-[2px] flex-1 bg-line-teal/25"></span>
+        <span class="h-[2px] flex-1 bg-line-rose/40"></span>
       </div>
     </section>
 
     <InterestPicker v-if="showInterestPicker" class="mt-6" @saved="load" />
 
     <section class="mt-10">
-      <div class="flex flex-wrap items-end justify-between gap-3 border-b border-border pb-3">
-        <div class="flex items-baseline gap-3">
+      <div class="flex flex-wrap items-end justify-between gap-3 border-b-2 pb-3" style="border-color: var(--color-line-teal)">
+        <div class="flex items-center gap-3">
+          <span class="route-node" style="--node: var(--color-line-teal)" aria-hidden="true"></span>
           <h2 class="text-xl font-bold text-ink">本站推荐</h2>
           <span v-if="resources.length" class="data-num text-xs text-ink-muted">
             为你挑选 {{ resources.length }} 条

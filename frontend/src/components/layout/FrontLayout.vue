@@ -54,7 +54,7 @@ function isActive(key: string): boolean {
 </script>
 
 <template>
-  <div class="flex min-h-screen flex-col bg-bg">
+  <div class="flex min-h-screen flex-col">
     <a
       href="#main-content"
       class="sr-only z-50 bg-primary px-4 py-2 text-sm font-semibold text-white focus:not-sr-only focus:absolute focus:left-4 focus:top-4"
@@ -152,7 +152,14 @@ function isActive(key: string): boolean {
       </RouterView>
     </main>
 
-    <footer class="border-t border-border bg-surface">
+    <footer class="bg-surface">
+      <div class="flex h-[2px] w-full" aria-hidden="true">
+        <span class="flex-1 bg-line-teal"></span>
+        <span class="flex-1 bg-line-blue"></span>
+        <span class="flex-1 bg-line-amber"></span>
+        <span class="flex-1 bg-line-rose"></span>
+        <span class="w-16 bg-primary"></span>
+      </div>
       <div class="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3 px-6 py-5 text-xs text-ink-muted">
         <span class="flex items-center gap-2">
           <span class="route-node" style="--node: var(--color-line-teal)" aria-hidden="true"></span>

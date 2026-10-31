@@ -63,9 +63,10 @@ onMounted(load)
         v-for="(item, index) in items"
         :key="item.code"
         :to="{ name: 'discipline', params: { code: item.code } }"
-        class="group flex flex-col rounded-[4px] border border-border bg-surface p-5 transition-all duration-200 hover:-translate-y-0.5 hover:border-ink/25 hover:shadow-[0_10px_30px_-18px_rgba(11,27,43,0.45)]"
+        class="group relative flex flex-col overflow-hidden rounded-[4px] border border-border bg-surface p-5 transition-all duration-200 hover:-translate-y-0.5 hover:border-ink/25 hover:shadow-[0_10px_30px_-18px_rgba(11,27,43,0.45)]"
         :aria-label="`进入${item.name}学科，${item.point_count} 个知识点`"
       >
+        <span class="absolute inset-x-0 top-0 h-[2px]" :style="{ background: lineColor(index) }" aria-hidden="true"></span>
         <div class="flex items-start justify-between gap-3">
           <span class="line-chip" :style="{ '--chip': lineColor(index) }">{{ item.code.toUpperCase() }}</span>
           <span

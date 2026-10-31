@@ -36,7 +36,7 @@ function logout() {
 </script>
 
 <template>
-  <div class="flex min-h-screen bg-bg">
+  <div class="flex min-h-screen">
     <aside class="hidden w-60 shrink-0 flex-col bg-rail text-white md:flex">
       <RouterLink :to="{ name: 'admin-dashboard' }" class="flex h-16 items-center gap-2.5 border-b border-white/10 px-5">
         <span class="flex h-8 w-8 items-center justify-center rounded-[3px] bg-white" aria-hidden="true">

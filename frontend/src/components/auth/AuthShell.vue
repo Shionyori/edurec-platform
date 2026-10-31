@@ -1,5 +1,5 @@
 <template>
-  <div class="flex min-h-screen items-center justify-center bg-bg px-4 py-10">
+  <div class="flex min-h-screen items-center justify-center px-4 py-10">
     <div class="w-full max-w-md">
       <div class="mb-7 text-center">
         <RouterLink to="/" class="inline-flex items-center gap-2.5" aria-label="edurec 首页">

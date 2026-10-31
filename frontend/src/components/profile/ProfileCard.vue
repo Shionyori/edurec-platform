@@ -39,7 +39,8 @@ function cancel() {
 </script>
 
 <template>
-  <div class="rounded-[4px] border border-border bg-surface p-6">
+  <div class="relative overflow-hidden rounded-[4px] border border-border bg-surface p-6">
+    <span class="absolute inset-x-0 top-0 h-[2px]" style="background: var(--color-line-teal)" aria-hidden="true"></span>
     <div class="flex flex-wrap items-center gap-4">
       <el-avatar :size="64" :src="user.avatar_url ?? undefined" class="ring-2 ring-bg">
         {{ (user.display_name ?? user.username).charAt(0) }}

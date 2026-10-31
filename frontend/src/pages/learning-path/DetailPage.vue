@@ -127,8 +127,11 @@ watch(pathId, load)
       </header>
 
       <section class="mt-6 rounded-[4px] border border-border bg-surface p-5">
-        <div class="flex flex-wrap items-end justify-between gap-2 border-b border-border pb-3">
-          <h2 class="text-lg font-bold text-ink">线路站点</h2>
+        <div class="flex flex-wrap items-end justify-between gap-2 border-b-2 pb-3" style="border-color: var(--color-line-teal)">
+          <div class="flex items-center gap-3">
+            <span class="route-node" style="--node: var(--color-line-teal)" aria-hidden="true"></span>
+            <h2 class="text-lg font-bold text-ink">线路站点</h2>
+          </div>
           <span class="text-xs text-ink-muted">按先修顺序排列，逐节解锁</span>
         </div>
 
@@ -205,9 +208,12 @@ watch(pathId, load)
       </div>
 
       <section v-else class="mt-8">
-        <div class="flex flex-wrap items-end justify-between gap-3 border-b border-border pb-3">
+        <div class="flex flex-wrap items-end justify-between gap-3 border-b-2 pb-3" style="border-color: var(--color-primary)">
           <div>
-            <h2 class="text-xl font-bold text-ink">当前一节</h2>
+            <div class="flex items-center gap-3">
+              <span class="route-node" style="--node: var(--color-primary)" aria-hidden="true"></span>
+              <h2 class="text-xl font-bold text-ink">当前一节</h2>
+            </div>
             <p v-if="currentPointName" class="mt-1 text-sm text-ink-secondary">{{ currentPointName }}</p>
           </div>
           <el-button type="primary" :loading="completing" @click="completeCurrent">

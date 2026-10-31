@@ -208,8 +208,11 @@ watch(code, load)
       </p>
 
       <section class="mt-6 rounded-[4px] border border-border bg-surface p-5">
-        <div class="flex flex-wrap items-center justify-between gap-3 border-b border-border pb-3">
-          <h2 class="text-lg font-bold text-ink">先修关系</h2>
+        <div class="flex flex-wrap items-center justify-between gap-3 border-b-2 pb-3" style="border-color: var(--color-line-teal)">
+          <div class="flex items-center gap-3">
+            <span class="route-node" style="--node: var(--color-line-teal)" aria-hidden="true"></span>
+            <h2 class="text-lg font-bold text-ink">先修关系</h2>
+          </div>
           <div class="flex items-center gap-3">
             <span class="hidden text-xs text-ink-muted sm:inline">箭头表示「先学 → 后学」，点击节点可切换</span>
             <el-switch v-model="showAllNodes" size="small" active-text="显示全部学科" />
@@ -229,8 +232,9 @@ watch(code, load)
       </section>
 
       <section class="mt-6 rounded-[4px] border border-border bg-surface p-5">
-        <div class="flex flex-wrap items-center justify-between gap-3 border-b border-border pb-3">
+        <div class="flex flex-wrap items-center justify-between gap-3 border-b-2 pb-3" style="border-color: var(--color-line-rose)">
           <div class="flex flex-wrap items-baseline gap-3">
+            <span class="route-node" style="--node: var(--color-line-rose)" aria-hidden="true"></span>
             <h2 class="text-lg font-bold text-ink">概念图谱</h2>
             <span class="data-num text-xs text-ink-muted">
               来自 EMBEDD-ER{{ concepts.length ? ` · 共 ${concepts.length} 个概念` : '' }}
@@ -276,8 +280,11 @@ watch(code, load)
       </section>
 
       <section class="mt-8">
-        <div class="flex flex-wrap items-end justify-between gap-2 border-b border-border pb-3">
-          <h2 class="text-xl font-bold text-ink">课程资源</h2>
+        <div class="flex flex-wrap items-end justify-between gap-2 border-b-2 pb-3" style="border-color: var(--color-line-blue)">
+          <div class="flex items-center gap-3">
+            <span class="route-node" style="--node: var(--color-line-blue)" aria-hidden="true"></span>
+            <h2 class="text-xl font-bold text-ink">课程资源</h2>
+          </div>
           <span class="data-num text-xs text-ink-muted">共 {{ detail.resource_total }} 条</span>
         </div>
 

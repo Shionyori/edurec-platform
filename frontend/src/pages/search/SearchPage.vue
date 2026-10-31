@@ -373,7 +373,8 @@ onBeforeUnmount(() => {
       </template>
     </div>
 
-    <div class="mt-5 rounded-[4px] border border-border bg-surface p-4 md:sticky md:top-16 md:z-30">
+    <div class="relative mt-5 overflow-hidden rounded-[4px] border border-border bg-surface p-4 md:sticky md:top-16 md:z-30">
+      <span class="absolute inset-x-0 top-0 h-[2px]" style="background: var(--color-line-teal)" aria-hidden="true"></span>
       <div class="flex flex-wrap items-center gap-2.5">
         <div class="w-full sm:w-56">
           <el-input

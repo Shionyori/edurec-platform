@@ -132,8 +132,11 @@ onMounted(load)
       </div>
 
       <section class="mt-8">
-        <div class="flex flex-wrap items-end justify-between gap-2 border-b border-border pb-3">
-          <h2 class="text-xl font-bold text-ink">知识点线路</h2>
+        <div class="flex flex-wrap items-end justify-between gap-2 border-b-2 pb-3" style="border-color: var(--color-line-teal)">
+          <div class="flex items-center gap-3">
+            <span class="route-node" style="--node: var(--color-line-teal)" aria-hidden="true"></span>
+            <h2 class="text-xl font-bold text-ink">知识点线路</h2>
+          </div>
           <span class="text-xs text-ink-muted">按层级从左到右、由基础到进阶</span>
         </div>
 
@@ -146,7 +149,10 @@ onMounted(load)
           <span class="absolute bottom-2 left-[5px] top-2 w-[2px] bg-border" aria-hidden="true"></span>
 
           <div v-for="group in levelGroups" :key="group.level" class="relative pb-5 last:pb-0">
-            <div class="flex items-center gap-3">
+            <div
+              class="flex items-center gap-3 rounded-[3px] px-2 py-1"
+              :style="{ backgroundColor: `${levelColor(group.level)}0F` }"
+            >
               <span
                 class="route-node absolute -left-6 top-1.5"
                 :style="{ '--node': levelColor(group.level) }"
@@ -192,8 +198,11 @@ onMounted(load)
       </section>
 
       <section class="mt-10">
-        <div class="flex flex-wrap items-end justify-between gap-2 border-b border-border pb-3">
-          <h2 class="text-xl font-bold text-ink">课程资源</h2>
+        <div class="flex flex-wrap items-end justify-between gap-2 border-b-2 pb-3" style="border-color: var(--color-line-blue)">
+          <div class="flex items-center gap-3">
+            <span class="route-node" style="--node: var(--color-line-blue)" aria-hidden="true"></span>
+            <h2 class="text-xl font-bold text-ink">课程资源</h2>
+          </div>
           <span class="data-num text-xs text-ink-muted">共 {{ detail.resource_total }} 条</span>
         </div>
         <div v-if="resources.length > 0" class="mt-5 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">

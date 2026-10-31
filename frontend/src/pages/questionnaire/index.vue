@@ -177,7 +177,8 @@ onMounted(load)
       >
         <button
           type="button"
-          class="flex w-full flex-wrap items-center gap-3 border-b border-border bg-bg/60 px-5 py-3 text-left transition-colors hover:bg-bg"
+          class="flex w-full flex-wrap items-center gap-3 border-b border-border px-5 py-3 text-left transition-colors"
+          :style="{ backgroundColor: `${levelColor(group.level)}0F` }"
           :aria-expanded="!!openLevels[group.level]"
           @click="toggleLevel(group.level)"
         >

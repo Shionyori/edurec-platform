@@ -267,12 +267,18 @@ onMounted(() => {
           </div>
 
           <div class="mt-6 rounded-[4px] border border-border bg-surface p-5">
-            <h2 class="text-base font-bold text-ink">简介</h2>
+            <div class="flex items-center gap-3 border-b-2 pb-2" style="border-color: var(--color-line-teal)">
+              <span class="route-node" style="--node: var(--color-line-teal)" aria-hidden="true"></span>
+              <h2 class="text-base font-bold text-ink">简介</h2>
+            </div>
             <p class="mt-2 whitespace-pre-line text-sm leading-relaxed text-ink-secondary">{{ resource.description }}</p>
           </div>
 
           <div v-if="metaEntries.length > 0" class="mt-4 rounded-[4px] border border-border bg-surface p-5">
-            <h2 class="text-base font-bold text-ink">元信息</h2>
+            <div class="flex items-center gap-3 border-b-2 pb-2" style="border-color: var(--color-line-amber)">
+              <span class="route-node" style="--node: var(--color-line-amber)" aria-hidden="true"></span>
+              <h2 class="text-base font-bold text-ink">元信息</h2>
+            </div>
             <dl class="mt-2 grid grid-cols-2 gap-3 text-sm sm:grid-cols-3">
               <div v-for="([key, value]) in metaEntries" :key="key">
                 <dt class="text-ink-muted">{{ key }}</dt>
@@ -295,7 +301,10 @@ onMounted(() => {
           </div>
 
           <div class="mt-8">
-            <h2 class="border-b border-border pb-2 text-base font-bold text-ink">用户评价（{{ total }}）</h2>
+            <div class="flex items-center gap-3 border-b-2 pb-2" style="border-color: var(--color-line-blue)">
+              <span class="route-node" style="--node: var(--color-line-blue)" aria-hidden="true"></span>
+              <h2 class="text-base font-bold text-ink">用户评价（{{ total }}）</h2>
+            </div>
             <RatingList
               :ratings="ratings"
               :total="total"
@@ -306,14 +315,18 @@ onMounted(() => {
           </div>
 
           <div v-if="isBilibiliResource" class="mt-8">
-            <h2 class="border-b border-border pb-2 text-base font-bold text-ink">B 站评论</h2>
+            <div class="flex items-center gap-3 border-b-2 pb-2" style="border-color: var(--color-line-rose)">
+              <span class="route-node" style="--node: var(--color-line-rose)" aria-hidden="true"></span>
+              <h2 class="text-base font-bold text-ink">B 站评论</h2>
+            </div>
             <CommentList :comments="comments" :loading="commentsLoading" />
           </div>
         </div>
 
         <!-- 右侧评分卡 -->
         <aside>
-          <div class="sticky top-20 rounded-[4px] border border-border bg-surface p-5">
+          <div class="sticky top-20 overflow-hidden rounded-[4px] border border-border bg-surface p-5">
+            <span class="absolute inset-x-0 top-0 h-[2px]" style="background: var(--color-primary)" aria-hidden="true"></span>
             <div class="flex items-end justify-between gap-3">
               <div v-if="total > 0" class="data-num text-3xl font-bold text-ink">{{ resource.avg_rating.toFixed(1) }}</div>
               <div v-else class="text-sm font-medium text-ink-muted">暂无评分</div>

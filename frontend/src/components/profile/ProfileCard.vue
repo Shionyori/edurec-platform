@@ -66,10 +66,10 @@ function cancel() {
           <el-input v-model="avatarUrl" placeholder="https://…" maxlength="512" />
         </div>
       </div>
-      <div v-if="error" class="mt-3 text-sm text-red-500">{{ error }}</div>
+      <div v-if="error" class="mt-3 text-sm text-danger">{{ error }}</div>
       <div class="mt-4 flex gap-2">
-        <el-button type="primary" round :loading="saving" @click="save">保存</el-button>
-        <el-button round @click="cancel">取消</el-button>
+        <el-button type="primary" :loading="saving" @click="save">保存</el-button>
+        <el-button @click="cancel">取消</el-button>
       </div>
     </div>
   </div>

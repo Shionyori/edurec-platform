@@ -77,7 +77,7 @@ onMounted(fetchList)
         <div v-if="firstLoad && loading && !error">
           <el-skeleton :rows="4" animated />
         </div>
-        <div v-else-if="error" class="py-16 text-center text-sm text-red-500">{{ error }}</div>
+        <div v-else-if="error" class="py-16 text-center text-sm text-danger">{{ error }}</div>
         <el-empty
           v-else-if="items.length === 0"
           description="暂无行为记录"

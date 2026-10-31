@@ -85,7 +85,7 @@ onMounted(load)
     <div v-if="loading" class="mt-8 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
       <el-skeleton v-for="i in 6" :key="i" :rows="3" animated />
     </div>
-    <div v-else-if="error" class="py-24 text-center text-sm text-red-500">{{ error }}</div>
+    <div v-else-if="error" class="py-24 text-center text-sm text-danger">{{ error }}</div>
     <el-empty v-else-if="filtered.length === 0" description="没有匹配的知识点" class="mt-8" />
 
     <template v-else>

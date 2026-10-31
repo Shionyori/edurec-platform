@@ -54,7 +54,7 @@ onMounted(fetchFavorites)
     <div v-if="firstLoad && loading && !error" class="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
       <el-skeleton v-for="i in 4" :key="i" :rows="1" animated />
     </div>
-    <div v-else-if="error" class="py-12 text-center text-sm text-red-500">{{ error }}</div>
+    <div v-else-if="error" class="py-12 text-center text-sm text-danger">{{ error }}</div>
     <el-empty
       v-else-if="items.length === 0"
       description="还没有收藏，去资源详情页点「收藏」试试"
@@ -91,7 +91,12 @@ onMounted(fetchFavorites)
               <p class="truncate text-sm font-medium text-ink">{{ r.title }}</p>
               <p class="mt-0.5 flex items-center gap-2 text-xs text-ink-muted">
                 <span v-if="r.category?.name" class="truncate">{{ r.category.name }}</span>
-                <span class="shrink-0 text-amber-500">★ {{ r.avg_rating.toFixed(1) }}</span>
+                <span class="data-num flex shrink-0 items-center gap-1 text-ink">
+                  <svg viewBox="0 0 24 24" class="h-3 w-3" fill="currentColor" aria-hidden="true">
+                    <path d="M12 3.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8-5.2-2.7-5.2 2.7 1-5.8L3.5 9.7l5.9-.9L12 3.5z" />
+                  </svg>
+                  {{ r.avg_rating.toFixed(1) }}
+                </span>
               </p>
             </div>
           </RouterLink>

@@ -222,7 +222,7 @@ onMounted(() => {
       </div>
     </div>
     <div v-else-if="resourceError" class="py-24 text-center">
-      <p class="text-sm text-red-500">{{ resourceError }}</p>
+      <p class="text-sm text-danger">{{ resourceError }}</p>
       <RouterLink :to="{ name: 'home' }">
         <el-button class="mt-4">返回首页</el-button>
       </RouterLink>

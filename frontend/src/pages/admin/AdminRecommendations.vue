@@ -41,30 +41,30 @@ onMounted(async () => {
     <p class="mt-1 text-sm text-ink-secondary">推荐效果看板与运行记录（可追溯）</p>
 
     <div v-if="loading" class="py-16 text-center text-sm text-ink-muted">加载中…</div>
-    <div v-else-if="error" class="py-16 text-center text-sm text-red-500">{{ error }}</div>
+    <div v-else-if="error" class="py-16 text-center text-sm text-danger">{{ error }}</div>
     <template v-else>
       <div class="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
-        <div class="rounded-lg border border-border bg-surface p-4">
+        <div class="rounded-[4px] border border-border bg-surface p-4">
           <p class="text-xs text-ink-muted">曝光</p>
           <p class="mt-1 text-2xl font-bold text-ink">{{ stats?.impressions ?? 0 }}</p>
         </div>
-        <div class="rounded-lg border border-border bg-surface p-4">
+        <div class="rounded-[4px] border border-border bg-surface p-4">
           <p class="text-xs text-ink-muted">点击</p>
           <p class="mt-1 text-2xl font-bold text-ink">{{ stats?.clicks ?? 0 }}</p>
         </div>
-        <div class="rounded-lg border border-border bg-surface p-4">
+        <div class="rounded-[4px] border border-border bg-surface p-4">
           <p class="text-xs text-ink-muted">点击率 CTR</p>
           <p class="mt-1 text-2xl font-bold text-primary">{{ percent(stats?.click_through_rate ?? 0) }}</p>
         </div>
-        <div class="rounded-lg border border-border bg-surface p-4">
+        <div class="rounded-[4px] border border-border bg-surface p-4">
           <p class="text-xs text-ink-muted">收藏</p>
           <p class="mt-1 text-2xl font-bold text-ink">{{ stats?.favorites ?? 0 }}</p>
         </div>
-        <div class="rounded-lg border border-border bg-surface p-4">
+        <div class="rounded-[4px] border border-border bg-surface p-4">
           <p class="text-xs text-ink-muted">浏览</p>
           <p class="mt-1 text-2xl font-bold text-ink">{{ stats?.views ?? 0 }}</p>
         </div>
-        <div class="rounded-lg border border-border bg-surface p-4">
+        <div class="rounded-[4px] border border-border bg-surface p-4">
           <p class="text-xs text-ink-muted">推荐覆盖用户</p>
           <p class="mt-1 text-2xl font-bold text-ink">{{ stats?.recommendation_users ?? 0 }}</p>
         </div>

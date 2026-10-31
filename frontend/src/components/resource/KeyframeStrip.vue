@@ -63,7 +63,7 @@ function position(index: number, length: number): number {
 </script>
 
 <template>
-  <div v-if="cells.length > 0" class="mt-4 rounded-lg border border-border bg-surface p-5">
+  <div v-if="cells.length > 0" class="mt-4 rounded-[4px] border border-border bg-surface p-5">
     <div class="flex items-center justify-between">
       <h2 class="text-base font-semibold text-ink">关键帧</h2>
       <span class="text-xs text-ink-muted">

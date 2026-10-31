@@ -104,7 +104,7 @@ onMounted(load)
             v-for="point in group.items"
             :key="point.id"
             :to="{ name: 'knowledge-detail', params: { code: point.code } }"
-            class="group rounded-lg border border-border bg-surface p-5 transition hover:border-primary hover:shadow-md"
+            class="group rounded-[4px] border border-border bg-surface p-5 transition hover:border-primary hover:shadow-[0_10px_30px_-18px_rgba(11,27,43,0.45)]"
           >
             <div class="flex items-start justify-between gap-3">
               <h3 class="text-base font-semibold text-ink group-hover:text-primary">

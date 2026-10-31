@@ -210,7 +210,7 @@ The front shell is a 64px sticky navy rail containing the brand lockup, a search
 
 Resource grids are 1 column, 2 at `sm` (640px), and 3 at `lg` (1024px), with 20px gaps; they never exceed three columns. Every section is introduced by a header sitting directly on the paper with a 2px line-colored bottom rule and a station node — teal for discovery, blue for resources, rose for concept layers — not by a card inside a card. The home page composes a white hero panel, an optional cold-start interest picker, and then the recommendation grid; detail pages use a navy masthead followed by ruled content sections.
 
-The paper ground carries a sparse route-network texture: a 420×420 tiling SVG of thin line-colored paths and hollow station dots at 5–10% opacity. It is a texture, never content: text and controls always sit on opaque white surfaces, and the texture is decorative (`aria-hidden`). Interactive cards can repeat the route cue as a 2px inset top rule (a positioned element inside the card, not a border), keeping the corner language intact. The footer closes the paper with a five-segment line-color rule.
+The paper ground stays plain: route language appears only where it carries structure (section rules, station nodes, route strips), never as a background texture behind content. Interactive cards can repeat the route cue as a 2px inset top rule (a positioned element inside the card, not a border), keeping the corner language intact. The footer closes the paper with a five-segment line-color rule.
 
 Two sticky regions are intentional: the top rail (64px, `z-40`) and, on the questionnaire, a bottom action bar that stays 16px above the viewport edge while the user scrolls a long self-assessment. The search filter panel sticks below the rail at `top: 64px` on desktop.
 
@@ -218,8 +218,6 @@ Two sticky regions are intentional: the top rail (64px, `z-40`) and, on the ques
 **The Rail-and-Paper Rule.** Orientation lives on deep navy rail — top bar, mastheads, admin sidebar; reading lives on cool paper. A page never becomes a full-width navy field, and a masthead never floats as a white card.
 
 **The Three-Column Cap Rule.** Resource and station grids cap at three columns; density comes from tighter type and 20px gaps, never from adding a fourth column.
-
-**The Map-Texture Rule.** The paper texture is a background, not a surface: keep its strokes at or below 10% opacity, keep all text on opaque panels, and never let the pattern carry meaning or data.
 
 ## Elevation & Depth
 
@@ -286,7 +284,7 @@ A white 4px-rounded bar, 1px Paper Hairline, 12px 20px padding, pinned `sticky; 
 - **Do** set Chinese in the system sans stack and keep micro-labels at 11px uppercase with 0.14em tracking inside chips and data rows.
 - **Do** provide a clear next action inside every empty state, using a dashed hairline container rather than a bare blank region.
 - **Do** introduce sections with a 2px line-colored rule and a station node; use teal for discovery, blue for resources, rose for concept layers.
-- **Do** repeat the line cue as an inset 2px top rule on discipline cards, and keep the paper map texture at or below 10% opacity.
+- **Do** repeat the line cue as an inset 2px top rule on discipline cards, and keep the paper ground plain so route lines always mean structure.
 
 ### Don't:
 - **Don't** introduce large radii (8px+), pill buttons, gradients, or soft gray ambient shadows; the only elevation is the ink-tinted hover lift.
@@ -295,5 +293,5 @@ A white 4px-rounded bar, 1px Paper Hairline, 12px 20px padding, pinned `sticky; 
 - **Don't** use the 11px uppercase micro-label as a decorative kicker/eyebrow above headings.
 - **Don't** convey done/current/locked or error/success states by color alone; carry the label.
 - **Don't** load a webfont or switch Chinese body copy to a serif/display face.
-- **Don't** place text or controls directly on the map texture, and don't let the pattern cross an opaque panel.
+- **Don't** reintroduce a decorative route texture behind content; lines and station dots must encode structure or state.
 - **Don't** use a thick accent border on a rounded card; inset the 2px rule as its own positioned element instead.

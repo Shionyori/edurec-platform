@@ -52,9 +52,6 @@ body {
     'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
-  /* 线路网络底纹：极淡的站点与线路，只做纸张肌理，不干扰正文 */
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='420' height='420' viewBox='0 0 420 420'%3E%3Cg fill='none' stroke-width='2'%3E%3Cpath d='M-20 70H150Q190 70 190 110V440' stroke='%230B1B2B' stroke-opacity='.055'/%3E%3Cpath d='M30 440V230Q30 190 70 190H330Q370 190 370 150V-20' stroke='%230E7C7B' stroke-opacity='.095'/%3E%3Cpath d='M440 300H300Q260 300 260 260V40' stroke='%231D4ED8' stroke-opacity='.085'/%3E%3Cpath d='M110 -20V100Q110 140 150 140H440' stroke='%23B45309' stroke-opacity='.09'/%3E%3Cpath d='M-20 350H120Q160 350 160 310V210' stroke='%23BE123C' stroke-opacity='.085'/%3E%3C/g%3E%3Cg fill='%23F5F4EF' stroke-width='2'%3E%3Ccircle cx='190' cy='110' r='5' stroke='%230B1B2B' stroke-opacity='.09'/%3E%3Ccircle cx='70' cy='190' r='5' stroke='%230E7C7B' stroke-opacity='.20'/%3E%3Ccircle cx='260' cy='260' r='5' stroke='%231D4ED8' stroke-opacity='.18'/%3E%3Ccircle cx='150' cy='140' r='5' stroke='%23B45309' stroke-opacity='.18'/%3E%3Ccircle cx='160' cy='310' r='5' stroke='%23BE123C' stroke-opacity='.18'/%3E%3C/g%3E%3C/svg%3E");
-  background-size: 420px 420px;
 }
 
 html {

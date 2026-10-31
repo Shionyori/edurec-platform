@@ -133,7 +133,7 @@ components:
 
 edurec is a Chinese educational-resource recommender, and its visual world is the transit route map: knowledge points are stations on a prerequisite line, the current goal is "你在这里," and a learning path is a printed itinerary. The system operates in **Operate** mode — the route metaphor contributes palette, type, density, and one signature move (the route strip and station line); layout, controls, and form semantics stay conventional so the user can act quickly. The result reads as a rail system on paper, not as a generic white SaaS dashboard.
 
-The ground is a cool off-white paper, the orientation surfaces are deep station navy, and one signal vermilion marks the current stop or the action. Line colors are semantic, not decorative: they encode level and resource type wherever a line, chip, or station appears. Density is deliberately tight: pages are organized by section rules and 20px card gaps rather than by generous whitespace or oversized type.
+The ground is a cool off-white paper, the orientation surfaces are deep depot navy, and one signal vermilion marks the current stop or the action. Line colors are semantic, not decorative: they encode level and resource type wherever a line, chip, or station appears. Density is deliberately tight: pages are organized by section rules and 20px card gaps rather than by generous whitespace or oversized type.
 
 Chinese is set in the system sans stack — no webfont is loaded — and codes, counts, levels, percentages, and ratings use tabular numerals. The shape language is small and exact: 4px cards, 3px chips and controls, 2px route strokes, and round station dots as the only recurring circles.
 

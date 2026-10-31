@@ -39,23 +39,6 @@ onMounted(load)
 <template>
   <div class="mx-auto max-w-7xl px-4 py-8 sm:px-6 sm:py-10">
     <section class="relative overflow-hidden rounded-[4px] border border-border bg-surface px-6 py-8 sm:px-10 sm:py-12">
-      <!-- 线路网络底纹：只做世界肌理，不承载数据 -->
-      <svg
-        class="pointer-events-none absolute -right-24 -top-24 hidden h-[140%] w-[62%] opacity-[0.14] lg:block"
-        viewBox="0 0 640 420"
-        fill="none"
-        aria-hidden="true"
-      >
-        <path d="M-20 300H180Q230 300 230 250V90Q230 50 270 50H660" stroke="var(--color-line-teal)" stroke-width="3" />
-        <path d="M660 340H430Q380 340 380 300V150Q380 110 340 110H-20" stroke="var(--color-line-blue)" stroke-width="3" />
-        <path d="M120 -20V160Q120 200 160 200H660" stroke="var(--color-line-amber)" stroke-width="3" />
-        <path d="M520 -20V90Q520 130 480 130H-20" stroke="var(--color-line-rose)" stroke-width="3" />
-        <circle cx="230" cy="250" r="7" fill="var(--color-surface)" stroke="var(--color-line-teal)" stroke-width="3" />
-        <circle cx="380" cy="300" r="7" fill="var(--color-surface)" stroke="var(--color-line-blue)" stroke-width="3" />
-        <circle cx="160" cy="200" r="7" fill="var(--color-surface)" stroke="var(--color-line-amber)" stroke-width="3" />
-        <circle cx="480" cy="130" r="7" fill="var(--color-surface)" stroke="var(--color-line-rose)" stroke-width="3" />
-      </svg>
-
       <div class="relative z-10 flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
         <div class="max-w-2xl">
           <h1 class="text-3xl font-bold leading-[1.1] tracking-tight text-ink sm:text-5xl">

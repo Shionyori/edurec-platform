@@ -178,7 +178,7 @@ watch(code, load)
     </div>
 
     <template v-else-if="detail">
-      <header class="mt-4 flex flex-wrap items-end justify-between gap-6 rounded-[4px] bg-rail px-6 py-7 text-white">
+      <header class="mt-4 flex flex-wrap items-end justify-between gap-6 rounded-[4px] bg-rail-soft px-6 py-7 text-white">
         <div class="max-w-3xl">
           <div class="flex flex-wrap items-center gap-2">
             <span class="line-chip" :style="{ '--chip': levelColor(detail.point.level) }">L{{ detail.point.level }}</span>

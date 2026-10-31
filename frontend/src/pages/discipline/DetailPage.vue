@@ -102,7 +102,7 @@ onMounted(load)
     </div>
 
     <template v-else-if="detail">
-      <header class="mt-4 flex flex-wrap items-end justify-between gap-6 rounded-[4px] bg-rail px-6 py-7 text-white">
+      <header class="mt-4 flex flex-wrap items-end justify-between gap-6 rounded-[4px] bg-rail-soft px-6 py-7 text-white">
         <div class="max-w-3xl">
           <span class="line-chip" :style="{ '--chip': 'rgba(255,255,255,0.14)' }">
             {{ detail.discipline.code.toUpperCase() }}

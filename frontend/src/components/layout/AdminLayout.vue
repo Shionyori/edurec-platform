@@ -37,7 +37,7 @@ function logout() {
 
 <template>
   <div class="flex min-h-screen">
-    <aside class="hidden w-60 shrink-0 flex-col bg-rail text-white md:flex">
+    <aside class="hidden w-60 shrink-0 flex-col bg-rail-soft text-white md:flex">
       <RouterLink :to="{ name: 'admin-dashboard' }" class="flex h-16 items-center gap-2.5 border-b border-white/10 px-5">
         <span class="flex h-8 w-8 items-center justify-center rounded-[3px] bg-white" aria-hidden="true">
           <svg viewBox="0 0 24 24" class="h-5 w-5" fill="none">
@@ -106,7 +106,7 @@ function logout() {
           :aria-current="isActive(String(item.to.name)) ? 'page' : undefined"
           class="shrink-0 rounded-[3px] px-3 py-1.5 text-sm"
           :class="isActive(String(item.to.name))
-            ? 'bg-rail font-semibold text-white'
+            ? 'bg-rail-soft font-semibold text-white'
             : 'text-ink-secondary'"
         >{{ item.label }}</RouterLink>
       </nav>

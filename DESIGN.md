@@ -98,7 +98,7 @@ components:
     padding: "1px 11px"
     height: "32px"
   nav-link:
-    backgroundColor: "{colors.rail}"
+    backgroundColor: "{colors.rail-soft}"
     textColor: "{colors.surface}"
     typography: "{typography.control}"
     padding: "20px 12px"
@@ -133,7 +133,7 @@ components:
 
 edurec is a Chinese educational-resource recommender, and its visual world is the transit route map: knowledge points are stations on a prerequisite line, the current goal is "你在这里," and a learning path is a printed itinerary. The system operates in **Operate** mode — the route metaphor contributes palette, type, density, and one signature move (the route strip and station line); layout, controls, and form semantics stay conventional so the user can act quickly. The result reads as a rail system on paper, not as a generic white SaaS dashboard.
 
-The ground is a cool off-white paper, the orientation surfaces are deep station navy, and one signal vermilion marks the current stop or the action. Line colors are semantic, not decorative: they encode level and resource type wherever a line, chip, or station appears. Density is deliberately tight: pages are organized by section rules and 20px card gaps rather than by generous whitespace or oversized type.
+The ground is a cool off-white paper, the orientation surfaces are deep depot navy, and one signal vermilion marks the current stop or the action. Line colors are semantic, not decorative: they encode level and resource type wherever a line, chip, or station appears. Density is deliberately tight: pages are organized by section rules and 20px card gaps rather than by generous whitespace or oversized type.
 
 Chinese is set in the system sans stack — no webfont is loaded — and codes, counts, levels, percentages, and ratings use tabular numerals. The shape language is small and exact: 4px cards, 3px chips and controls, 2px route strokes, and round station dots as the only recurring circles.
 
@@ -166,8 +166,8 @@ A rail-signage palette: one warm signal color against a cool paper neutral field
 - **Halt Red** (#B91C1C): errors and destructive admin actions.
 
 ### Neutral
-- **Station Navy** (#0B1B2B): primary ink and the rail/header surface. Body text and the top navigation are the same navy by design.
-- **Depot Navy** (#14293D): the soft rail step for raised rail panels.
+- **Station Navy** (#0B1B2B): primary ink, brand marks, and neutral chip fills.
+- **Depot Navy** (#14293D): every rail surface — top navigation, page mastheads, the learning-path header, and the admin sidebar — plus raised rail panels. One step lighter than the ink, so large navy fields read as navy rather than a black band against paper.
 - **Paper Ground** (#F5F4EF): page background behind every content section.
 - **Ticket White** (#FFFFFF): cards, inputs, sticky bars, and the content surface.
 - **Slate Ink** (#4A5763): secondary copy, descriptions, metadata, and muted nav links.
@@ -210,7 +210,7 @@ The front shell is a 64px sticky navy rail containing the brand lockup, a search
 
 Resource grids are 1 column, 2 at `sm` (640px), and 3 at `lg` (1024px), with 20px gaps; they never exceed three columns. Every section is introduced by a header sitting directly on the paper with a 2px line-colored bottom rule and a station node — teal for discovery, blue for resources, rose for concept layers — not by a card inside a card. The home page composes a white hero panel, an optional cold-start interest picker, and then the recommendation grid; detail pages use a navy masthead followed by ruled content sections.
 
-The paper ground carries a sparse route-network texture: a 420×420 tiling SVG of thin line-colored paths and hollow station dots at 5–10% opacity. It is a texture, never content: text and controls always sit on opaque white surfaces, and the texture is decorative (`aria-hidden`). Interactive cards can repeat the route cue as a 2px inset top rule (a positioned element inside the card, not a border), keeping the corner language intact. The footer closes the paper with a five-segment line-color rule.
+The paper ground stays plain: route language appears only where it carries structure (section rules, station nodes, route strips), never as a background texture behind content. Interactive cards can repeat the route cue as a 2px inset top rule (a positioned element inside the card, not a border), keeping the corner language intact. The footer closes the paper with a five-segment line-color rule.
 
 Two sticky regions are intentional: the top rail (64px, `z-40`) and, on the questionnaire, a bottom action bar that stays 16px above the viewport edge while the user scrolls a long self-assessment. The search filter panel sticks below the rail at `top: 64px` on desktop.
 
@@ -218,8 +218,6 @@ Two sticky regions are intentional: the top rail (64px, `z-40`) and, on the ques
 **The Rail-and-Paper Rule.** Orientation lives on deep navy rail — top bar, mastheads, admin sidebar; reading lives on cool paper. A page never becomes a full-width navy field, and a masthead never floats as a white card.
 
 **The Three-Column Cap Rule.** Resource and station grids cap at three columns; density comes from tighter type and 20px gaps, never from adding a fourth column.
-
-**The Map-Texture Rule.** The paper texture is a background, not a surface: keep its strokes at or below 10% opacity, keep all text on opaque panels, and never let the pattern carry meaning or data.
 
 ## Elevation & Depth
 
@@ -253,7 +251,7 @@ Cards are 4px-rounded rectangles; chips and controls are 3px; route strokes are 
 
 ### Cards / Containers
 - **Corner Style:** 4px on every card, panel, and masthead.
-- **Background:** Ticket White for content; Station Navy for mastheads, the learning-path header, and admin sidebar; Paper Ground for empty states and inset groups.
+- **Background:** Ticket White for content; Depot Navy for mastheads, the learning-path header, and admin sidebar; Paper Ground for empty states and inset groups.
 - **Shadow Strategy:** flat at rest; Card Hover Lift on interactive cards only.
 - **Border:** 1px Paper Hairline; dashed Paper Hairline for empty states, which are action entry points rather than dead ends.
 - **Internal Padding:** 16–20px for card bodies (resource cards use 16px mobile / 20px desktop), 20–28px for panels and mastheads. Resource cards put a 16:9 cover flush to the top edge, with a type chip and category row above the title, a teal dot-and-reason line for recommendation explanations, and a ruled footer of rating and views using tabular numerals.
@@ -264,7 +262,7 @@ Cards are 4px-rounded rectangles; chips and controls are 3px; route strokes are 
 - **Rail variant:** inputs placed on the navy rail use a white 8% fill, 16% inset stroke, and white text; focus raises the stroke to 55% white and the placeholder to 50% white. Search in the top rail uses this variant.
 
 ### Navigation
-- **Style:** 64px Station Navy rail, sticky at the top, with a white 3px-radius square holding the route-mark logo, a 17px bold wordmark, and a 10px tracked subtitle. Links are 14px Control weight.
+- **Style:** 64px Depot Navy rail, sticky at the top, with a white 3px-radius square holding the route-mark logo, a 17px bold wordmark, and a 10px tracked subtitle. Links are 14px Control weight.
 - **States:** active link is white semibold with a 2px Signal Vermilion bottom border; inactive links are white at 65% and brighten on hover. Account menu shows a 28px avatar ringed in 25% white.
 - **Mobile:** below 768px the rail keeps the brand, collapses search, and exposes nav as a horizontally scrollable chip row (3px radius, white/12 fill when active) on a 10% white top border.
 - **Admin:** a 240px navy sidebar with a colored `route-node` beside each item (filled for the active section) and a white 10% active row; content header is a 64px white bar with a ruled bottom border.
@@ -286,7 +284,7 @@ A white 4px-rounded bar, 1px Paper Hairline, 12px 20px padding, pinned `sticky; 
 - **Do** set Chinese in the system sans stack and keep micro-labels at 11px uppercase with 0.14em tracking inside chips and data rows.
 - **Do** provide a clear next action inside every empty state, using a dashed hairline container rather than a bare blank region.
 - **Do** introduce sections with a 2px line-colored rule and a station node; use teal for discovery, blue for resources, rose for concept layers.
-- **Do** repeat the line cue as an inset 2px top rule on discipline cards, and keep the paper map texture at or below 10% opacity.
+- **Do** repeat the line cue as an inset 2px top rule on discipline cards, and keep the paper ground plain so route lines always mean structure.
 
 ### Don't:
 - **Don't** introduce large radii (8px+), pill buttons, gradients, or soft gray ambient shadows; the only elevation is the ink-tinted hover lift.
@@ -295,5 +293,5 @@ A white 4px-rounded bar, 1px Paper Hairline, 12px 20px padding, pinned `sticky; 
 - **Don't** use the 11px uppercase micro-label as a decorative kicker/eyebrow above headings.
 - **Don't** convey done/current/locked or error/success states by color alone; carry the label.
 - **Don't** load a webfont or switch Chinese body copy to a serif/display face.
-- **Don't** place text or controls directly on the map texture, and don't let the pattern cross an opaque panel.
+- **Don't** reintroduce a decorative route texture behind content; lines and station dots must encode structure or state.
 - **Don't** use a thick accent border on a rounded card; inset the 2px rule as its own positioned element instead.

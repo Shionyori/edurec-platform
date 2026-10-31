@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-10-31T09:29:59Z",
+  "generatedAt": "2026-10-31T10:35:00Z",
   "title": "Design System: edurec",
   "extensions": {
     "colorMeta": {
@@ -156,7 +156,7 @@
       },
       "rail": {
         "role": "neutral",
-        "displayName": "Station Navy Rail",
+        "displayName": "Station Navy",
         "canonical": "oklch(21.7% 0.038 250.0)",
         "tonalRamp": [
           "#0E1217",
@@ -412,9 +412,9 @@
       "name": "Rail Navigation Link",
       "kind": "nav",
       "refersTo": "nav-link",
-      "description": "Navy rail navigation: white/65 inactive links, white semibold active link with a 2px Signal Vermilion underline.",
+      "description": "Depot Navy rail navigation: white/65 inactive links, white semibold active link with a 2px Signal Vermilion underline.",
       "html": "<nav class=\"ds-rail-nav\" aria-label=\"主导航\"><a class=\"ds-nav-link is-active\" href=\"#\" aria-current=\"page\">首页</a><a class=\"ds-nav-link\" href=\"#\">知识点</a><a class=\"ds-nav-link\" href=\"#\">全部</a></nav>",
-      "css": ".ds-rail-nav {\n  display: flex; align-items: center; gap: 4px; padding: 0 12px;\n  background: #0B1B2B; font-family: system-ui, -apple-system, \"Segoe UI\", Roboto, \"PingFang SC\", \"Hiragino Sans GB\", \"Microsoft YaHei\", sans-serif;\n}\n.ds-nav-link {\n  display: inline-flex; align-items: center; padding: 20px 12px;\n  border-bottom: 2px solid transparent; color: rgba(255,255,255,.65);\n  font-size: 14px; font-weight: 600; line-height: 20px; text-decoration: none;\n  transition: color .15s ease, border-color .15s ease;\n}\n.ds-nav-link:hover { color: #FFFFFF; }\n.ds-nav-link.is-active { color: #FFFFFF; border-bottom-color: #C9451F; }\n.ds-nav-link:focus-visible { outline: 2px solid #0E7C7B; outline-offset: -2px; }"
+      "css": ".ds-rail-nav {\n  display: flex; align-items: center; gap: 4px; padding: 0 12px;\n  background: #14293D; font-family: system-ui, -apple-system, \"Segoe UI\", Roboto, \"PingFang SC\", \"Hiragino Sans GB\", \"Microsoft YaHei\", sans-serif;\n}\n.ds-nav-link {\n  display: inline-flex; align-items: center; padding: 20px 12px;\n  border-bottom: 2px solid transparent; color: rgba(255,255,255,.65);\n  font-size: 14px; font-weight: 600; line-height: 20px; text-decoration: none;\n  transition: color .15s ease, border-color .15s ease;\n}\n.ds-nav-link:hover { color: #FFFFFF; }\n.ds-nav-link.is-active { color: #FFFFFF; border-bottom-color: #C9451F; }\n.ds-nav-link:focus-visible { outline: 2px solid #0E7C7B; outline-offset: -2px; }"
     },
     {
       "name": "Line Chip",
@@ -451,15 +451,14 @@
   ],
   "narrative": {
     "northStar": "学习线路牌 / The Study Line",
-    "overview": "edurec is a Chinese educational-resource recommender, and its visual world is the transit route map: knowledge points are stations on a prerequisite line, the current goal is \"你在这里,\" and a learning path is a printed itinerary. The system operates in **Operate** mode — the route metaphor contributes palette, type, density, and one signature move (the route strip and station line); layout, controls, and form semantics stay conventional so the user can act quickly. The result reads as a rail system on paper, not as a generic white SaaS dashboard.\n\nThe ground is a cool off-white paper, the orientation surfaces are deep station navy, and one signal vermilion marks the current stop or the action. Line colors are semantic, not decorative: they encode level and resource type wherever a line, chip, or station appears. Density is deliberately tight: pages are organized by section rules and 20px card gaps rather than by generous whitespace or oversized type.\n\nChinese is set in the system sans stack — no webfont is loaded — and codes, counts, levels, percentages, and ratings use tabular numerals. The shape language is small and exact: 4px cards, 3px chips and controls, 2px route strokes, and round station dots as the only recurring circles.\n\nThe paper ground itself carries a sparse route-network texture (thin line-colored paths and hollow station dots at 5–10% opacity). It is texture, never content: text always sits on opaque panels. Section headers repeat the route cue as a 2px line-colored rule with a station node, and discipline cards carry the same cue as an inset top rule, so colour is distributed through the page without turning the pattern into data.",
+    "overview": "edurec is a Chinese educational-resource recommender, and its visual world is the transit route map: knowledge points are stations on a prerequisite line, the current goal is \"你在这里,\" and a learning path is a printed itinerary. The system operates in **Operate** mode — the route metaphor contributes palette, type, density, and one signature move (the route strip and station line); layout, controls, and form semantics stay conventional so the user can act quickly. The result reads as a rail system on paper, not as a generic white SaaS dashboard.\n\nThe ground is a cool off-white paper, the orientation surfaces are deep depot navy, and one signal vermilion marks the current stop or the action. Line colors are semantic, not decorative: they encode level and resource type wherever a line, chip, or station appears. Density is deliberately tight: pages are organized by section rules and 20px card gaps rather than by generous whitespace or oversized type.\n\nChinese is set in the system sans stack — no webfont is loaded — and codes, counts, levels, percentages, and ratings use tabular numerals. The shape language is small and exact: 4px cards, 3px chips and controls, 2px route strokes, and round station dots as the only recurring circles.",
     "keyCharacteristics": [
       "Deep navy rail surfaces for orientation and mastheads; cool paper for reading.",
       "Signal vermilion reserved for the primary action and the current station.",
       "Four semantic line colors (teal, blue, amber, rose) mapped to levels and resource types.",
       "System Chinese sans with tabular numerals and 11px uppercase micro-labels.",
       "4px / 3px / 2px geometry, flat by default, one ink-tinted hover lift.",
-      "The route strip and station line as the one recurring custom component.",
-      "A 5–10% route-network paper texture and 2px line-colored section rules distribute colour without carrying data."
+      "The route strip and station line as the one recurring custom component."
     ],
     "rules": [
       {
@@ -501,11 +500,6 @@
         "name": "The Square-End Rule",
         "body": "Use 4px for cards, 3px for chips and controls, 2px for route strokes, and square-capped connector strokes. Do not introduce 8px+ radii, pill buttons, or large blobs; circles are reserved for stations, avatars, and progress.",
         "section": "shapes"
-      },
-      {
-        "name": "The Map-Texture Rule",
-        "body": "The paper texture is a background, not a surface: keep its strokes at or below 10% opacity, keep all text on opaque panels, and never let the pattern carry meaning or data.",
-        "section": "layout"
       }
     ],
     "dos": [
@@ -517,7 +511,7 @@
       "Do set Chinese in the system sans stack and keep micro-labels at 11px uppercase with 0.14em tracking inside chips and data rows.",
       "Do provide a clear next action inside every empty state, using a dashed hairline container rather than a bare blank region.",
       "Do introduce sections with a 2px line-colored rule and a station node; use teal for discovery, blue for resources, rose for concept layers.",
-      "Do repeat the line cue as an inset 2px top rule on discipline cards, and keep the paper map texture at or below 10% opacity."
+      "Do repeat the line cue as an inset 2px top rule on discipline cards, and keep the paper ground plain so route lines always mean structure."
     ],
     "donts": [
       "Don't introduce large radii (8px+), pill buttons, gradients, or soft gray ambient shadows; the only elevation is the ink-tinted hover lift.",
@@ -526,7 +520,7 @@
       "Don't use the 11px uppercase micro-label as a decorative kicker/eyebrow above headings.",
       "Don't convey done/current/locked or error/success states by color alone; carry the label.",
       "Don't load a webfont or switch Chinese body copy to a serif/display face.",
-      "Don't place text or controls directly on the map texture, and don't let the pattern cross an opaque panel.",
+      "Don't reintroduce a decorative route texture behind content; lines and station dots must encode structure or state.",
       "Don't use a thick accent border on a rounded card; inset the 2px rule as its own positioned element instead."
     ]
   }

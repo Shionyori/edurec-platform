@@ -2,27 +2,28 @@
 import { onMounted, ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import { listCategories } from '@/api/category'
+import { listDisciplines } from '@/api/discipline'
 import { useAuthStore } from '@/stores/auth'
-import type { Category } from '@/types'
+import type { Category, Discipline } from '@/types'
 
 const emit = defineEmits<{ saved: [] }>()
 
 const auth = useAuthStore()
 
 const categories = ref<Category[]>([])
+// 分类数据可能很少；学科是另一条真实的入口，给新用户更多可选方向
+const disciplines = ref<Discipline[]>([])
 const selected = ref<number[]>([])
 const loading = ref(false)
 const saving = ref(false)
 
 onMounted(async () => {
   loading.value = true
-  try {
-    categories.value = await listCategories()
-  } catch {
-    // 分类加载失败不阻塞页面主体
-  } finally {
-    loading.value = false
-  }
+  // 分类与学科互不依赖：任一失败都不阻塞页面主体
+  const [cats, discs] = await Promise.allSettled([listCategories(), listDisciplines()])
+  if (cats.status === 'fulfilled') categories.value = cats.value
+  if (discs.status === 'fulfilled') disciplines.value = discs.value
+  loading.value = false
 })
 
 async function save() {
@@ -64,6 +65,18 @@ async function save() {
       <div class="mt-4 flex flex-wrap items-center gap-3">
         <el-button type="primary" :loading="saving" @click="save">保存并刷新推荐</el-button>
         <span class="text-xs text-ink-muted">至少选择一个方向</span>
+      </div>
+
+      <div v-if="disciplines.length > 0" class="mt-4 border-t border-border pt-3">
+        <p class="text-xs text-ink-muted">也可以直接按学科开始：</p>
+        <div class="mt-2 flex flex-wrap gap-1.5">
+          <RouterLink
+            v-for="discipline in disciplines"
+            :key="discipline.code"
+            :to="{ name: 'discipline', params: { code: discipline.code } }"
+            class="rounded-[3px] border border-border px-2 py-1 text-xs text-ink-secondary transition-colors hover:border-ink/30 hover:text-primary"
+          >{{ discipline.name }}</RouterLink>
+        </div>
       </div>
     </div>
   </div>

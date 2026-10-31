@@ -173,7 +173,7 @@ watch(pathId, load)
                     :class="step.status === 'done'
                       ? 'bg-success/10 text-success'
                       : step.status === 'current'
-                        ? 'bg-primary/10 text-primary'
+                        ? 'bg-primary/10 text-primary-active'
                         : 'bg-bg text-ink-muted'"
                   >{{ statusLabels[step.status] }}</span>
                 </div>
@@ -219,11 +219,10 @@ watch(pathId, load)
           <ResourceCard v-for="resource in resources" :key="resource.id" :resource="resource" />
         </div>
         <div v-else class="mt-5 flex flex-col items-center gap-3 rounded-[4px] border border-dashed border-border px-6 py-12 text-center">
-          <p class="text-sm text-ink-secondary">本节暂无课程资源，可以先到搜索页按关键词采集，或直接完成本节。</p>
-          <div class="flex flex-wrap justify-center gap-3">
-            <RouterLink :to="{ name: 'search' }"><el-button>去搜索资源</el-button></RouterLink>
-            <el-button :loading="completing" @click="completeCurrent">直接完成本节</el-button>
-          </div>
+          <p class="text-sm text-ink-secondary">
+            本节暂无课程资源，可以先到搜索页按关键词采集，或直接用上方的「学完本节，解锁下一节」继续。
+          </p>
+          <RouterLink :to="{ name: 'search' }"><el-button>去搜索资源</el-button></RouterLink>
         </div>
       </section>
     </template>

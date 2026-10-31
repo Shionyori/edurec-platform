@@ -3,10 +3,16 @@ import { computed, ref } from 'vue'
 import type { Resource } from '@/types'
 import { recordBehavior } from '@/api/behavior'
 
-const props = defineProps<{ resource: Resource }>()
+const props = defineProps<{ resource: Resource; showReasonFallback?: boolean }>()
 
 // 外链封面（如 B 站）可能失效：no-referrer 已规避防盗链，但仍需对加载失败做降级
 const coverFailed = ref(false)
+
+// 推荐流里没有个性化理由时给出诚实的兜底说明；普通列表不显示理由。
+const reasonText = computed(() => {
+  if (props.resource.reason) return props.resource.reason
+  return props.showReasonFallback ? '按热度与评分推荐' : ''
+})
 
 const typeMeta = computed(() => {
   switch (props.resource.type) {
@@ -66,18 +72,19 @@ function onClick() {
         {{ resource.description }}
       </p>
 
-      <p v-if="resource.reason" class="mt-3 flex items-start gap-2 text-xs leading-relaxed text-line-teal">
+      <p v-if="reasonText" class="mt-3 flex items-start gap-2 text-xs leading-relaxed text-line-teal">
         <span class="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-current" aria-hidden="true"></span>
-        <span>{{ resource.reason }}</span>
+        <span>{{ reasonText }}</span>
       </p>
 
       <div class="mt-4 flex items-center justify-between border-t border-border pt-3 text-xs text-ink-muted">
-        <span class="data-num flex items-center gap-1.5">
+        <span v-if="resource.avg_rating > 0" class="data-num flex items-center gap-1.5">
           <svg viewBox="0 0 24 24" class="h-3.5 w-3.5" fill="currentColor" aria-hidden="true">
             <path d="M12 3.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8-5.2-2.7-5.2 2.7 1-5.8L3.5 9.7l5.9-.9L12 3.5z" />
           </svg>
           {{ resource.avg_rating.toFixed(1) }}
         </span>
+        <span v-else>暂无评分</span>
         <span class="data-num">{{ resource.view_count }} 次浏览</span>
       </div>
     </div>

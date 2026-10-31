@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { getKnowledgePoint, startConceptGeneration, getConceptGenerationStatus } from '@/api/knowledge'
@@ -27,6 +27,13 @@ const conceptEdges = computed(() => detail.value?.concept_edges ?? [])
 // 默认只显示「当前目标」的先修子图：目标必须是唯一末端；
 // 打开后展示全部学科（含旁支），用于浏览整张图。
 const showAllNodes = ref(false)
+
+// 窄屏用紧凑节点尺寸，配合 SVG 自适应缩放到卡片宽度
+const isNarrow = ref(false)
+let narrowQuery: MediaQueryList | null = null
+function syncNarrow(event?: MediaQueryListEvent) {
+  isNarrow.value = event ? event.matches : (narrowQuery?.matches ?? false)
+}
 
 const LINE_COLORS = ['#0E7C7B', '#1D4ED8', '#B45309', '#BE123C']
 function levelColor(level: number): string {
@@ -134,7 +141,19 @@ async function regenerateConcepts() {
   }
 }
 
-onMounted(load)
+onMounted(() => {
+  if (typeof window !== 'undefined' && typeof window.matchMedia === 'function') {
+    narrowQuery = window.matchMedia('(max-width: 640px)')
+    syncNarrow()
+    narrowQuery.addEventListener('change', syncNarrow)
+  }
+  load()
+})
+
+onBeforeUnmount(() => {
+  narrowQuery?.removeEventListener('change', syncNarrow)
+})
+
 watch(code, load)
 </script>
 
@@ -201,6 +220,7 @@ watch(code, load)
           :nodes="goalGraph.nodes"
           :edges="goalGraph.edges"
           :current-id="detail.point.id"
+          :compact="isNarrow"
           @select="openNode"
         />
         <p v-if="goalGraph.nodes.length === 0" class="py-8 text-center text-sm text-ink-muted">

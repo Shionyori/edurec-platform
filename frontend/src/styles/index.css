@@ -12,6 +12,7 @@
   --color-bg: #f5f4ef;
   --color-surface: #ffffff;
   --color-border: #dcd9cf;
+  --color-control: #8c8777;
   --color-ink: #0b1b2b;
   --color-ink-secondary: #4a5763;
   /* 11px 微标签也要达到 4.5:1，因此比常见的 muted gray 更深 */
@@ -40,6 +41,9 @@
   --el-border-radius-base: 4px;
   --el-border-radius-small: 3px;
   --el-font-family: inherit;
+  /* 占位符与控件描边满足非文本对比度要求 */
+  --el-text-color-placeholder: #6b7681;
+  --color-control: #8c8777;
 }
 
 body {
@@ -228,7 +232,7 @@ html {
 .el-select__wrapper,
 .el-textarea__inner {
   border-radius: var(--el-border-radius-base);
-  box-shadow: 0 0 0 1px var(--color-border) inset;
+  box-shadow: 0 0 0 1px var(--color-control) inset;
 }
 .el-input__wrapper.is-focus,
 .el-select__wrapper.is-focused {

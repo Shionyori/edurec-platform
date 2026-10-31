@@ -48,7 +48,7 @@ function logout() {
         </span>
         <span class="flex flex-col leading-none">
           <span class="text-[17px] font-bold tracking-tight">edurec</span>
-          <span class="mt-1 text-[10px] font-semibold tracking-[0.18em] text-white/45">管理后台</span>
+          <span class="mt-1 text-[10px] font-semibold tracking-[0.18em] text-white/60">管理后台</span>
         </span>
       </RouterLink>
 
@@ -57,6 +57,7 @@ function logout() {
           v-for="item in navItems"
           :key="item.label"
           :to="item.to"
+          :aria-current="isActive(String(item.to.name)) ? 'page' : undefined"
           class="flex items-center gap-2.5 rounded-[3px] px-3 py-2 text-sm transition-colors"
           :class="isActive(String(item.to.name))
             ? 'bg-white/10 font-semibold text-white'
@@ -102,6 +103,7 @@ function logout() {
           v-for="item in navItems"
           :key="item.label"
           :to="item.to"
+          :aria-current="isActive(String(item.to.name)) ? 'page' : undefined"
           class="shrink-0 rounded-[3px] px-3 py-1.5 text-sm"
           :class="isActive(String(item.to.name))
             ? 'bg-rail font-semibold text-white'

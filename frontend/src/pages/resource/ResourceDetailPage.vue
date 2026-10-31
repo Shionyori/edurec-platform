@@ -254,12 +254,13 @@ onMounted(() => {
             <span>{{ resource.category?.name }}</span>
             <span v-for="t in resource.tags" :key="t" class="text-primary">#{{ t }}</span>
             <span>作者：{{ resource.author }}</span>
-            <span class="flex items-center gap-1 text-ink">
+            <span v-if="resource.avg_rating > 0" class="flex items-center gap-1 text-ink">
               <svg viewBox="0 0 24 24" class="h-3.5 w-3.5" fill="currentColor" aria-hidden="true">
                 <path d="M12 3.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8-5.2-2.7-5.2 2.7 1-5.8L3.5 9.7l5.9-.9L12 3.5z" />
               </svg>
               {{ resource.avg_rating.toFixed(1) }}
             </span>
+            <span v-else>暂无评分</span>
             <span>{{ resource.view_count }} 次浏览</span>
             <span v-if="resource.difficulty">{{ difficultyLabel(resource.difficulty) }}</span>
             <span v-if="resource.duration_minutes">{{ formatDuration(resource.duration_minutes) }}</span>
@@ -313,8 +314,9 @@ onMounted(() => {
         <!-- 右侧评分卡 -->
         <aside>
           <div class="sticky top-20 rounded-[4px] border border-border bg-surface p-5">
-            <div class="flex items-end justify-between">
-              <div class="data-num text-3xl font-bold text-ink">{{ resource.avg_rating.toFixed(1) }}</div>
+            <div class="flex items-end justify-between gap-3">
+              <div v-if="total > 0" class="data-num text-3xl font-bold text-ink">{{ resource.avg_rating.toFixed(1) }}</div>
+              <div v-else class="text-sm font-medium text-ink-muted">暂无评分</div>
               <div class="data-num text-sm text-ink-muted">{{ total }} 条评价</div>
             </div>
             <el-rate :model-value="Math.round(resource.avg_rating)" disabled class="mt-2" />

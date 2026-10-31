@@ -72,7 +72,7 @@ function isActive(key: string): boolean {
           </span>
           <span class="flex flex-col leading-none">
             <span class="text-[17px] font-bold tracking-tight">edurec</span>
-            <span class="mt-1 text-[10px] font-semibold tracking-[0.18em] text-white/45">学习线路</span>
+            <span class="mt-1 text-[10px] font-semibold tracking-[0.18em] text-white/60">学习线路</span>
           </span>
         </RouterLink>
 
@@ -90,6 +90,7 @@ function isActive(key: string): boolean {
             v-for="item in navItems"
             :key="item.key"
             :to="item.to"
+            :aria-current="isActive(item.key) ? 'page' : undefined"
             class="border-b-2 px-3 py-5 text-sm transition-colors duration-150"
             :class="isActive(item.key)
               ? 'border-primary font-semibold text-white'
@@ -134,6 +135,7 @@ function isActive(key: string): boolean {
           v-for="item in navItems"
           :key="item.key"
           :to="item.to"
+          :aria-current="isActive(item.key) ? 'page' : undefined"
           class="shrink-0 rounded-[3px] px-3 py-1.5 text-sm"
           :class="isActive(item.key)
             ? 'bg-white/12 font-semibold text-white'

@@ -91,12 +91,13 @@ onMounted(fetchFavorites)
               <p class="truncate text-sm font-medium text-ink">{{ r.title }}</p>
               <p class="mt-0.5 flex items-center gap-2 text-xs text-ink-muted">
                 <span v-if="r.category?.name" class="truncate">{{ r.category.name }}</span>
-                <span class="data-num flex shrink-0 items-center gap-1 text-ink">
+                <span v-if="r.avg_rating > 0" class="data-num flex shrink-0 items-center gap-1 text-ink">
                   <svg viewBox="0 0 24 24" class="h-3 w-3" fill="currentColor" aria-hidden="true">
                     <path d="M12 3.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8-5.2-2.7-5.2 2.7 1-5.8L3.5 9.7l5.9-.9L12 3.5z" />
                   </svg>
                   {{ r.avg_rating.toFixed(1) }}
                 </span>
+                <span v-else class="shrink-0 text-ink-muted">暂无评分</span>
               </p>
             </div>
           </RouterLink>

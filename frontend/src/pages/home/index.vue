@@ -59,16 +59,16 @@ onMounted(load)
 
         <div class="w-full max-w-sm border-t border-border pt-4 lg:w-80 lg:border-l lg:border-t-0 lg:pl-8 lg:pt-0">
           <p class="text-sm font-semibold text-ink">一条线路，三步走完</p>
-          <ol class="route-strip mt-5" style="--track: var(--color-ink)">
-            <li class="route-strip__stop" data-state="done">
+          <ol class="route-strip mt-5" style="--track: var(--color-ink)" aria-label="学习流程示意">
+            <li class="route-strip__stop">
               <span class="route-strip__dot"></span>
               <span class="route-strip__label">选目标</span>
             </li>
-            <li class="route-strip__stop" data-state="done">
+            <li class="route-strip__stop">
               <span class="route-strip__dot"></span>
               <span class="route-strip__label">生成路径</span>
             </li>
-            <li class="route-strip__stop" data-state="current">
+            <li class="route-strip__stop">
               <span class="route-strip__dot"></span>
               <span class="route-strip__label">完成本节</span>
             </li>
@@ -129,6 +129,7 @@ onMounted(load)
           v-for="(r, i) in resources"
           :key="r.id"
           :resource="r"
+          show-reason-fallback
           :style="{ animationDelay: `${Math.min(i, 8) * 30}ms` }"
         />
       </div>

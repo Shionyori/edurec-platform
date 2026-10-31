@@ -43,9 +43,31 @@ describe('QuestionnairePage', () => {
     expect(wrapper.text()).toContain('初始学习问卷')
     expect(wrapper.text()).toContain('高等数学')
     expect(wrapper.text()).toContain('第 2 层')
-    // mastery 1 → 等级 3；0.33 → 1
-    const checked = wrapper.findAll('.el-radio-button.is-active')
+    // mastery 1 → 等级 3；0.33 → 1；0 → 0
+    const checked = wrapper.findAll('[role="radio"][aria-checked="true"]')
     expect(checked.length).toBeGreaterThanOrEqual(3)
+  })
+
+  it('默认只展开第一层，可切换全部展开/收起', async () => {
+    const wrapper = await mountPage()
+
+    const headers = wrapper.findAll('section > button[aria-expanded]')
+    expect(headers.length).toBe(2)
+    expect(headers[0].attributes('aria-expanded')).toBe('true')
+    expect(headers[1].attributes('aria-expanded')).toBe('false')
+
+    const expand = wrapper.findAll('button').find((b) => b.text() === '全部展开')
+    await expand!.trigger('click')
+    expect(headers[1].attributes('aria-expanded')).toBe('true')
+  })
+
+  it('「全部按没接触过」把答案重置为 0 并标记为已修改', async () => {
+    const wrapper = await mountPage()
+
+    const bulk = wrapper.findAll('button').find((b) => b.text().includes('全部按'))
+    await bulk!.trigger('click')
+
+    expect(wrapper.text()).toContain('已修改 2 项')
   })
 
   it('保存时把自评等级提交给接口并返回知识点页', async () => {

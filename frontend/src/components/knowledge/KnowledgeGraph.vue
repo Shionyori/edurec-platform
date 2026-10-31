@@ -66,7 +66,7 @@ function onSelect(node: KnowledgeNode) {
       :height="layout.height + 14"
       role="img"
       aria-label="知识点先修关系图"
-      class="min-w-full"
+      class="kg-svg min-w-full"
     >
       <defs>
         <marker
@@ -175,5 +175,13 @@ function onSelect(node: KnowledgeNode) {
 }
 .kg-node:focus-visible rect {
   stroke-width: 2.5;
+}
+
+/* 窄屏不横向裁切：整图缩放到卡片宽度，配合 compact 参数保持字号可读 */
+@media (max-width: 640px) {
+  .kg-svg {
+    width: 100%;
+    height: auto;
+  }
 }
 </style>

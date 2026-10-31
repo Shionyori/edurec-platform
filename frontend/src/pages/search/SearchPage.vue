@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { listCategories } from '@/api/category'
 import { listResources } from '@/api/resource'
 import { startGenerationByKeyword, getConceptGenerationStatus } from '@/api/knowledge'
@@ -11,6 +11,7 @@ import type { Category, GenerationStatus, Resource } from '@/types'
 const PAGE_SIZE = 12
 
 const route = useRoute()
+const router = useRouter()
 
 const categories = ref<Category[]>([])
 const resources = ref<Resource[]>([])
@@ -287,6 +288,10 @@ function clearFilters() {
   type.value = ''
   tags.value = ''
   sort.value = 'latest'
+  // 同步清掉 URL 上的筛选，刷新/分享时不会又回到旧筛选
+  if (Object.keys(route.query).length > 0) {
+    router.replace({ name: 'search', query: {} })
+  }
   resetAndSearch()
 }
 

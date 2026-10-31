@@ -10,6 +10,9 @@ const route = useRoute()
 const code = computed(() => String(route.params.code ?? ''))
 
 const detail = ref<DisciplineDetail | null>(null)
+// 列表字段兜底为空数组：后端历史版本在无数据时返回 null，直接 .length 会让整页渲染崩溃。
+const points = computed(() => detail.value?.points ?? [])
+const resources = computed(() => detail.value?.resources ?? [])
 const loading = ref(true)
 const error = ref('')
 const crawling = ref(false)
@@ -103,9 +106,9 @@ onMounted(load)
 
       <section class="mt-8">
         <h2 class="text-lg font-semibold text-ink">知识点</h2>
-        <div v-if="detail.points.length > 0" class="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div v-if="points.length > 0" class="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           <RouterLink
-            v-for="point in detail.points"
+            v-for="point in points"
             :key="point.id"
             :to="{ name: 'knowledge-detail', params: { code: point.code } }"
             class="rounded-lg border border-border bg-surface p-4 transition hover:border-primary hover:shadow-sm"
@@ -126,8 +129,8 @@ onMounted(load)
           <h2 class="text-lg font-semibold text-ink">课程资源</h2>
           <span class="text-xs text-ink-muted">共 {{ detail.resource_total }} 条</span>
         </div>
-        <div v-if="detail.resources.length > 0" class="mt-4 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          <ResourceCard v-for="resource in detail.resources" :key="resource.id" :resource="resource" />
+        <div v-if="resources.length > 0" class="mt-4 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          <ResourceCard v-for="resource in resources" :key="resource.id" :resource="resource" />
         </div>
         <el-empty
           v-else

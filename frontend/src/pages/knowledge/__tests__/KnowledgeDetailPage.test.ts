@@ -83,6 +83,22 @@ describe('KnowledgeDetailPage', () => {
     expect(wrapper.text()).toContain('暂未匹配到概念层')
   })
 
+  it('后端把空列表返回为 null 时仍能渲染', async () => {
+    mockedDetail.mockResolvedValue({
+      ...detail,
+      nodes: null,
+      edges: null,
+      resources: null,
+      concepts: null,
+      concept_edges: null,
+    } as unknown as KnowledgeDetail)
+
+    const wrapper = await mountPage()
+
+    expect(wrapper.text()).toContain('数学分析')
+    expect(wrapper.text()).toContain('暂未匹配到概念层')
+  })
+
   it('有概念时展示概念标签与数量', async () => {
     mockedDetail.mockResolvedValue({
       ...detail,

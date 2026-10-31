@@ -102,7 +102,7 @@ watch(pathId, load)
     </div>
 
     <template v-else-if="path">
-      <header class="mt-4 rounded-[4px] bg-rail px-6 py-7 text-white">
+      <header class="mt-4 rounded-[4px] bg-rail-soft px-6 py-7 text-white">
         <div class="flex flex-wrap items-end justify-between gap-6">
           <div class="max-w-2xl">
             <span

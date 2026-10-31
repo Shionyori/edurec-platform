@@ -60,7 +60,7 @@ function isActive(key: string): boolean {
       class="sr-only z-50 bg-primary px-4 py-2 text-sm font-semibold text-white focus:not-sr-only focus:absolute focus:left-4 focus:top-4"
     >跳到主要内容</a>
 
-    <header class="sticky top-0 z-40 bg-rail text-white">
+    <header class="sticky top-0 z-40 border-b border-white/10 bg-rail-soft text-white">
       <div class="mx-auto flex h-16 max-w-7xl items-center gap-5 px-4 sm:px-6">
         <RouterLink to="/" class="flex shrink-0 items-center gap-2.5" aria-label="edurec 首页">
           <span class="flex h-8 w-8 items-center justify-center rounded-[3px] bg-white" aria-hidden="true">

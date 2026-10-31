@@ -98,7 +98,7 @@ components:
     padding: "1px 11px"
     height: "32px"
   nav-link:
-    backgroundColor: "{colors.rail}"
+    backgroundColor: "{colors.rail-soft}"
     textColor: "{colors.surface}"
     typography: "{typography.control}"
     padding: "20px 12px"
@@ -166,8 +166,8 @@ A rail-signage palette: one warm signal color against a cool paper neutral field
 - **Halt Red** (#B91C1C): errors and destructive admin actions.
 
 ### Neutral
-- **Station Navy** (#0B1B2B): primary ink and the rail/header surface. Body text and the top navigation are the same navy by design.
-- **Depot Navy** (#14293D): the soft rail step for raised rail panels.
+- **Station Navy** (#0B1B2B): primary ink, brand marks, and neutral chip fills.
+- **Depot Navy** (#14293D): every rail surface — top navigation, page mastheads, the learning-path header, and the admin sidebar — plus raised rail panels. One step lighter than the ink, so large navy fields read as navy rather than a black band against paper.
 - **Paper Ground** (#F5F4EF): page background behind every content section.
 - **Ticket White** (#FFFFFF): cards, inputs, sticky bars, and the content surface.
 - **Slate Ink** (#4A5763): secondary copy, descriptions, metadata, and muted nav links.
@@ -251,7 +251,7 @@ Cards are 4px-rounded rectangles; chips and controls are 3px; route strokes are 
 
 ### Cards / Containers
 - **Corner Style:** 4px on every card, panel, and masthead.
-- **Background:** Ticket White for content; Station Navy for mastheads, the learning-path header, and admin sidebar; Paper Ground for empty states and inset groups.
+- **Background:** Ticket White for content; Depot Navy for mastheads, the learning-path header, and admin sidebar; Paper Ground for empty states and inset groups.
 - **Shadow Strategy:** flat at rest; Card Hover Lift on interactive cards only.
 - **Border:** 1px Paper Hairline; dashed Paper Hairline for empty states, which are action entry points rather than dead ends.
 - **Internal Padding:** 16–20px for card bodies (resource cards use 16px mobile / 20px desktop), 20–28px for panels and mastheads. Resource cards put a 16:9 cover flush to the top edge, with a type chip and category row above the title, a teal dot-and-reason line for recommendation explanations, and a ruled footer of rating and views using tabular numerals.
@@ -262,7 +262,7 @@ Cards are 4px-rounded rectangles; chips and controls are 3px; route strokes are 
 - **Rail variant:** inputs placed on the navy rail use a white 8% fill, 16% inset stroke, and white text; focus raises the stroke to 55% white and the placeholder to 50% white. Search in the top rail uses this variant.
 
 ### Navigation
-- **Style:** 64px Station Navy rail, sticky at the top, with a white 3px-radius square holding the route-mark logo, a 17px bold wordmark, and a 10px tracked subtitle. Links are 14px Control weight.
+- **Style:** 64px Depot Navy rail, sticky at the top, with a white 3px-radius square holding the route-mark logo, a 17px bold wordmark, and a 10px tracked subtitle. Links are 14px Control weight.
 - **States:** active link is white semibold with a 2px Signal Vermilion bottom border; inactive links are white at 65% and brighten on hover. Account menu shows a 28px avatar ringed in 25% white.
 - **Mobile:** below 768px the rail keeps the brand, collapses search, and exposes nav as a horizontally scrollable chip row (3px radius, white/12 fill when active) on a 10% white top border.
 - **Admin:** a 240px navy sidebar with a colored `route-node` beside each item (filled for the active section) and a white 10% active row; content header is a 64px white bar with a ruled bottom border.

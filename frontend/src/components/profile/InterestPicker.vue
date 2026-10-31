@@ -56,7 +56,7 @@ async function save() {
       <span class="line-chip" style="--chip: var(--color-line-amber)">冷启动</span>
     </div>
     <div class="grid gap-5 px-5 py-4 sm:grid-cols-2">
-      <section>
+      <section class="order-2 border-t border-border pt-4 sm:order-1 sm:border-t-0 sm:pt-0">
         <h3 class="text-sm font-semibold text-ink">按方向订阅推荐</h3>
         <p class="mt-1 text-xs text-ink-muted">保存后用于冷启动推荐</p>
         <div v-if="loading" class="mt-3 text-sm text-ink-muted">加载中…</div>
@@ -73,7 +73,7 @@ async function save() {
 
       <section
         v-if="disciplines.length > 0"
-        class="border-t border-border pt-4 sm:border-l sm:border-t-0 sm:pl-5 sm:pt-0"
+        class="order-1 sm:order-2 sm:border-l sm:border-border sm:pl-5"
       >
         <h3 class="text-sm font-semibold text-ink">或按学科直接开始</h3>
         <p class="mt-1 text-xs text-ink-muted">不确定兴趣时，先从一个学科进入</p>

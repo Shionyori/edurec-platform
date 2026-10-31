@@ -86,6 +86,41 @@ describe('DisciplineDetailPage', () => {
     expect(wrapper.text()).toContain('有机化学基础')
   })
 
+  it('后端把空资源返回为 null 时仍能渲染知识点卡片', async () => {
+    // 旧版后端无资源时返回 resources: null；前端曾因 detail.resources.length 崩溃
+    mockedGet.mockResolvedValue({ ...emptyDetail, resources: null } as unknown as DisciplineDetail)
+    mockedStart.mockResolvedValue({
+      discipline_code: 'chemistry',
+      status: 'done',
+      imported: 0,
+      linked: 0,
+      resource_total: 0,
+    })
+
+    const wrapper = await mountPage()
+
+    expect(wrapper.text()).toContain('有机化学')
+    expect(wrapper.text()).toContain('该学科暂无资源')
+  })
+
+  it('知识点无概念时提示「概念待生成」并引导生成', async () => {
+    const wrapper = await mountPage()
+
+    expect(wrapper.text()).toContain('概念待生成')
+    expect(wrapper.text()).toContain('重新生成概念')
+  })
+
+  it('知识点已有概念时不显示待生成提示', async () => {
+    mockedGet.mockResolvedValue({
+      ...filledDetail,
+      points: [{ ...emptyDetail.points[0], concept_count: 3 }],
+    })
+
+    const wrapper = await mountPage()
+
+    expect(wrapper.text()).not.toContain('概念待生成')
+  })
+
   it('已有资源时不触发抓取', async () => {
     mockedGet.mockResolvedValue(filledDetail)
     const wrapper = await mountPage()

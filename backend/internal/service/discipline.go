@@ -19,10 +19,10 @@ type DisciplineNode struct {
 
 // DisciplineDetail 学科详情：学科下的知识点 + 资源
 type DisciplineDetail struct {
-	Discipline    DisciplineNode    `json:"discipline"`
-	Points        []KnowledgeNode   `json:"points"`
-	Resources     []model.Resource  `json:"resources"`
-	ResourceTotal int64             `json:"resource_total"`
+	Discipline    DisciplineNode   `json:"discipline"`
+	Points        []KnowledgeNode  `json:"points"`
+	Resources     []model.Resource `json:"resources"`
+	ResourceTotal int64            `json:"resource_total"`
 }
 
 // DisciplineService 学科导航：主页面列表与学科页。
@@ -102,6 +102,10 @@ func (s *DisciplineService) Detail(code string, resourceLimit int) (*DisciplineD
 	resources, total, err := s.repo.ListResourcesByDiscipline(code, limit, 0)
 	if err != nil {
 		return nil, apperror.Internal(err)
+	}
+	// 列表字段始终返回数组：nil 会被编码成 JSON null，前端无法按数组渲染。
+	if resources == nil {
+		resources = make([]model.Resource, 0)
 	}
 
 	return &DisciplineDetail{

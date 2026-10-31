@@ -10,6 +10,9 @@ const route = useRoute()
 const code = computed(() => String(route.params.code ?? ''))
 
 const detail = ref<DisciplineDetail | null>(null)
+// 列表字段兜底为空数组：后端历史版本在无数据时返回 null，直接 .length 会让整页渲染崩溃。
+const points = computed(() => detail.value?.points ?? [])
+const resources = computed(() => detail.value?.resources ?? [])
 const loading = ref(true)
 const error = ref('')
 const crawling = ref(false)
@@ -103,18 +106,27 @@ onMounted(load)
 
       <section class="mt-8">
         <h2 class="text-lg font-semibold text-ink">知识点</h2>
-        <div v-if="detail.points.length > 0" class="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <p v-if="points.some((point) => point.concept_count === 0)" class="mt-1 text-xs text-ink-muted">
+          标有「概念待生成」的知识点尚无概念图谱，进入详情页点击「重新生成概念」即可尝试补齐。
+        </p>
+        <div v-if="points.length > 0" class="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           <RouterLink
-            v-for="point in detail.points"
+            v-for="point in points"
             :key="point.id"
             :to="{ name: 'knowledge-detail', params: { code: point.code } }"
             class="rounded-lg border border-border bg-surface p-4 transition hover:border-primary hover:shadow-sm"
           >
             <h3 class="text-sm font-semibold text-ink">{{ point.name }}</h3>
             <p class="mt-1 line-clamp-2 text-xs text-ink-secondary">{{ point.description }}</p>
-            <div class="mt-3 flex gap-3 text-xs text-ink-muted">
+            <div class="mt-3 flex flex-wrap items-center gap-3 text-xs text-ink-muted">
               <span>资源 {{ point.resource_count }}</span>
               <span>概念 {{ point.concept_count }}</span>
+              <el-tag
+                v-if="point.concept_count === 0"
+                size="small"
+                type="info"
+                effect="plain"
+              >概念待生成</el-tag>
             </div>
           </RouterLink>
         </div>
@@ -126,8 +138,8 @@ onMounted(load)
           <h2 class="text-lg font-semibold text-ink">课程资源</h2>
           <span class="text-xs text-ink-muted">共 {{ detail.resource_total }} 条</span>
         </div>
-        <div v-if="detail.resources.length > 0" class="mt-4 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          <ResourceCard v-for="resource in detail.resources" :key="resource.id" :resource="resource" />
+        <div v-if="resources.length > 0" class="mt-4 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          <ResourceCard v-for="resource in resources" :key="resource.id" :resource="resource" />
         </div>
         <el-empty
           v-else

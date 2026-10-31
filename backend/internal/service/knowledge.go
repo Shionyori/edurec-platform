@@ -43,13 +43,13 @@ type KnowledgeConceptEdge struct {
 
 // KnowledgeDetail 知识点详情：当前节点 + 整张图 + 该节点的资源 + 该学科的概念子图
 type KnowledgeDetail struct {
-	Point         KnowledgeNode           `json:"point"`
-	Nodes         []KnowledgeNode         `json:"nodes"`
-	Edges         []KnowledgeEdge         `json:"edges"`
-	Resources     []model.Resource        `json:"resources"`
-	ResourceTotal int64                   `json:"resource_total"`
+	Point         KnowledgeNode            `json:"point"`
+	Nodes         []KnowledgeNode          `json:"nodes"`
+	Edges         []KnowledgeEdge          `json:"edges"`
+	Resources     []model.Resource         `json:"resources"`
+	ResourceTotal int64                    `json:"resource_total"`
 	Concepts      []model.KnowledgeConcept `json:"concepts"`
-	ConceptEdges  []KnowledgeConceptEdge  `json:"concept_edges"`
+	ConceptEdges  []KnowledgeConceptEdge   `json:"concept_edges"`
 }
 
 // List 返回全部知识点（含资源数），按层级与排序号排列
@@ -108,12 +108,19 @@ func (s *KnowledgeService) Detail(code string, resourceLimit int) (*KnowledgeDet
 	if err != nil {
 		return nil, apperror.Internal(err)
 	}
+	// 列表字段始终返回数组：nil 会被编码成 JSON null，前端无法按数组渲染。
+	if resources == nil {
+		resources = make([]model.Resource, 0)
+	}
 
 	// 概念层：该学科下的概念（EMBEDD-ER / MOOCCube），以及这些概念之间的先修边。
 	// 上限 120 个，避免一次把上千概念塞给前端；层级升序便于按学习顺序展示。
 	concepts, err := s.points.ListConceptsByPoint(point.Code, 120)
 	if err != nil {
 		return nil, apperror.Internal(err)
+	}
+	if concepts == nil {
+		concepts = make([]model.KnowledgeConcept, 0)
 	}
 	conceptIDs := make([]uint, 0, len(concepts))
 	for i := range concepts {

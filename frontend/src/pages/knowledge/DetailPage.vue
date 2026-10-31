@@ -18,21 +18,27 @@ const error = ref('')
 const creatingPath = ref(false)
 const regenerating = ref(false)
 const generationNotice = ref('')
+// 列表字段兜底为空数组：后端历史版本在无数据时可能返回 null，直接 .length 会让整页渲染崩溃。
+const nodes = computed(() => detail.value?.nodes ?? [])
+const edges = computed(() => detail.value?.edges ?? [])
+const resources = computed(() => detail.value?.resources ?? [])
+const concepts = computed(() => detail.value?.concepts ?? [])
+const conceptEdges = computed(() => detail.value?.concept_edges ?? [])
 // 默认只显示「当前目标」的先修子图：目标必须是唯一末端；
 // 打开后展示全部学科（含旁支），用于浏览整张图。
 const showAllNodes = ref(false)
 
 const VISIBLE_CONCEPTS = 30
-const visibleConcepts = computed(() => (detail.value?.concepts ?? []).slice(0, VISIBLE_CONCEPTS))
+const visibleConcepts = computed(() => concepts.value.slice(0, VISIBLE_CONCEPTS))
 const hiddenConceptCount = computed(() =>
-  Math.max(0, (detail.value?.concepts.length ?? 0) - visibleConcepts.value.length),
+  Math.max(0, concepts.value.length - visibleConcepts.value.length),
 )
 
 // 目标导向子图：从当前知识点沿先修边反向取闭包，只保留「先修 → 目标」的节点。
 // 这样图的最右端（末端）只有当前这一个学习目标，而不是整张图里的多个同级学科。
 const goalGraph = computed(() => {
-  const allNodes = detail.value?.nodes ?? []
-  const allEdges = detail.value?.edges ?? []
+  const allNodes = nodes.value
+  const allEdges = edges.value
   const targetId = detail.value?.point.id
   if (showAllNodes.value || !targetId) {
     return { nodes: allNodes, edges: allEdges }
@@ -186,7 +192,7 @@ watch(code, load)
           <h2 class="text-base font-semibold text-ink">概念图谱</h2>
           <div class="flex items-center gap-3">
             <span class="text-xs text-ink-muted">
-              来自 EMBEDD-ER{{ detail.concepts.length ? ` · 共 ${detail.concepts.length} 个概念` : '' }}
+              来自 EMBEDD-ER{{ concepts.length ? ` · 共 ${concepts.length} 个概念` : '' }}
             </span>
             <el-button size="small" round :loading="regenerating" @click="regenerateConcepts">
               重新生成概念
@@ -215,12 +221,12 @@ watch(code, load)
             另有 {{ hiddenConceptCount }} 个概念未展示
           </p>
           <p class="mt-3 text-xs text-ink-muted">
-            概念先修边 {{ detail.concept_edges.length }} 条；同一层级的概念可以并行学习。
+            概念先修边 {{ conceptEdges.length }} 条；同一层级的概念可以并行学习。
           </p>
         </template>
         <el-empty
           v-else
-          description="该学科暂未匹配到概念层（MOOCCube 未覆盖），先按学科先修顺序学习即可"
+          description="该学科暂未匹配到概念层（MOOCCube 未覆盖）；可点击「重新生成概念」尝试补齐，或先按学科先修顺序学习"
           :image-size="80"
           class="mt-2"
         />
@@ -233,11 +239,11 @@ watch(code, load)
         </div>
 
         <div
-          v-if="detail.resources.length > 0"
+          v-if="resources.length > 0"
           class="mt-4 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3"
         >
           <ResourceCard
-            v-for="resource in detail.resources"
+            v-for="resource in resources"
             :key="resource.id"
             :resource="resource"
           />

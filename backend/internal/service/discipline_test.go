@@ -1,8 +1,12 @@
 package service_test
 
 import (
+	"encoding/json"
+	"strings"
 	"testing"
 
+	"github.com/Shionyori/edurec-platform/backend/internal/model"
+	"github.com/Shionyori/edurec-platform/backend/internal/repository"
 	"github.com/Shionyori/edurec-platform/backend/internal/service"
 )
 
@@ -34,5 +38,57 @@ func TestDefaultDisciplinesConsistent(t *testing.T) {
 
 	if len(disciplines) < 15 {
 		t.Errorf("主要学科数量过少: %d", len(disciplines))
+	}
+}
+
+// fakeKnowledgeRepo 只实现学科详情用到的查询；其余方法由嵌入接口兜底（不应被调用）。
+type fakeKnowledgeRepo struct {
+	repository.KnowledgeRepository
+	discipline *model.Discipline
+	points     []model.KnowledgePoint
+	resources  []model.Resource
+}
+
+func (f *fakeKnowledgeRepo) FindDisciplineByCode(string) (*model.Discipline, error) {
+	return f.discipline, nil
+}
+
+func (f *fakeKnowledgeRepo) ListPointsByDiscipline(string) ([]model.KnowledgePoint, error) {
+	return f.points, nil
+}
+
+func (f *fakeKnowledgeRepo) CountResourcesByPoint() (map[uint]int64, error) {
+	return map[uint]int64{}, nil
+}
+
+func (f *fakeKnowledgeRepo) CountConceptsByPoint() (map[string]int64, error) {
+	return map[string]int64{}, nil
+}
+
+func (f *fakeKnowledgeRepo) ListResourcesByDiscipline(string, int, int) ([]model.Resource, int64, error) {
+	return f.resources, int64(len(f.resources)), nil
+}
+
+// 学科无资源时 resources 必须序列化为 []，不能是 null：
+// 前端按数组访问（detail.resources.length），null 会导致整页渲染崩溃。
+func TestDisciplineDetailEmptyResourcesSerializesAsArray(t *testing.T) {
+	svc := service.NewDisciplineService(&fakeKnowledgeRepo{
+		discipline: &model.Discipline{Code: "math", Name: "数学"},
+	})
+
+	detail, err := svc.Detail("math", 12)
+	if err != nil {
+		t.Fatalf("Detail() error = %v", err)
+	}
+	if detail.Resources == nil {
+		t.Fatal("Resources = nil，应为空切片")
+	}
+
+	body, err := json.Marshal(detail)
+	if err != nil {
+		t.Fatalf("json.Marshal() error = %v", err)
+	}
+	if !strings.Contains(string(body), `"resources":[]`) {
+		t.Fatalf("resources 未序列化为数组: %s", body)
 	}
 }

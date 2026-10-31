@@ -78,8 +78,25 @@ describe('KnowledgeDetailPage', () => {
     expect(mockedDetail).toHaveBeenCalledWith('mathematical-analysis', 12)
   })
 
-  it('概念层为空时给出说明', async () => {
+  it('概念层为空时给出说明并引导生成', async () => {
     const wrapper = await mountPage()
+    expect(wrapper.text()).toContain('暂未匹配到概念层')
+    expect(wrapper.text()).toContain('可点击「重新生成概念」尝试补齐')
+  })
+
+  it('后端把空列表返回为 null 时仍能渲染', async () => {
+    mockedDetail.mockResolvedValue({
+      ...detail,
+      nodes: null,
+      edges: null,
+      resources: null,
+      concepts: null,
+      concept_edges: null,
+    } as unknown as KnowledgeDetail)
+
+    const wrapper = await mountPage()
+
+    expect(wrapper.text()).toContain('数学分析')
     expect(wrapper.text()).toContain('暂未匹配到概念层')
   })
 

@@ -489,7 +489,9 @@ func (r *KnowledgeRepo) ListResourcesByDiscipline(code string, limit, offset int
 		return nil, 0, fmt.Errorf("统计学科资源失败: %w", err)
 	}
 
-	var items []model.Resource
+	// 初始化为空切片：Raw().Scan 在无结果时会保留 nil，JSON 序列化成 null，
+	// 前端按数组访问会直接崩溃。
+	items := make([]model.Resource, 0)
 	if err := r.db.Raw(`
 		SELECT DISTINCT r.*
 		FROM resources r

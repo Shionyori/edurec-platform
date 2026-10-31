@@ -226,7 +226,7 @@ watch(code, load)
         </template>
         <el-empty
           v-else
-          description="该学科暂未匹配到概念层（MOOCCube 未覆盖），先按学科先修顺序学习即可"
+          description="该学科暂未匹配到概念层（MOOCCube 未覆盖）；可点击「重新生成概念」尝试补齐，或先按学科先修顺序学习"
           :image-size="80"
           class="mt-2"
         />

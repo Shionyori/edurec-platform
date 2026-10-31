@@ -106,6 +106,9 @@ onMounted(load)
 
       <section class="mt-8">
         <h2 class="text-lg font-semibold text-ink">知识点</h2>
+        <p v-if="points.some((point) => point.concept_count === 0)" class="mt-1 text-xs text-ink-muted">
+          标有「概念待生成」的知识点尚无概念图谱，进入详情页点击「重新生成概念」即可尝试补齐。
+        </p>
         <div v-if="points.length > 0" class="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           <RouterLink
             v-for="point in points"
@@ -115,9 +118,15 @@ onMounted(load)
           >
             <h3 class="text-sm font-semibold text-ink">{{ point.name }}</h3>
             <p class="mt-1 line-clamp-2 text-xs text-ink-secondary">{{ point.description }}</p>
-            <div class="mt-3 flex gap-3 text-xs text-ink-muted">
+            <div class="mt-3 flex flex-wrap items-center gap-3 text-xs text-ink-muted">
               <span>资源 {{ point.resource_count }}</span>
               <span>概念 {{ point.concept_count }}</span>
+              <el-tag
+                v-if="point.concept_count === 0"
+                size="small"
+                type="info"
+                effect="plain"
+              >概念待生成</el-tag>
             </div>
           </RouterLink>
         </div>

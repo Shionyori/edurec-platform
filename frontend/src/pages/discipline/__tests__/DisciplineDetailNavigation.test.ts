@@ -39,6 +39,7 @@ describe('DisciplineDetailPage 知识点卡片导航', () => {
       history: createMemoryHistory(),
       routes: [
         { path: '/knowledge', name: 'knowledge', component: { template: '<div />' } },
+        { path: '/search', name: 'search', component: { template: '<div />' } },
         { path: '/discipline/:code', component: DisciplineDetailPage },
         {
           path: '/knowledge/:code',

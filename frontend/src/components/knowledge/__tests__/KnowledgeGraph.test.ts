@@ -25,7 +25,13 @@ describe('KnowledgeGraph', () => {
 
   it('当前节点高亮', () => {
     const wrapper = mount(KnowledgeGraph, { props: { nodes, edges, currentId: 2 } })
-    expect(wrapper.html()).toContain('#3b82f6')
+    const rects = wrapper.findAll('rect')
+    expect(rects).toHaveLength(2)
+    // 当前节点：深墨蓝底 + 信号朱红描边
+    expect(rects[1].attributes('fill')).toBe('#0B1B2B')
+    expect(rects[1].attributes('stroke')).toBe('#E4572E')
+    // 非当前节点保持白底
+    expect(rects[0].attributes('fill')).toBe('#FFFFFF')
   })
 
   it('点击节点抛出 select 事件', async () => {

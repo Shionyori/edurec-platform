@@ -44,7 +44,7 @@ onMounted(fetchFavorites)
 </script>
 
 <template>
-  <div class="rounded-xl border border-border bg-surface p-6 shadow-sm">
+  <div class="rounded-[4px] border border-border bg-surface p-6">
     <div class="flex items-center justify-between">
       <h2 class="text-lg font-semibold text-ink">我的收藏</h2>
       <span v-if="total > 0" class="text-xs text-ink-muted">共 {{ total }} 个</span>
@@ -67,7 +67,7 @@ onMounted(fetchFavorites)
         <li
           v-for="r in items"
           :key="r.id"
-          class="flex items-center gap-3 rounded-lg border border-border p-2 transition-colors hover:border-primary/30 hover:bg-bg/70"
+          class="flex items-center gap-3 rounded-[3px] border border-border p-2 transition-colors hover:border-primary/30 hover:bg-bg/70"
         >
           <RouterLink
             :to="{ name: 'resource-detail', params: { id: r.id } }"

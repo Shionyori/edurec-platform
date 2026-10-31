@@ -39,20 +39,20 @@ function cancel() {
 </script>
 
 <template>
-  <div class="rounded-xl border border-border bg-surface p-6 shadow-sm">
-    <div class="flex items-center gap-4">
-      <el-avatar :size="64" :src="user.avatar_url ?? undefined">
+  <div class="rounded-[4px] border border-border bg-surface p-6">
+    <div class="flex flex-wrap items-center gap-4">
+      <el-avatar :size="64" :src="user.avatar_url ?? undefined" class="ring-2 ring-bg">
         {{ (user.display_name ?? user.username).charAt(0) }}
       </el-avatar>
       <div class="min-w-0 flex-1">
         <div class="flex items-center gap-2">
-          <h2 class="truncate text-xl font-semibold text-ink">{{ user.display_name ?? user.username }}</h2>
+          <h2 class="truncate text-xl font-bold text-ink">{{ user.display_name ?? user.username }}</h2>
           <el-tag v-if="user.is_admin" type="warning" size="small">管理员</el-tag>
         </div>
         <p class="mt-1 truncate text-sm text-ink-secondary">@{{ user.username }} · {{ user.email }}</p>
-        <p class="mt-0.5 text-xs text-ink-muted">注册于 {{ formatDate(user.created_at) }}</p>
+        <p class="data-num mt-0.5 text-xs text-ink-muted">注册于 {{ formatDate(user.created_at) }}</p>
       </div>
-      <el-button v-if="!editing" round class="shrink-0" @click="editing = true">编辑资料</el-button>
+      <el-button v-if="!editing" class="shrink-0" @click="editing = true">编辑资料</el-button>
     </div>
 
     <div v-if="editing" class="mt-6 border-t border-border pt-5">

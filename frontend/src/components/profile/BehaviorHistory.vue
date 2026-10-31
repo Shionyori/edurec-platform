@@ -59,7 +59,7 @@ onMounted(fetchList)
 </script>
 
 <template>
-  <div class="rounded-xl border border-border bg-surface p-6 shadow-sm">
+  <div class="rounded-[4px] border border-border bg-surface p-6">
     <div class="flex flex-wrap items-center justify-between gap-3">
       <h2 class="text-lg font-semibold text-ink">行为历史</h2>
       <el-radio-group v-model="action" size="small" @change="handleFilter">

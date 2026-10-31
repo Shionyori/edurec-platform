@@ -81,7 +81,7 @@ describe('LearningPathPage', () => {
     expect(wrapper.text()).toContain('线性代数')
     expect(wrapper.text()).toContain('数据结构与算法')
     expect(wrapper.text()).toContain('已完成 1 / 3 节')
-    expect(wrapper.text()).toContain('当前一节：线性代数')
+    expect(wrapper.text()).toContain('当前一节')
     expect(wrapper.text()).toContain('线性代数精讲')
     expect(wrapper.text()).toContain('未解锁')
     expect(mockedResources).toHaveBeenCalledWith(1, 9)

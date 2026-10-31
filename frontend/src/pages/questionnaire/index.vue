@@ -16,6 +16,11 @@ const error = ref('')
 const levelLabels = ['没接触过', '了解概念', '学过并练习', '熟练']
 const levelOptions = levelLabels.map((label, value) => ({ label, value }))
 
+const LINE_COLORS = ['#0E7C7B', '#1D4ED8', '#B45309', '#BE123C']
+function levelColor(level: number): string {
+  return LINE_COLORS[(Math.max(1, level) - 1) % LINE_COLORS.length]
+}
+
 const grouped = computed(() => {
   const map = new Map<number, LearningProfileItem[]>()
   for (const item of items.value) {
@@ -63,33 +68,46 @@ onMounted(load)
 </script>
 
 <template>
-  <div class="mx-auto max-w-4xl px-6 py-10">
-    <div class="flex items-start justify-between gap-4">
+  <div class="mx-auto max-w-4xl px-4 py-8 sm:px-6 sm:py-10">
+    <header class="flex flex-wrap items-start justify-between gap-4 border-b border-border pb-5">
       <div>
-        <h1 class="text-2xl font-bold">初始学习问卷</h1>
-        <p class="mt-2 text-sm text-ink-secondary">
-          按你的真实水平自评每个知识点，系统会据此跳过已掌握内容，只推荐路径上还没掌握的部分。
-          以后可以随时回来重做。
+        <h1 class="text-2xl font-bold tracking-tight text-ink sm:text-3xl">初始学习问卷</h1>
+        <p class="mt-2 max-w-2xl text-sm leading-relaxed text-ink-secondary">
+          按你的真实水平自评每个知识点，系统会据此跳过已掌握内容，只推荐路径上还没掌握的部分。以后可以随时回来重做。
         </p>
       </div>
-      <RouterLink :to="{ name: 'knowledge' }" class="shrink-0 text-sm text-primary hover:underline">
-        先去看知识点 →
+      <RouterLink :to="{ name: 'knowledge' }">
+        <el-button>先去看知识点</el-button>
       </RouterLink>
-    </div>
+    </header>
 
-    <div v-if="loading" class="mt-8">
+    <div v-if="loading" class="mt-6">
       <el-skeleton :rows="8" animated />
     </div>
-    <el-empty v-else-if="error" :description="error" class="mt-16" />
+    <div v-else-if="error" class="mt-6 flex flex-col items-center gap-3 rounded-[4px] border border-border bg-surface px-6 py-16 text-center">
+      <p class="text-sm text-danger">{{ error }}</p>
+      <el-button @click="load">重新加载</el-button>
+    </div>
 
     <template v-else>
-      <section v-for="group in grouped" :key="group.level" class="mt-8">
-        <h2 class="text-lg font-semibold text-ink">第 {{ group.level }} 层</h2>
-        <div class="mt-3 space-y-3">
+      <p class="mt-4 text-xs text-ink-muted">0 = 没接触，3 = 熟练；掌握度 ≥ 80% 的节点会从路径中跳过</p>
+
+      <section
+        v-for="group in grouped"
+        :key="group.level"
+        class="mt-5 overflow-hidden rounded-[4px] border border-border bg-surface"
+      >
+        <div class="flex flex-wrap items-center gap-3 border-b border-border bg-bg/60 px-5 py-3">
+          <span class="line-chip" :style="{ '--chip': levelColor(group.level) }">L{{ group.level }}</span>
+          <h2 class="text-sm font-semibold text-ink">第 {{ group.level }} 层</h2>
+          <span class="data-num text-xs text-ink-muted">{{ group.items.length }} 个知识点</span>
+        </div>
+
+        <div class="divide-y divide-border">
           <div
             v-for="item in group.items"
             :key="item.point_code"
-            class="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border bg-surface px-4 py-3"
+            class="flex flex-wrap items-center justify-between gap-3 px-5 py-3 transition-colors hover:bg-bg/40"
           >
             <div class="min-w-40">
               <span class="text-sm font-medium text-ink">{{ item.name }}</span>
@@ -110,9 +128,9 @@ onMounted(load)
         </div>
       </section>
 
-      <div class="mt-8 flex items-center gap-3">
-        <el-button type="primary" round :loading="saving" @click="save">保存并返回知识点</el-button>
-        <span class="text-xs text-ink-muted">0 = 没接触，3 = 熟练；掌握度 ≥ 80% 的节点会从路径中跳过</span>
+      <div class="sticky bottom-4 mt-6 flex flex-wrap items-center justify-between gap-3 rounded-[4px] border border-border bg-surface px-5 py-3 shadow-[0_10px_30px_-18px_rgba(11,27,43,0.45)]">
+        <span class="data-num text-xs text-ink-muted">共 {{ items.length }} 个知识点</span>
+        <el-button type="primary" :loading="saving" @click="save">保存并返回知识点</el-button>
       </div>
     </template>
   </div>

@@ -63,12 +63,14 @@ onMounted(fetchList)
         <p class="mt-1 text-sm text-ink-secondary">维护平台教育资源</p>
       </div>
       <div class="flex flex-wrap items-center gap-3">
-        <el-input v-model="keyword" placeholder="按标题搜索" clearable class="w-52" @keyup.enter="handleSearch" />
-        <el-select v-model="type" placeholder="全部类型" clearable class="w-32" @change="handleSearch">
-          <el-option label="课程" value="course" />
-          <el-option label="文章" value="article" />
-          <el-option label="视频" value="video" />
-        </el-select>
+        <div class="w-52"><el-input v-model="keyword" placeholder="按标题搜索" clearable @keyup.enter="handleSearch" /></div>
+        <div class="w-32">
+          <el-select v-model="type" placeholder="全部类型" clearable @change="handleSearch">
+            <el-option label="课程" value="course" />
+            <el-option label="文章" value="article" />
+            <el-option label="视频" value="video" />
+          </el-select>
+        </div>
         <RouterLink :to="{ name: 'resource-upload' }">
           <el-button type="primary">新增资源</el-button>
         </RouterLink>
@@ -76,8 +78,8 @@ onMounted(fetchList)
     </div>
 
     <div v-if="loading" class="py-16 text-center text-sm text-ink-muted">加载中…</div>
-    <div v-else-if="error" class="py-16 text-center text-sm text-red-500">{{ error }}</div>
-    <div v-else class="mt-4 rounded-lg border border-border bg-surface">
+    <div v-else-if="error" class="py-16 text-center text-sm text-danger">{{ error }}</div>
+    <div v-else class="mt-4 rounded-[4px] border border-border bg-surface">
       <el-table :data="items">
         <el-table-column prop="id" label="ID" width="70" />
         <el-table-column prop="title" label="标题" min-width="200" show-overflow-tooltip />

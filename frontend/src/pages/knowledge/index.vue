@@ -85,7 +85,7 @@ onMounted(load)
     <div v-if="loading" class="mt-8 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
       <el-skeleton v-for="i in 6" :key="i" :rows="3" animated />
     </div>
-    <div v-else-if="error" class="py-24 text-center text-sm text-red-500">{{ error }}</div>
+    <div v-else-if="error" class="py-24 text-center text-sm text-danger">{{ error }}</div>
     <el-empty v-else-if="filtered.length === 0" description="没有匹配的知识点" class="mt-8" />
 
     <template v-else>
@@ -104,7 +104,7 @@ onMounted(load)
             v-for="point in group.items"
             :key="point.id"
             :to="{ name: 'knowledge-detail', params: { code: point.code } }"
-            class="group rounded-lg border border-border bg-surface p-5 transition hover:border-primary hover:shadow-md"
+            class="group rounded-[4px] border border-border bg-surface p-5 transition hover:border-primary hover:shadow-[0_10px_30px_-18px_rgba(11,27,43,0.45)]"
           >
             <div class="flex items-start justify-between gap-3">
               <h3 class="text-base font-semibold text-ink group-hover:text-primary">

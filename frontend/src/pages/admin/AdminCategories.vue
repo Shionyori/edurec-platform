@@ -54,8 +54,8 @@ onMounted(fetchList)
     <p class="mt-1 text-sm text-ink-secondary">维护教育资源分类</p>
 
     <div v-if="loading" class="py-16 text-center text-sm text-ink-muted">加载中…</div>
-    <div v-else-if="error" class="py-16 text-center text-sm text-red-500">{{ error }}</div>
-    <div v-else class="mt-4 rounded-lg border border-border bg-surface">
+    <div v-else-if="error" class="py-16 text-center text-sm text-danger">{{ error }}</div>
+    <div v-else class="mt-4 rounded-[4px] border border-border bg-surface">
       <el-table :data="items">
         <el-table-column prop="id" label="ID" width="80" />
         <el-table-column prop="name" label="名称" min-width="140" />
@@ -63,14 +63,14 @@ onMounted(fetchList)
       </el-table>
     </div>
 
-    <div class="mt-6 rounded-lg border border-border bg-surface p-5">
+    <div class="mt-6 rounded-[4px] border border-border bg-surface p-5">
       <h2 class="text-sm font-semibold text-ink">新建分类</h2>
       <div class="mt-3 flex flex-wrap items-start gap-3">
-        <el-input v-model="name" placeholder="分类名称（必填）" clearable class="w-48" maxlength="64" />
-        <el-input v-model="description" placeholder="描述（选填）" clearable class="w-80" maxlength="256" />
+        <div class="w-48"><el-input v-model="name" placeholder="分类名称（必填）" clearable maxlength="64" /></div>
+        <div class="w-80"><el-input v-model="description" placeholder="描述（选填）" clearable maxlength="256" /></div>
         <el-button type="primary" :loading="creating" @click="handleCreate">创建</el-button>
       </div>
-      <p v-if="createError" class="mt-2 text-sm text-red-500">{{ createError }}</p>
+      <p v-if="createError" class="mt-2 text-sm text-danger">{{ createError }}</p>
     </div>
   </div>
 </template>

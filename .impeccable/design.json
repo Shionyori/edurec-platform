@@ -1,0 +1,533 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-10-31T09:29:59Z",
+  "title": "Design System: edurec",
+  "extensions": {
+    "colorMeta": {
+      "primary": {
+        "role": "primary",
+        "displayName": "Signal Vermilion",
+        "canonical": "oklch(57.1% 0.175 36.0)",
+        "tonalRamp": [
+          "#240702",
+          "#510900",
+          "#7E1000",
+          "#A82700",
+          "#CB4A25",
+          "#EB795A",
+          "#FFAC94",
+          "#FFDCD0"
+        ]
+      },
+      "primary-hover": {
+        "role": "primary",
+        "displayName": "Signal Vermilion Deep",
+        "canonical": "oklch(53.3% 0.167 35.8)",
+        "tonalRamp": [
+          "#230703",
+          "#4F0C00",
+          "#7C1500",
+          "#A62B01",
+          "#C84D2C",
+          "#E87B5E",
+          "#FEAD97",
+          "#FFDDD1"
+        ]
+      },
+      "primary-active": {
+        "role": "primary",
+        "displayName": "Signal Vermilion Pressed",
+        "canonical": "oklch(48.0% 0.157 34.9)",
+        "tonalRamp": [
+          "#220804",
+          "#4D1002",
+          "#791B00",
+          "#A23113",
+          "#C45135",
+          "#E47D64",
+          "#FBAE9B",
+          "#FFDDD3"
+        ]
+      },
+      "surface": {
+        "role": "neutral",
+        "displayName": "Ticket White",
+        "canonical": "oklch(100.0% 0.000 89.9)",
+        "tonalRamp": [
+          "#121212",
+          "#292929",
+          "#424242",
+          "#5D5D5D",
+          "#7A7A7A",
+          "#9E9E9E",
+          "#C4C4C4",
+          "#E8E8E8"
+        ]
+      },
+      "paper-bg": {
+        "role": "neutral",
+        "displayName": "Paper Ground",
+        "canonical": "oklch(96.7% 0.007 97.4)",
+        "tonalRamp": [
+          "#121211",
+          "#292927",
+          "#43423F",
+          "#5E5E59",
+          "#7B7A76",
+          "#9F9E9A",
+          "#C5C4C1",
+          "#E8E8E6"
+        ]
+      },
+      "border": {
+        "role": "neutral",
+        "displayName": "Paper Hairline",
+        "canonical": "oklch(88.5% 0.014 93.0)",
+        "tonalRamp": [
+          "#121210",
+          "#2A2924",
+          "#44423B",
+          "#605E55",
+          "#7D7A71",
+          "#A19E96",
+          "#C6C4BE",
+          "#E9E8E5"
+        ]
+      },
+      "control-border": {
+        "role": "neutral",
+        "displayName": "Control Bar",
+        "canonical": "oklch(62.3% 0.024 92.6)",
+        "tonalRamp": [
+          "#13120E",
+          "#2B2921",
+          "#464236",
+          "#625D4F",
+          "#7F7A6B",
+          "#A39E90",
+          "#C7C4BA",
+          "#E9E8E3"
+        ]
+      },
+      "ink": {
+        "role": "neutral",
+        "displayName": "Station Navy",
+        "canonical": "oklch(21.7% 0.038 250.0)",
+        "tonalRamp": [
+          "#0E1217",
+          "#202A34",
+          "#354453",
+          "#4E6073",
+          "#6A7C90",
+          "#90A0B2",
+          "#B9C6D3",
+          "#E2E9EF"
+        ]
+      },
+      "ink-secondary": {
+        "role": "neutral",
+        "displayName": "Slate Ink",
+        "canonical": "oklch(45.0% 0.026 246.3)",
+        "tonalRamp": [
+          "#0F1215",
+          "#232A30",
+          "#39444D",
+          "#525F6B",
+          "#6F7C89",
+          "#94A0AB",
+          "#BCC5CE",
+          "#E4E8ED"
+        ]
+      },
+      "ink-muted": {
+        "role": "neutral",
+        "displayName": "Muted Slate",
+        "canonical": "oklch(56.0% 0.022 248.2)",
+        "tonalRamp": [
+          "#0F1214",
+          "#242A2F",
+          "#3B434C",
+          "#555F69",
+          "#717C87",
+          "#96A0AA",
+          "#BEC5CC",
+          "#E5E8EC"
+        ]
+      },
+      "rail": {
+        "role": "neutral",
+        "displayName": "Station Navy Rail",
+        "canonical": "oklch(21.7% 0.038 250.0)",
+        "tonalRamp": [
+          "#0E1217",
+          "#202A34",
+          "#354453",
+          "#4E6073",
+          "#6A7C90",
+          "#90A0B2",
+          "#B9C6D3",
+          "#E2E9EF"
+        ]
+      },
+      "rail-soft": {
+        "role": "neutral",
+        "displayName": "Depot Navy",
+        "canonical": "oklch(27.4% 0.046 248.8)",
+        "tonalRamp": [
+          "#0D1218",
+          "#1E2A36",
+          "#324457",
+          "#4A6076",
+          "#667D94",
+          "#8CA1B6",
+          "#B7C6D6",
+          "#E1E9F1"
+        ]
+      },
+      "line-teal": {
+        "role": "secondary",
+        "displayName": "Teal Line",
+        "canonical": "oklch(53.2% 0.088 193.8)",
+        "tonalRamp": [
+          "#031515",
+          "#003130",
+          "#004E4E",
+          "#006C6C",
+          "#2A8A89",
+          "#63ADAC",
+          "#9CD0CE",
+          "#D5EEED"
+        ]
+      },
+      "line-blue": {
+        "role": "secondary",
+        "displayName": "Cobalt Line",
+        "canonical": "oklch(48.8% 0.217 264.4)",
+        "tonalRamp": [
+          "#040F2E",
+          "#061F68",
+          "#0D32A2",
+          "#1C4CD3",
+          "#376DF6",
+          "#6398FF",
+          "#99C2FF",
+          "#D2E8FF"
+        ]
+      },
+      "line-amber": {
+        "role": "secondary",
+        "displayName": "Amber Line",
+        "canonical": "oklch(55.5% 0.146 49.0)",
+        "tonalRamp": [
+          "#200B01",
+          "#491700",
+          "#732600",
+          "#9A3D00",
+          "#BB5B1B",
+          "#DC8656",
+          "#F4B492",
+          "#FFE0CF"
+        ]
+      },
+      "line-rose": {
+        "role": "secondary",
+        "displayName": "Rose Line",
+        "canonical": "oklch(51.4% 0.198 16.9)",
+        "tonalRamp": [
+          "#260408",
+          "#550012",
+          "#850020",
+          "#B10033",
+          "#D4354F",
+          "#F46C78",
+          "#FFA4A8",
+          "#FFD9DA"
+        ]
+      },
+      "success": {
+        "role": "tertiary",
+        "displayName": "Go Green",
+        "canonical": "oklch(52.7% 0.137 150.1)",
+        "tonalRamp": [
+          "#031607",
+          "#003310",
+          "#00521D",
+          "#007131",
+          "#2F904D",
+          "#65B377",
+          "#9ED4A8",
+          "#D5F0DA"
+        ]
+      },
+      "warning": {
+        "role": "tertiary",
+        "displayName": "Caution Amber",
+        "canonical": "oklch(55.5% 0.146 49.0)",
+        "tonalRamp": [
+          "#200B01",
+          "#491700",
+          "#732600",
+          "#9A3D00",
+          "#BB5B1B",
+          "#DC8656",
+          "#F4B492",
+          "#FFE0CF"
+        ]
+      },
+      "danger": {
+        "role": "tertiary",
+        "displayName": "Halt Red",
+        "canonical": "oklch(50.5% 0.190 27.5)",
+        "tonalRamp": [
+          "#260504",
+          "#540002",
+          "#830002",
+          "#AF1215",
+          "#D23D36",
+          "#F27165",
+          "#FFA79B",
+          "#FFDAD3"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Display",
+        "purpose": "Home hero headline only; 30px on mobile, 48px on desktop."
+      },
+      "headline": {
+        "displayName": "Headline",
+        "purpose": "Page titles and navy masthead titles; 24px mobile to 30px desktop."
+      },
+      "title": {
+        "displayName": "Title",
+        "purpose": "Section headers and card headings; 20px bold, card titles 16px semibold."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "Descriptions, card copy, and form labels; 14px with relaxed leading."
+      },
+      "label": {
+        "displayName": "Micro Label",
+        "purpose": "Chip text, level badges, and compact data labels; 11px uppercase with 0.14em tracking."
+      },
+      "brand-label": {
+        "displayName": "Brand Label",
+        "purpose": "The 学习线路 / 管理后台 lockup under the wordmark; 10px, 0.18em tracking."
+      },
+      "control": {
+        "displayName": "Control",
+        "purpose": "Buttons, nav links, and form controls; 14px semibold."
+      }
+    },
+    "shadows": [
+      {
+        "name": "card-hover-lift",
+        "value": "0 10px 30px -18px rgba(11, 27, 43, 0.45)",
+        "purpose": "Interactive cards on hover, paired with translateY(-2px); also detaches the sticky action bar."
+      },
+      {
+        "name": "point-card-lift",
+        "value": "0 10px 24px -18px rgba(11, 27, 43, 0.45)",
+        "purpose": "Tighter variant on knowledge-point cards inside discipline pages."
+      }
+    ],
+    "motion": [
+      {
+        "name": "state-color",
+        "value": "150ms ease",
+        "purpose": "Nav links, card titles, and control colors on hover/focus."
+      },
+      {
+        "name": "card-lift",
+        "value": "200ms ease-out",
+        "purpose": "Resource and discipline cards rising 2px with the hover shadow."
+      },
+      {
+        "name": "route-enter",
+        "value": "opacity 0.2s ease, transform 0.2s ease",
+        "purpose": "Page-level route transition entering with an 8px upward offset."
+      },
+      {
+        "name": "route-leave",
+        "value": "opacity 0.12s ease",
+        "purpose": "Fast page-level fade-out."
+      },
+      {
+        "name": "card-reveal",
+        "value": "fade-up 0.32s ease both",
+        "purpose": "Recommendation and search cards entering with an 8px rise; stagger 30ms per card, capped at 8."
+      },
+      {
+        "name": "list-move",
+        "value": "opacity 0.25s ease, transform 0.25s ease",
+        "purpose": "List insert/remove/move transitions."
+      },
+      {
+        "name": "reduced-motion",
+        "value": "none",
+        "purpose": "prefers-reduced-motion disables route, fade-up, and list transitions and restores instant scrolling."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "sm",
+        "value": "640px"
+      },
+      {
+        "name": "md",
+        "value": "768px"
+      },
+      {
+        "name": "lg",
+        "value": "1024px"
+      }
+    ],
+    "focusRings": [
+      {
+        "name": "focus-visible",
+        "value": "2px solid #0E7C7B; outline-offset: 2px",
+        "purpose": "Global keyboard focus ring on every control and link; nav links tuck the offset to -2px."
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Signal Vermilion action button: 32px tall, 4px radius, 600 weight, with hover/active/ focus states.",
+      "html": "<button class=\"ds-btn-primary\" type=\"button\">选一个学习目标</button>",
+      "css": ".ds-btn-primary {\n  display: inline-flex; align-items: center; justify-content: center;\n  height: 32px; padding: 8px 15px; border: 1px solid #C9451F; border-radius: 4px;\n  background: #C9451F; color: #FFFFFF; font-family: system-ui, -apple-system, \"Segoe UI\", Roboto, \"PingFang SC\", \"Hiragino Sans GB\", \"Microsoft YaHei\", sans-serif;\n  font-size: 14px; font-weight: 600; line-height: 1; cursor: pointer;\n  transition: background-color .15s ease, border-color .15s ease;\n}\n.ds-btn-primary:hover { background: #B93C18; border-color: #B93C18; }\n.ds-btn-primary:active { background: #A32F10; border-color: #A32F10; }\n.ds-btn-primary:focus-visible { outline: 2px solid #0E7C7B; outline-offset: 2px; }"
+    },
+    {
+      "name": "Text Input",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "32px paper-white field with a 1px Control Bar inset stroke that darkens to Station Navy on focus; the rail variant in the top bar uses white alpha fills instead.",
+      "html": "<input class=\"ds-input\" type=\"search\" placeholder=\"搜索课程、文章、视频…\" aria-label=\"搜索\" />",
+      "css": ".ds-input {\n  width: 100%; max-width: 320px; height: 32px; padding: 1px 11px;\n  border: 0; border-radius: 4px; background: #FFFFFF; color: #0B1B2B;\n  box-shadow: 0 0 0 1px #8C8777 inset; font-family: system-ui, -apple-system, \"Segoe UI\", Roboto, \"PingFang SC\", \"Hiragino Sans GB\", \"Microsoft YaHei\", sans-serif;\n  font-size: 14px; line-height: 32px; outline: none;\n  transition: box-shadow .15s ease;\n}\n.ds-input::placeholder { color: #6B7681; }\n.ds-input:hover { box-shadow: 0 0 0 1px #6B7681 inset; }\n.ds-input:focus { box-shadow: 0 0 0 1px #0B1B2B inset; }\n.ds-input:focus-visible { outline: 2px solid #0E7C7B; outline-offset: 2px; }"
+    },
+    {
+      "name": "Rail Navigation Link",
+      "kind": "nav",
+      "refersTo": "nav-link",
+      "description": "Navy rail navigation: white/65 inactive links, white semibold active link with a 2px Signal Vermilion underline.",
+      "html": "<nav class=\"ds-rail-nav\" aria-label=\"主导航\"><a class=\"ds-nav-link is-active\" href=\"#\" aria-current=\"page\">首页</a><a class=\"ds-nav-link\" href=\"#\">知识点</a><a class=\"ds-nav-link\" href=\"#\">全部</a></nav>",
+      "css": ".ds-rail-nav {\n  display: flex; align-items: center; gap: 4px; padding: 0 12px;\n  background: #0B1B2B; font-family: system-ui, -apple-system, \"Segoe UI\", Roboto, \"PingFang SC\", \"Hiragino Sans GB\", \"Microsoft YaHei\", sans-serif;\n}\n.ds-nav-link {\n  display: inline-flex; align-items: center; padding: 20px 12px;\n  border-bottom: 2px solid transparent; color: rgba(255,255,255,.65);\n  font-size: 14px; font-weight: 600; line-height: 20px; text-decoration: none;\n  transition: color .15s ease, border-color .15s ease;\n}\n.ds-nav-link:hover { color: #FFFFFF; }\n.ds-nav-link.is-active { color: #FFFFFF; border-bottom-color: #C9451F; }\n.ds-nav-link:focus-visible { outline: 2px solid #0E7C7B; outline-offset: -2px; }"
+    },
+    {
+      "name": "Line Chip",
+      "kind": "chip",
+      "refersTo": "line-chip",
+      "description": "3px-radius uppercase micro-label filled with a semantic line color through the --chip custom property; the outline variant is used for codes on dark mastheads.",
+      "html": "<div class=\"ds-chips\"><span class=\"ds-line-chip\" style=\"--chip:#0E7C7B\">课程</span><span class=\"ds-line-chip ds-line-chip--outline\" style=\"--chip:#0B1B2B\">MATH</span></div>",
+      "css": ".ds-chips { display: flex; align-items: center; gap: 8px; font-family: system-ui, -apple-system, \"Segoe UI\", Roboto, \"PingFang SC\", \"Hiragino Sans GB\", \"Microsoft YaHei\", sans-serif; }\n.ds-line-chip {\n  display: inline-flex; align-items: center; gap: 6px; padding: 3px 7px;\n  border-radius: 3px; background: var(--chip, #0B1B2B); color: #FFFFFF;\n  font-size: 11px; font-weight: 700; line-height: 1.2; letter-spacing: .06em;\n  text-transform: uppercase; font-variant-numeric: tabular-nums;\n}\n.ds-line-chip--outline {\n  background: transparent; color: var(--chip, #0B1B2B);\n  box-shadow: inset 0 0 0 1px currentColor;\n}"
+    },
+    {
+      "name": "Resource Card",
+      "kind": "card",
+      "refersTo": "resource-card",
+      "description": "4px paper-white card with a 16:9 cover, semantic type chip, 16px semibold title, teal recommendation reason, and a tabular footer; lifts 2px on hover.",
+      "html": "<a class=\"ds-resource-card\" href=\"#\">\n  <div class=\"ds-resource-card__media\" aria-hidden=\"true\">\n    <span class=\"ds-resource-card__track\"></span>\n    <span class=\"ds-resource-card__station\"></span>\n    <span class=\"ds-resource-card__initial\">机</span>\n  </div>\n  <div class=\"ds-resource-card__body\">\n    <div class=\"ds-resource-card__meta\">\n      <span class=\"ds-line-chip\" style=\"--chip:#0E7C7B\">课程</span>\n      <span class=\"ds-resource-card__category\">人工智能</span>\n    </div>\n    <h3 class=\"ds-resource-card__title\">机器学习零基础入门</h3>\n    <p class=\"ds-resource-card__desc\">从线性代数到模型训练，按先修顺序补齐前置知识。</p>\n    <p class=\"ds-resource-card__reason\"><span class=\"ds-resource-card__reason-dot\"></span>为你推荐</p>\n    <div class=\"ds-resource-card__footer\"><span>暂无评分</span><span>945 次浏览</span></div>\n  </div>\n</a>",
+      "css": ".ds-resource-card {\n  display: block; overflow: hidden; border: 1px solid #DCD9CF; border-radius: 4px;\n  background: #FFFFFF; color: #0B1B2B; text-decoration: none; font-family: system-ui, -apple-system, \"Segoe UI\", Roboto, \"PingFang SC\", \"Hiragino Sans GB\", \"Microsoft YaHei\", sans-serif;\n  transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease;\n}\n.ds-resource-card:hover {\n  transform: translateY(-2px); border-color: rgba(11,27,43,.25);\n  box-shadow: 0 10px 30px -18px rgba(11,27,43,.45);\n}\n.ds-resource-card:focus-visible { outline: 2px solid #0E7C7B; outline-offset: 2px; }\n.ds-resource-card__media {\n  position: relative; display: flex; align-items: center; justify-content: center;\n  aspect-ratio: 16 / 9; background: #F5F4EF; overflow: hidden;\n}\n.ds-resource-card__track { position: absolute; left: 0; right: 0; top: 50%; height: 2px; background: #DCD9CF; }\n.ds-resource-card__station {\n  position: relative; z-index: 1; width: 10px; height: 10px; border: 2px solid #0E7C7B;\n  border-radius: 999px; background: #FFFFFF;\n}\n.ds-resource-card__initial { margin-left: 12px; font-size: 24px; font-weight: 700; color: rgba(11,27,43,.2); }\n.ds-resource-card__body { padding: 16px; }\n@media (min-width: 640px) { .ds-resource-card__body { padding: 20px; } }\n.ds-resource-card__meta { display: flex; align-items: center; justify-content: space-between; gap: 12px; }\n.ds-resource-card__category { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12px; color: #6B7681; }\n.ds-line-chip {\n  display: inline-flex; align-items: center; padding: 3px 7px; border-radius: 3px;\n  background: var(--chip, #0B1B2B); color: #FFFFFF; font-size: 11px; font-weight: 700;\n  line-height: 1.2; letter-spacing: .06em; text-transform: uppercase;\n  font-variant-numeric: tabular-nums;\n}\n.ds-resource-card__title { margin: 12px 0 0; font-size: 16px; font-weight: 600; line-height: 1.35; }\n.ds-resource-card__desc {\n  margin: 6px 0 0; font-size: 14px; line-height: 1.625; color: #4A5763;\n  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;\n}\n.ds-resource-card__reason { display: flex; align-items: flex-start; gap: 8px; margin: 12px 0 0; font-size: 12px; line-height: 1.625; color: #0E7C7B; }\n.ds-resource-card__reason-dot { flex: none; width: 6px; height: 6px; margin-top: 6px; border-radius: 999px; background: currentColor; }\n.ds-resource-card__footer {\n  display: flex; align-items: center; justify-content: space-between; margin-top: 16px;\n  padding-top: 12px; border-top: 1px solid #DCD9CF; font-size: 12px; color: #6B7681;\n  font-variant-numeric: tabular-nums;\n}"
+    },
+    {
+      "name": "Route Strip & Station Line",
+      "kind": "custom",
+      "refersTo": "route-strip",
+      "description": "The signature transit line: a 2px track with 12px round stations, done/current/locked states, and a vermilion halo on the current stop.",
+      "html": "<ol class=\"ds-route-strip\" style=\"--track:#0B1B2B\" aria-label=\"学习流程示意\">\n  <li class=\"ds-route-strip__stop\" data-state=\"done\"><span class=\"ds-route-strip__dot\"></span><span class=\"ds-route-strip__label\">选目标</span></li>\n  <li class=\"ds-route-strip__stop\" data-state=\"current\"><span class=\"ds-route-strip__dot\"></span><span class=\"ds-route-strip__label\">生成路径</span></li>\n  <li class=\"ds-route-strip__stop\" data-state=\"locked\"><span class=\"ds-route-strip__dot\"></span><span class=\"ds-route-strip__label\">完成本节</span></li>\n</ol>",
+      "css": ".ds-route-strip {\n  display: flex; align-items: flex-start; gap: 0; margin: 0; padding: 0;\n  list-style: none; font-family: system-ui, -apple-system, \"Segoe UI\", Roboto, \"PingFang SC\", \"Hiragino Sans GB\", \"Microsoft YaHei\", sans-serif;\n}\n.ds-route-strip__stop {\n  position: relative; display: flex; flex: 1; min-width: 0; flex-direction: column;\n  align-items: flex-start; gap: 8px; padding-top: 14px; color: #0B1B2B;\n}\n.ds-route-strip__stop::before {\n  content: \"\"; position: absolute; top: 5px; left: 0; right: 0; height: 2px;\n  background: var(--track, #DCD9CF);\n}\n.ds-route-strip__stop:first-child::before { left: 6px; }\n.ds-route-strip__stop:last-child::before { right: calc(100% - 6px); }\n.ds-route-strip__dot {\n  position: absolute; top: 0; left: 0; box-sizing: border-box; width: 12px; height: 12px;\n  border: 3px solid var(--node, #0B1B2B); border-radius: 999px; background: #FFFFFF;\n}\n.ds-route-strip__stop[data-state=\"done\"] .ds-route-strip__dot { background: var(--node, #15803D); }\n.ds-route-strip__stop[data-state=\"current\"] .ds-route-strip__dot {\n  background: var(--node, #C9451F); border-color: var(--node, #C9451F);\n  box-shadow: 0 0 0 4px rgba(201,69,31,.18);\n}\n.ds-route-strip__stop[data-state=\"locked\"] { color: #6B7681; }\n.ds-route-strip__label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12px; line-height: 1.3; }"
+    },
+    {
+      "name": "Sticky Action Bar",
+      "kind": "custom",
+      "refersTo": "sticky-action-bar",
+      "description": "Questionnaire save bar pinned 16px above the viewport bottom: tabular count on the left, primary save action on the right, one ink-tinted lift shadow.",
+      "html": "<div class=\"ds-sticky-bar\" role=\"region\" aria-label=\"问卷保存\">\n  <span class=\"ds-sticky-bar__count\">共 72 个知识点 · 已修改 3 项</span>\n  <button class=\"ds-btn-primary\" type=\"button\">保存并返回知识点</button>\n</div>",
+      "css": ".ds-sticky-bar {\n  position: sticky; bottom: 16px; display: flex; flex-wrap: wrap; align-items: center;\n  justify-content: space-between; gap: 12px; padding: 12px 20px; border: 1px solid #DCD9CF;\n  border-radius: 4px; background: #FFFFFF; box-shadow: 0 10px 30px -18px rgba(11,27,43,.45);\n  font-family: system-ui, -apple-system, \"Segoe UI\", Roboto, \"PingFang SC\", \"Hiragino Sans GB\", \"Microsoft YaHei\", sans-serif;\n}\n.ds-sticky-bar__count { font-size: 12px; color: #6B7681; font-variant-numeric: tabular-nums; }\n.ds-btn-primary {\n  display: inline-flex; align-items: center; justify-content: center;\n  height: 32px; padding: 8px 15px; border: 1px solid #C9451F; border-radius: 4px;\n  background: #C9451F; color: #FFFFFF; font-family: system-ui, -apple-system, \"Segoe UI\", Roboto, \"PingFang SC\", \"Hiragino Sans GB\", \"Microsoft YaHei\", sans-serif;\n  font-size: 14px; font-weight: 600; line-height: 1; cursor: pointer;\n  transition: background-color .15s ease, border-color .15s ease;\n}\n.ds-btn-primary:hover { background: #B93C18; border-color: #B93C18; }\n.ds-btn-primary:active { background: #A32F10; border-color: #A32F10; }\n.ds-btn-primary:focus-visible { outline: 2px solid #0E7C7B; outline-offset: 2px; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "学习线路牌 / The Study Line",
+    "overview": "edurec is a Chinese educational-resource recommender, and its visual world is the transit route map: knowledge points are stations on a prerequisite line, the current goal is \"你在这里,\" and a learning path is a printed itinerary. The system operates in **Operate** mode — the route metaphor contributes palette, type, density, and one signature move (the route strip and station line); layout, controls, and form semantics stay conventional so the user can act quickly. The result reads as a rail system on paper, not as a generic white SaaS dashboard.\n\nThe ground is a cool off-white paper, the orientation surfaces are deep station navy, and one signal vermilion marks the current stop or the action. Line colors are semantic, not decorative: they encode level and resource type wherever a line, chip, or station appears. Density is deliberately tight: pages are organized by section rules and 20px card gaps rather than by generous whitespace or oversized type.\n\nChinese is set in the system sans stack — no webfont is loaded — and codes, counts, levels, percentages, and ratings use tabular numerals. The shape language is small and exact: 4px cards, 3px chips and controls, 2px route strokes, and round station dots as the only recurring circles.\n\nThe paper ground itself carries a sparse route-network texture (thin line-colored paths and hollow station dots at 5–10% opacity). It is texture, never content: text always sits on opaque panels. Section headers repeat the route cue as a 2px line-colored rule with a station node, and discipline cards carry the same cue as an inset top rule, so colour is distributed through the page without turning the pattern into data.",
+    "keyCharacteristics": [
+      "Deep navy rail surfaces for orientation and mastheads; cool paper for reading.",
+      "Signal vermilion reserved for the primary action and the current station.",
+      "Four semantic line colors (teal, blue, amber, rose) mapped to levels and resource types.",
+      "System Chinese sans with tabular numerals and 11px uppercase micro-labels.",
+      "4px / 3px / 2px geometry, flat by default, one ink-tinted hover lift.",
+      "The route strip and station line as the one recurring custom component.",
+      "A 5–10% route-network paper texture and 2px line-colored section rules distribute colour without carrying data."
+    ],
+    "rules": [
+      {
+        "name": "The One Signal Rule",
+        "body": "Vermilion is the \"you are here / act now\" signal. It may fill a primary action, mark the current station, underline the active nav item, or tint a current-state chip at 10%; it never becomes a section wash, a gradient, or decorative chrome.",
+        "section": "colors"
+      },
+      {
+        "name": "The Semantic Line Rule",
+        "body": "Every line color must encode a real level (1–4) or resource type (course/video/article). The four-color palette is never used as decorative variety or assigned at random.",
+        "section": "colors"
+      },
+      {
+        "name": "The Tabular Data Rule",
+        "body": "Every number that can be compared — counts, percentages, ratings, levels, dates, codes — uses `font-variant-numeric: tabular-nums`. Columns of stats must align without a monospace font.",
+        "section": "typography"
+      },
+      {
+        "name": "The Micro-Label Rule",
+        "body": "The 11px uppercase 0.14em label is a data/signage device: it belongs inside a chip or a metric row. It is never a decorative kicker or eyebrow floating above a heading, and never body copy.",
+        "section": "typography"
+      },
+      {
+        "name": "The Rail-and-Paper Rule",
+        "body": "Orientation lives on deep navy rail — top bar, mastheads, admin sidebar; reading lives on cool paper. A page never becomes a full-width navy field, and a masthead never floats as a white card.",
+        "section": "layout"
+      },
+      {
+        "name": "The Three-Column Cap Rule",
+        "body": "Resource and station grids cap at three columns; density comes from tighter type and 20px gaps, never from adding a fourth column.",
+        "section": "layout"
+      },
+      {
+        "name": "The Flat-By-Default Rule",
+        "body": "Surfaces are flat at rest. A shadow appears only as a response to interaction (card hover, translateY(-2px)) or to detach the one sticky action bar; never as ambient decoration, and never in the generic soft-gray SaaS style — the shadow is always tinted with Station Navy.",
+        "section": "elevation"
+      },
+      {
+        "name": "The Square-End Rule",
+        "body": "Use 4px for cards, 3px for chips and controls, 2px for route strokes, and square-capped connector strokes. Do not introduce 8px+ radii, pill buttons, or large blobs; circles are reserved for stations, avatars, and progress.",
+        "section": "shapes"
+      },
+      {
+        "name": "The Map-Texture Rule",
+        "body": "The paper texture is a background, not a surface: keep its strokes at or below 10% opacity, keep all text on opaque panels, and never let the pattern carry meaning or data.",
+        "section": "layout"
+      }
+    ],
+    "dos": [
+      "Do keep the rail/paper split: navy for orientation and mastheads, paper for reading, white for interactive content surfaces.",
+      "Do use 4px cards, 3px chips and controls, 2px route strokes, and square-capped connector strokes.",
+      "Do map the four line colors to real levels or resource types, and pair every state color with a text label.",
+      "Do use Signal Vermilion only for the primary action, the current station, the active nav underline, and small current-state tints.",
+      "Do use tabular numerals for every count, rating, percentage, level, and code.",
+      "Do set Chinese in the system sans stack and keep micro-labels at 11px uppercase with 0.14em tracking inside chips and data rows.",
+      "Do provide a clear next action inside every empty state, using a dashed hairline container rather than a bare blank region.",
+      "Do introduce sections with a 2px line-colored rule and a station node; use teal for discovery, blue for resources, rose for concept layers.",
+      "Do repeat the line cue as an inset 2px top rule on discipline cards, and keep the paper map texture at or below 10% opacity."
+    ],
+    "donts": [
+      "Don't introduce large radii (8px+), pill buttons, gradients, or soft gray ambient shadows; the only elevation is the ink-tinted hover lift.",
+      "Don't use the line palette as decoration or assign level/type colors arbitrarily; if a color does not encode level or type, it is not a line color.",
+      "Don't use vermilion as a section background, a wide wash, or a generic accent.",
+      "Don't use the 11px uppercase micro-label as a decorative kicker/eyebrow above headings.",
+      "Don't convey done/current/locked or error/success states by color alone; carry the label.",
+      "Don't load a webfont or switch Chinese body copy to a serif/display face.",
+      "Don't place text or controls directly on the map texture, and don't let the pattern cross an opaque panel.",
+      "Don't use a thick accent border on a rounded card; inset the 2px rule as its own positioned element instead."
+    ]
+  }
+}

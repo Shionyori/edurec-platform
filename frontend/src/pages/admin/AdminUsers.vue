@@ -64,8 +64,8 @@ onMounted(fetchList)
     </div>
 
     <div v-if="loading" class="py-16 text-center text-sm text-ink-muted">加载中…</div>
-    <div v-else-if="error" class="py-16 text-center text-sm text-red-500">{{ error }}</div>
-    <div v-else class="mt-4 rounded-lg border border-border bg-surface">
+    <div v-else-if="error" class="py-16 text-center text-sm text-danger">{{ error }}</div>
+    <div v-else class="mt-4 rounded-[4px] border border-border bg-surface">
       <el-table :data="items">
         <el-table-column prop="id" label="ID" width="70" />
         <el-table-column prop="username" label="用户名" min-width="120" />

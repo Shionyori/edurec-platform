@@ -62,7 +62,7 @@ async function submit() {
 </script>
 
 <template>
-  <div class="mt-6 rounded-lg border border-border bg-surface p-6">
+  <div class="mt-6 rounded-[4px] border border-border bg-surface p-6">
     <div class="grid grid-cols-1 gap-5">
       <div>
         <label class="mb-1 block text-xs text-ink-muted">标题 *</label>
@@ -108,7 +108,7 @@ async function submit() {
       </div>
     </div>
 
-    <p v-if="error" class="mt-4 text-sm text-red-500">{{ error }}</p>
+    <p v-if="error" class="mt-4 text-sm text-danger">{{ error }}</p>
     <div class="mt-6 flex gap-2">
       <el-button type="primary" :loading="submitting" @click="submit">提交</el-button>
     </div>

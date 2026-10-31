@@ -39,20 +39,21 @@ function cancel() {
 </script>
 
 <template>
-  <div class="rounded-xl border border-border bg-surface p-6 shadow-sm">
-    <div class="flex items-center gap-4">
-      <el-avatar :size="64" :src="user.avatar_url ?? undefined">
+  <div class="relative overflow-hidden rounded-[4px] border border-border bg-surface p-6">
+    <span class="absolute inset-x-0 top-0 h-[2px]" style="background: var(--color-line-teal)" aria-hidden="true"></span>
+    <div class="flex flex-wrap items-center gap-4">
+      <el-avatar :size="64" :src="user.avatar_url ?? undefined" class="ring-2 ring-bg">
         {{ (user.display_name ?? user.username).charAt(0) }}
       </el-avatar>
       <div class="min-w-0 flex-1">
         <div class="flex items-center gap-2">
-          <h2 class="truncate text-xl font-semibold text-ink">{{ user.display_name ?? user.username }}</h2>
+          <h2 class="truncate text-xl font-bold text-ink">{{ user.display_name ?? user.username }}</h2>
           <el-tag v-if="user.is_admin" type="warning" size="small">管理员</el-tag>
         </div>
         <p class="mt-1 truncate text-sm text-ink-secondary">@{{ user.username }} · {{ user.email }}</p>
-        <p class="mt-0.5 text-xs text-ink-muted">注册于 {{ formatDate(user.created_at) }}</p>
+        <p class="data-num mt-0.5 text-xs text-ink-muted">注册于 {{ formatDate(user.created_at) }}</p>
       </div>
-      <el-button v-if="!editing" round class="shrink-0" @click="editing = true">编辑资料</el-button>
+      <el-button v-if="!editing" class="w-full sm:w-auto sm:shrink-0" @click="editing = true">编辑资料</el-button>
     </div>
 
     <div v-if="editing" class="mt-6 border-t border-border pt-5">
@@ -66,10 +67,10 @@ function cancel() {
           <el-input v-model="avatarUrl" placeholder="https://…" maxlength="512" />
         </div>
       </div>
-      <div v-if="error" class="mt-3 text-sm text-red-500">{{ error }}</div>
+      <div v-if="error" class="mt-3 text-sm text-danger">{{ error }}</div>
       <div class="mt-4 flex gap-2">
-        <el-button type="primary" round :loading="saving" @click="save">保存</el-button>
-        <el-button round @click="cancel">取消</el-button>
+        <el-button type="primary" :loading="saving" @click="save">保存</el-button>
+        <el-button @click="cancel">取消</el-button>
       </div>
     </div>
   </div>

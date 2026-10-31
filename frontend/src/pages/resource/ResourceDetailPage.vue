@@ -204,12 +204,12 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="mx-auto max-w-7xl px-6 py-8">
+  <div class="mx-auto max-w-7xl px-4 py-8 sm:px-6">
     <div v-if="resourceLoading" class="grid grid-cols-1 gap-8 lg:grid-cols-3">
       <div class="lg:col-span-2">
         <el-skeleton animated>
           <template #template>
-            <el-skeleton-item variant="image" style="width: 100%; height: 320px; border-radius: 8px" />
+            <el-skeleton-item variant="image" style="width: 100%; height: 320px; border-radius: 4px" />
             <el-skeleton-item variant="h1" style="width: 60%; margin-top: 20px" />
             <el-skeleton-item variant="text" style="width: 100%; margin-top: 14px" />
             <el-skeleton-item variant="text" style="width: 92%; margin-top: 8px" />
@@ -222,7 +222,7 @@ onMounted(() => {
       </div>
     </div>
     <div v-else-if="resourceError" class="py-24 text-center">
-      <p class="text-sm text-red-500">{{ resourceError }}</p>
+      <p class="text-sm text-danger">{{ resourceError }}</p>
       <RouterLink :to="{ name: 'home' }">
         <el-button class="mt-4">返回首页</el-button>
       </RouterLink>
@@ -238,37 +238,47 @@ onMounted(() => {
             :alt="resource.title"
             referrerpolicy="no-referrer"
             loading="lazy"
-            class="mb-5 max-h-96 w-full rounded-lg border border-border object-cover"
+            class="mb-5 max-h-96 w-full rounded-[4px] border border-border object-cover"
             @error="coverFailed = true"
           />
 
-          <div class="flex items-center gap-2">
-            <el-tag
-              size="small"
-              :type="resource.type === 'course' ? 'primary' : resource.type === 'video' ? 'success' : 'warning'"
-            >
-              {{ resource.type }}
-            </el-tag>
-            <span class="text-xs text-ink-muted">更新于 {{ formatDate(resource.updated_at) }}</span>
+          <div class="flex flex-wrap items-center gap-2">
+            <span
+              class="line-chip"
+              :style="{ '--chip': resource.type === 'course' ? 'var(--color-line-teal)' : resource.type === 'video' ? 'var(--color-line-blue)' : 'var(--color-line-amber)' }"
+            >{{ resource.type === 'course' ? '课程' : resource.type === 'video' ? '视频' : '文章' }}</span>
+            <span class="data-num text-xs text-ink-muted">更新于 {{ formatDate(resource.updated_at) }}</span>
           </div>
-          <h1 class="mt-3 text-2xl font-bold text-ink">{{ resource.title }}</h1>
-          <div class="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-ink-secondary">
+          <h1 class="mt-3 text-2xl font-bold tracking-tight text-ink sm:text-3xl">{{ resource.title }}</h1>
+          <div class="data-num mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-ink-secondary">
             <span>{{ resource.category?.name }}</span>
             <span v-for="t in resource.tags" :key="t" class="text-primary">#{{ t }}</span>
             <span>作者：{{ resource.author }}</span>
-            <span class="text-amber-500">★ {{ resource.avg_rating.toFixed(1) }}</span>
+            <span v-if="resource.avg_rating > 0" class="flex items-center gap-1 text-ink">
+              <svg viewBox="0 0 24 24" class="h-3.5 w-3.5" fill="currentColor" aria-hidden="true">
+                <path d="M12 3.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8-5.2-2.7-5.2 2.7 1-5.8L3.5 9.7l5.9-.9L12 3.5z" />
+              </svg>
+              {{ resource.avg_rating.toFixed(1) }}
+            </span>
+            <span v-else>暂无评分</span>
             <span>{{ resource.view_count }} 次浏览</span>
             <span v-if="resource.difficulty">{{ difficultyLabel(resource.difficulty) }}</span>
             <span v-if="resource.duration_minutes">{{ formatDuration(resource.duration_minutes) }}</span>
           </div>
 
-          <div class="mt-6 rounded-lg border border-border bg-surface p-5">
-            <h2 class="text-base font-semibold text-ink">简介</h2>
+          <div class="mt-6 rounded-[4px] border border-border bg-surface p-5">
+            <div class="flex items-center gap-3 border-b-2 pb-2" style="border-color: var(--color-line-teal)">
+              <span class="route-node" style="--node: var(--color-line-teal)" aria-hidden="true"></span>
+              <h2 class="text-base font-bold text-ink">简介</h2>
+            </div>
             <p class="mt-2 whitespace-pre-line text-sm leading-relaxed text-ink-secondary">{{ resource.description }}</p>
           </div>
 
-          <div v-if="metaEntries.length > 0" class="mt-4 rounded-lg border border-border bg-surface p-5">
-            <h2 class="text-base font-semibold text-ink">元信息</h2>
+          <div v-if="metaEntries.length > 0" class="mt-4 rounded-[4px] border border-border bg-surface p-5">
+            <div class="flex items-center gap-3 border-b-2 pb-2" style="border-color: var(--color-line-amber)">
+              <span class="route-node" style="--node: var(--color-line-amber)" aria-hidden="true"></span>
+              <h2 class="text-base font-bold text-ink">元信息</h2>
+            </div>
             <dl class="mt-2 grid grid-cols-2 gap-3 text-sm sm:grid-cols-3">
               <div v-for="([key, value]) in metaEntries" :key="key">
                 <dt class="text-ink-muted">{{ key }}</dt>
@@ -279,12 +289,11 @@ onMounted(() => {
 
           <KeyframeStrip v-if="frames" :frames="frames" />
 
-          <div class="mt-4 flex gap-3">
-            <el-button v-if="resource.source_url" type="primary" round @click="openSource">前往原站学习</el-button>
+          <div class="mt-4 flex flex-wrap gap-3">
+            <el-button v-if="resource.source_url" type="primary" @click="openSource">前往原站学习</el-button>
             <el-button
               :type="favorited ? 'warning' : 'default'"
               :loading="favoritePending"
-              round
               @click="toggleFavorite"
             >
               {{ favorited ? '已收藏' : '收藏' }}
@@ -292,7 +301,10 @@ onMounted(() => {
           </div>
 
           <div class="mt-8">
-            <h2 class="text-base font-semibold text-ink">用户评价（{{ total }}）</h2>
+            <div class="flex items-center gap-3 border-b-2 pb-2" style="border-color: var(--color-line-blue)">
+              <span class="route-node" style="--node: var(--color-line-blue)" aria-hidden="true"></span>
+              <h2 class="text-base font-bold text-ink">用户评价（{{ total }}）</h2>
+            </div>
             <RatingList
               :ratings="ratings"
               :total="total"
@@ -303,17 +315,22 @@ onMounted(() => {
           </div>
 
           <div v-if="isBilibiliResource" class="mt-8">
-            <h2 class="text-base font-semibold text-ink">B 站评论</h2>
+            <div class="flex items-center gap-3 border-b-2 pb-2" style="border-color: var(--color-line-rose)">
+              <span class="route-node" style="--node: var(--color-line-rose)" aria-hidden="true"></span>
+              <h2 class="text-base font-bold text-ink">B 站评论</h2>
+            </div>
             <CommentList :comments="comments" :loading="commentsLoading" />
           </div>
         </div>
 
         <!-- 右侧评分卡 -->
         <aside>
-          <div class="sticky top-20 rounded-lg border border-border bg-surface p-5">
-            <div class="flex items-end justify-between">
-              <div class="text-3xl font-bold text-ink">{{ resource.avg_rating.toFixed(1) }}</div>
-              <div class="text-sm text-ink-muted">{{ total }} 条评价</div>
+          <div class="sticky top-20 overflow-hidden rounded-[4px] border border-border bg-surface p-5">
+            <span class="absolute inset-x-0 top-0 h-[2px]" style="background: var(--color-primary)" aria-hidden="true"></span>
+            <div class="flex items-end justify-between gap-3">
+              <div v-if="total > 0" class="data-num text-3xl font-bold text-ink">{{ resource.avg_rating.toFixed(1) }}</div>
+              <div v-else class="text-sm font-medium text-ink-muted">暂无评分</div>
+              <div class="data-num text-sm text-ink-muted">{{ total }} 条评价</div>
             </div>
             <el-rate :model-value="Math.round(resource.avg_rating)" disabled class="mt-2" />
             <div class="mt-4 border-t border-border pt-4">

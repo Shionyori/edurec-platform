@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { listCategories } from '@/api/category'
 import { listResources } from '@/api/resource'
 import { startGenerationByKeyword, getConceptGenerationStatus } from '@/api/knowledge'
@@ -11,6 +11,7 @@ import type { Category, GenerationStatus, Resource } from '@/types'
 const PAGE_SIZE = 12
 
 const route = useRoute()
+const router = useRouter()
 
 const categories = ref<Category[]>([])
 const resources = ref<Resource[]>([])
@@ -277,6 +278,23 @@ function handleSearch() {
   resetAndSearch()
 }
 
+const hasFilters = computed(
+  () => !!keyword.value.trim() || !!categoryId.value || !!type.value || !!tags.value.trim(),
+)
+
+function clearFilters() {
+  keyword.value = ''
+  categoryId.value = undefined
+  type.value = ''
+  tags.value = ''
+  sort.value = 'latest'
+  // 同步清掉 URL 上的筛选，刷新/分享时不会又回到旧筛选
+  if (Object.keys(route.query).length > 0) {
+    router.replace({ name: 'search', query: {} })
+  }
+  resetAndSearch()
+}
+
 // IntersectionObserver 只在交叉状态发生变化时回调：哨兵一直停在视口内（内容不足一屏）
 // 时不会再次触发，且 observe() 后的初始通知会被 loading 守卫挡掉。每次加载结束后重新
 // observe，让浏览器按当前状态重新投递一次通知，无限滚动与在线爬取才能自启动并继续续拉。
@@ -317,66 +335,108 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div class="mx-auto max-w-7xl px-6 py-8">
-    <h1 class="text-2xl font-bold">{{ pageTitle }}</h1>
-    <p class="mt-2 text-sm text-ink-secondary">搜索并筛选全部课程、文章与视频</p>
+  <div class="mx-auto max-w-7xl px-4 py-8 sm:px-6">
+    <div class="flex flex-wrap items-end justify-between gap-3 border-b border-border pb-4">
+      <div>
+        <h1 class="text-2xl font-bold tracking-tight text-ink sm:text-3xl">{{ pageTitle }}</h1>
+        <p class="mt-2 text-sm text-ink-secondary">搜索并筛选全部课程、文章与视频</p>
+      </div>
+      <span v-if="total > 0" class="data-num text-xs text-ink-muted">共 {{ total }} 条</span>
+    </div>
 
     <div
       v-if="generation"
-      class="mt-4 flex flex-wrap items-center gap-2 rounded-lg border border-border bg-surface px-4 py-3 text-sm"
+      class="mt-4 flex flex-wrap items-center gap-2 rounded-[4px] border border-border bg-surface px-4 py-3 text-sm"
     >
       <template v-if="generation.status.status === 'running'">
+        <span class="route-node" style="--node: var(--color-line-amber)" aria-hidden="true"></span>
         <span class="text-ink-secondary">
           正在为「{{ generation.pointName }}」自动构建概念图谱…
         </span>
       </template>
       <template v-else-if="generation.status.status === 'done'">
+        <span class="route-node" style="--node: var(--color-success)" aria-hidden="true"></span>
         <span class="text-ink-secondary">
           已为「{{ generation.pointName }}」补充 {{ generation.status.generated }} 个概念（共
           {{ generation.status.total }} 个）。
         </span>
         <RouterLink
           :to="{ name: 'knowledge-detail', params: { code: generation.pointCode } }"
-          class="text-primary hover:underline"
+          class="font-medium text-primary underline-offset-4 hover:underline"
         >查看知识点 →</RouterLink>
       </template>
       <template v-else-if="generation.status.status === 'failed'">
-        <span class="text-red-500">
+        <span class="route-node" style="--node: var(--color-danger)" aria-hidden="true"></span>
+        <span class="text-danger">
           概念生成失败：{{ generation.status.error || 'engine 未启动' }}（搜索不受影响）
         </span>
       </template>
     </div>
 
-    <div class="mt-6 flex flex-wrap items-center gap-3 rounded-lg border border-border bg-surface p-4">
-      <el-input v-model="keyword" placeholder="输入关键词…" clearable class="w-56" @keyup.enter="handleSearch" />
-      <el-select v-model="categoryId" placeholder="全部分类" clearable class="w-40" @change="handleSearch">
-        <el-option v-for="c in categories" :key="c.id" :label="c.name" :value="c.id" />
-      </el-select>
-      <el-select v-model="type" placeholder="全部类型" clearable class="w-32" @change="handleSearch">
-        <el-option label="课程" value="course" />
-        <el-option label="文章" value="article" />
-        <el-option label="视频" value="video" />
-      </el-select>
-      <el-select v-model="sort" class="w-32" @change="handleSearch">
-        <el-option label="最新" value="latest" />
-        <el-option label="热门" value="popular" />
-        <el-option label="评分" value="rating" />
-      </el-select>
-      <el-input v-model="tags" placeholder="标签（逗号分隔）" clearable class="w-48" @keyup.enter="handleSearch" />
-      <el-button type="primary" @click="handleSearch">搜索</el-button>
+    <div class="relative mt-5 overflow-hidden rounded-[4px] border border-border bg-surface p-4 md:sticky md:top-16 md:z-30">
+      <span class="absolute inset-x-0 top-0 h-[2px]" style="background: var(--color-line-teal)" aria-hidden="true"></span>
+      <div class="flex flex-wrap items-center gap-2.5">
+        <div class="w-full sm:w-56">
+          <el-input
+            v-model="keyword"
+            placeholder="输入关键词…"
+            clearable
+            @keyup.enter="handleSearch"
+          />
+        </div>
+        <div class="w-36">
+          <el-select v-model="categoryId" placeholder="全部分类" clearable @change="handleSearch">
+            <el-option v-for="c in categories" :key="c.id" :label="c.name" :value="c.id" />
+          </el-select>
+        </div>
+        <div class="w-32">
+          <el-select v-model="type" placeholder="全部类型" clearable @change="handleSearch">
+            <el-option label="课程" value="course" />
+            <el-option label="文章" value="article" />
+            <el-option label="视频" value="video" />
+          </el-select>
+        </div>
+        <div class="w-32">
+          <el-select v-model="sort" @change="handleSearch">
+            <el-option label="最新" value="latest" />
+            <el-option label="热门" value="popular" />
+            <el-option label="评分" value="rating" />
+          </el-select>
+        </div>
+        <div class="w-44">
+          <el-input v-model="tags" placeholder="标签（逗号分隔）" clearable @keyup.enter="handleSearch" />
+        </div>
+        <el-button type="primary" @click="handleSearch">搜索</el-button>
+        <button
+          v-if="hasFilters"
+          type="button"
+          class="ml-auto text-xs text-ink-muted underline-offset-4 hover:text-primary hover:underline"
+          @click="clearFilters"
+        >清除筛选</button>
+      </div>
     </div>
 
-    <div v-if="loading" class="mt-6">
-      <p class="py-4 text-center text-sm text-ink-muted">{{ loadingText }}</p>
-      <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+    <div v-if="loading" class="mt-5">
+      <p class="py-3 text-center text-sm text-ink-muted">{{ loadingText }}</p>
+      <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
         <ResourceCardSkeleton v-for="i in 6" :key="i" />
       </div>
     </div>
-    <div v-else-if="error && resources.length === 0" class="py-24 text-center text-sm text-red-500">{{ error }}</div>
-    <div v-else-if="resources.length === 0 && !loadingMore" class="py-24 text-center text-sm text-ink-muted">
-      没有符合条件的资源
+
+    <div v-else-if="error && resources.length === 0" class="mt-5 flex flex-col items-center gap-3 rounded-[4px] border border-border bg-surface px-6 py-16 text-center">
+      <p class="text-sm text-danger">{{ error }}</p>
+      <el-button @click="handleSearch">重新搜索</el-button>
     </div>
-    <div v-else class="mt-6 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+
+    <div v-else-if="resources.length === 0 && !loadingMore" class="mt-5 flex flex-col items-center gap-3 rounded-[4px] border border-dashed border-border px-6 py-16 text-center">
+      <p class="text-sm font-medium text-ink">没有符合条件的资源</p>
+      <p class="text-xs text-ink-muted">
+        {{ hasFilters ? '换个关键词，或清除筛选后再试。' : '资源准备好后会出现在这里。' }}
+      </p>
+      <el-button v-if="hasFilters" @click="clearFilters">清除筛选</el-button>
+    </div>
+
+    <div v-else class="mt-5 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
       <ResourceCard
         v-for="(r, i) in resources"
         :key="r.id"
@@ -385,7 +445,10 @@ onBeforeUnmount(() => {
       />
     </div>
 
-    <div v-if="loadingMore" class="py-8 text-center text-sm text-ink-muted">正在加载…</div>
+    <div v-if="loadingMore" class="flex items-center justify-center gap-2 py-8 text-sm text-ink-muted">
+      <span class="route-node" style="--node: var(--color-line-teal)" aria-hidden="true"></span>
+      正在加载…
+    </div>
     <div v-else-if="exhausted && resources.length > 0" class="py-8 text-center text-sm text-ink-muted">
       没有更多内容
     </div>

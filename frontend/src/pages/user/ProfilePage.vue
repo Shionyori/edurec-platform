@@ -27,9 +27,12 @@ async function handleUpdated() {
 </script>
 
 <template>
-  <div class="mx-auto max-w-5xl px-6 py-8">
-    <h1 class="text-2xl font-bold">个人中心</h1>
-    <div class="mt-6 space-y-6">
+  <div class="mx-auto max-w-5xl px-4 py-8 sm:px-6">
+    <div class="border-b border-border pb-4">
+      <h1 class="text-2xl font-bold tracking-tight text-ink sm:text-3xl">个人中心</h1>
+      <p class="mt-2 text-sm text-ink-secondary">管理资料、收藏与行为历史；这些数据也会影响推荐。</p>
+    </div>
+    <div class="mt-6 space-y-5">
       <ProfileCard v-if="user" :user="user" @updated="handleUpdated" />
       <FavoriteList />
       <BehaviorHistory />

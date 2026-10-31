@@ -59,7 +59,8 @@ onMounted(fetchList)
 </script>
 
 <template>
-  <div class="rounded-xl border border-border bg-surface p-6 shadow-sm">
+  <div class="relative overflow-hidden rounded-[4px] border border-border bg-surface p-6">
+    <span class="absolute inset-x-0 top-0 h-[2px]" style="background: var(--color-line-blue)" aria-hidden="true"></span>
     <div class="flex flex-wrap items-center justify-between gap-3">
       <h2 class="text-lg font-semibold text-ink">行为历史</h2>
       <el-radio-group v-model="action" size="small" @change="handleFilter">
@@ -77,7 +78,7 @@ onMounted(fetchList)
         <div v-if="firstLoad && loading && !error">
           <el-skeleton :rows="4" animated />
         </div>
-        <div v-else-if="error" class="py-16 text-center text-sm text-red-500">{{ error }}</div>
+        <div v-else-if="error" class="py-16 text-center text-sm text-danger">{{ error }}</div>
         <el-empty
           v-else-if="items.length === 0"
           description="暂无行为记录"

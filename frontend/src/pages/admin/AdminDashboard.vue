@@ -32,14 +32,14 @@ onMounted(async () => {
     <div v-else class="mt-6 grid grid-cols-1 gap-6 sm:grid-cols-2">
       <RouterLink
         :to="{ name: 'admin-resources' }"
-        class="rounded-lg border border-border bg-surface p-6 transition hover:shadow-md"
+        class="rounded-[4px] border border-border bg-surface p-6 transition hover:shadow-[0_10px_30px_-18px_rgba(11,27,43,0.45)]"
       >
         <p class="text-sm text-ink-muted">资源总数</p>
         <p class="mt-2 text-3xl font-bold text-ink">{{ resourceTotal }}</p>
       </RouterLink>
       <RouterLink
         :to="{ name: 'admin-users' }"
-        class="rounded-lg border border-border bg-surface p-6 transition hover:shadow-md"
+        class="rounded-[4px] border border-border bg-surface p-6 transition hover:shadow-[0_10px_30px_-18px_rgba(11,27,43,0.45)]"
       >
         <p class="text-sm text-ink-muted">用户总数</p>
         <p class="mt-2 text-3xl font-bold text-ink">{{ userTotal }}</p>
@@ -49,19 +49,19 @@ onMounted(async () => {
     <div class="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
       <RouterLink
         :to="{ name: 'admin-resources' }"
-        class="rounded-lg border border-border bg-surface p-5 text-sm text-ink-secondary transition hover:shadow-md"
+        class="rounded-[4px] border border-border bg-surface p-5 text-sm text-ink-secondary transition hover:shadow-[0_10px_30px_-18px_rgba(11,27,43,0.45)]"
       >
         资源管理
       </RouterLink>
       <RouterLink
         :to="{ name: 'admin-users' }"
-        class="rounded-lg border border-border bg-surface p-5 text-sm text-ink-secondary transition hover:shadow-md"
+        class="rounded-[4px] border border-border bg-surface p-5 text-sm text-ink-secondary transition hover:shadow-[0_10px_30px_-18px_rgba(11,27,43,0.45)]"
       >
         用户管理
       </RouterLink>
       <RouterLink
         :to="{ name: 'admin-categories' }"
-        class="rounded-lg border border-border bg-surface p-5 text-sm text-ink-secondary transition hover:shadow-md"
+        class="rounded-[4px] border border-border bg-surface p-5 text-sm text-ink-secondary transition hover:shadow-[0_10px_30px_-18px_rgba(11,27,43,0.45)]"
       >
         分类管理
       </RouterLink>

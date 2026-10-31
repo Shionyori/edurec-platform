@@ -1,26 +1,49 @@
 @import 'tailwindcss';
 
+/* ---------------------------------------------------------------------------
+   线路牌设计系统
+   深墨蓝站牌 + 冷白纸面 + 信号朱红；线路色承担层级/类型语义。
+   --------------------------------------------------------------------------- */
 @theme {
-  --color-primary: #4f46e5;
-  --color-primary-hover: #6366f1;
-  --color-primary-active: #4338ca;
-  --color-bg: #f8fafc;
+  --color-primary: #c9451f;
+  --color-primary-hover: #b93c18;
+  --color-primary-active: #a32f10;
+
+  --color-bg: #f5f4ef;
   --color-surface: #ffffff;
-  --color-border: #e2e8f0;
-  --color-ink: #0f172a;
-  --color-ink-secondary: #64748b;
-  --color-ink-muted: #94a3b8;
+  --color-border: #dcd9cf;
+  --color-control: #8c8777;
+  --color-ink: #0b1b2b;
+  --color-ink-secondary: #4a5763;
+  /* 11px 微标签也要达到 4.5:1，因此比常见的 muted gray 更深 */
+  --color-ink-muted: #6b7681;
+
+  --color-rail: #0b1b2b;
+  --color-rail-soft: #14293d;
+  --color-line-teal: #0e7c7b;
+  --color-line-blue: #1d4ed8;
+  --color-line-amber: #b45309;
+  --color-line-rose: #be123c;
+
+  --color-success: #15803d;
+  --color-warning: #b45309;
+  --color-danger: #b91c1c;
 }
 
 :root {
-  --el-color-primary: #4f46e5;
-  --el-color-primary-light-3: #7c7ff0;
-  --el-color-primary-light-5: #a5a8f5;
-  --el-color-primary-light-7: #cfd0fa;
-  --el-color-primary-light-8: #e3e3fc;
-  --el-color-primary-light-9: #f1f1fd;
-  --el-color-primary-dark-2: #4338ca;
-  --el-border-radius-base: 6px;
+  --el-color-primary: #c9451f;
+  --el-color-primary-light-3: #d96f4f;
+  --el-color-primary-light-5: #e49a82;
+  --el-color-primary-light-7: #efc5b6;
+  --el-color-primary-light-8: #f4d9ce;
+  --el-color-primary-light-9: #faeee9;
+  --el-color-primary-dark-2: #a32f10;
+  --el-border-radius-base: 4px;
+  --el-border-radius-small: 3px;
+  --el-font-family: inherit;
+  /* 占位符与控件描边满足非文本对比度要求 */
+  --el-text-color-placeholder: #6b7681;
+  --color-control: #8c8777;
 }
 
 body {
@@ -28,6 +51,10 @@ body {
   font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'PingFang SC',
     'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
   -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  /* 线路网络底纹：极淡的站点与线路，只做纸张肌理，不干扰正文 */
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='420' height='420' viewBox='0 0 420 420'%3E%3Cg fill='none' stroke-width='2'%3E%3Cpath d='M-20 70H150Q190 70 190 110V440' stroke='%230B1B2B' stroke-opacity='.055'/%3E%3Cpath d='M30 440V230Q30 190 70 190H330Q370 190 370 150V-20' stroke='%230E7C7B' stroke-opacity='.095'/%3E%3Cpath d='M440 300H300Q260 300 260 260V40' stroke='%231D4ED8' stroke-opacity='.085'/%3E%3Cpath d='M110 -20V100Q110 140 150 140H440' stroke='%23B45309' stroke-opacity='.09'/%3E%3Cpath d='M-20 350H120Q160 350 160 310V210' stroke='%23BE123C' stroke-opacity='.085'/%3E%3C/g%3E%3Cg fill='%23F5F4EF' stroke-width='2'%3E%3Ccircle cx='190' cy='110' r='5' stroke='%230B1B2B' stroke-opacity='.09'/%3E%3Ccircle cx='70' cy='190' r='5' stroke='%230E7C7B' stroke-opacity='.20'/%3E%3Ccircle cx='260' cy='260' r='5' stroke='%231D4ED8' stroke-opacity='.18'/%3E%3Ccircle cx='150' cy='140' r='5' stroke='%23B45309' stroke-opacity='.18'/%3E%3Ccircle cx='160' cy='310' r='5' stroke='%23BE123C' stroke-opacity='.18'/%3E%3C/g%3E%3C/svg%3E");
+  background-size: 420px 420px;
 }
 
 html {
@@ -44,7 +71,210 @@ html {
   }
 }
 
-/* 路由切换过渡：主内容淡入 + 轻微上移，比硬切更顺 */
+::selection {
+  background: var(--color-primary);
+  color: #fff;
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-line-teal);
+  outline-offset: 2px;
+}
+
+/* 滚动条也属于设计系统 */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #c3c0b5 transparent;
+}
+*::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+*::-webkit-scrollbar-thumb {
+  background: #c3c0b5;
+  border: 3px solid transparent;
+  background-clip: content-box;
+  border-radius: 999px;
+}
+*::-webkit-scrollbar-thumb:hover {
+  background: #a9a698;
+  border: 3px solid transparent;
+  background-clip: content-box;
+}
+
+/* ---------------------------------------------------------------------------
+   线路语言：微标签、站点、线路条
+   --------------------------------------------------------------------------- */
+.label-micro {
+  font-size: 11px;
+  line-height: 1;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-ink-muted);
+}
+
+.data-num {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum';
+}
+
+.line-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border-radius: 3px;
+  padding: 3px 7px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  font-variant-numeric: tabular-nums;
+  color: #fff;
+  background: var(--chip, var(--color-rail));
+}
+
+.line-chip--outline {
+  background: transparent;
+  color: var(--chip, var(--color-ink));
+  box-shadow: inset 0 0 0 1px currentColor;
+}
+
+.route-node {
+  width: 10px;
+  height: 10px;
+  flex: none;
+  border-radius: 999px;
+  border: 2px solid var(--node, var(--color-ink));
+  background: var(--color-surface);
+}
+.route-node--filled {
+  background: var(--node, var(--color-ink));
+}
+
+/* 线路条：一个横向排列的站点序列，用 2px 线连接 */
+.route-strip {
+  display: flex;
+  align-items: flex-start;
+  gap: 0;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.route-strip__stop {
+  position: relative;
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  padding-top: 14px;
+}
+.route-strip__stop::before {
+  content: '';
+  position: absolute;
+  top: 5px;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: var(--track, var(--color-border));
+}
+.route-strip__stop:first-child::before {
+  left: 6px;
+}
+.route-strip__stop:last-child::before {
+  right: calc(100% - 6px);
+}
+.route-strip__dot {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 12px;
+  height: 12px;
+  border-radius: 999px;
+  border: 3px solid var(--node, var(--color-ink));
+  background: var(--color-surface);
+  box-sizing: border-box;
+}
+.route-strip__stop[data-state='done'] .route-strip__dot {
+  background: var(--node, var(--color-success));
+}
+.route-strip__stop[data-state='current'] .route-strip__dot {
+  background: var(--node, var(--color-primary));
+  border-color: var(--node, var(--color-primary));
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--color-primary) 18%, transparent);
+}
+.route-strip__stop[data-state='locked'] {
+  color: var(--color-ink-muted);
+}
+.route-strip__label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 12px;
+  line-height: 1.3;
+}
+
+/* ---------------------------------------------------------------------------
+   Element Plus 适配线路牌
+   --------------------------------------------------------------------------- */
+.el-button {
+  font-weight: 600;
+}
+.el-button--primary {
+  --el-button-bg-color: var(--color-primary);
+  --el-button-border-color: var(--color-primary);
+  --el-button-hover-bg-color: var(--color-primary-hover);
+  --el-button-hover-border-color: var(--color-primary-hover);
+  --el-button-active-bg-color: var(--color-primary-active);
+  --el-button-active-border-color: var(--color-primary-active);
+}
+.el-input__wrapper,
+.el-select__wrapper,
+.el-textarea__inner {
+  border-radius: var(--el-border-radius-base);
+  box-shadow: 0 0 0 1px var(--color-control) inset;
+}
+.el-input__wrapper.is-focus,
+.el-select__wrapper.is-focused {
+  box-shadow: 0 0 0 1px var(--color-ink) inset;
+}
+.el-tag {
+  border-radius: 3px;
+  font-weight: 600;
+}
+.el-progress-bar__outer {
+  border-radius: 999px;
+  background: var(--color-border);
+}
+.el-progress-bar__inner {
+  border-radius: 999px;
+}
+
+/* 深色站牌上的输入框 / 下拉 */
+.rail-control .el-input__wrapper {
+  background: rgba(255, 255, 255, 0.08);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.16);
+}
+.rail-control .el-input__wrapper.is-focus {
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.55);
+}
+.rail-control .el-input__inner {
+  color: #fff;
+}
+.rail-control .el-input__inner::placeholder {
+  color: rgba(255, 255, 255, 0.5);
+}
+.rail-control .el-input__suffix,
+.rail-control .el-input__clear {
+  color: rgba(255, 255, 255, 0.6);
+}
+
+/* ---------------------------------------------------------------------------
+   动效
+   --------------------------------------------------------------------------- */
 .route-enter-active {
   transition: opacity 0.2s ease, transform 0.2s ease;
 }
@@ -59,7 +289,6 @@ html {
   opacity: 0;
 }
 
-/* 列表/网格入场 */
 @keyframes fade-up {
   from {
     opacity: 0;
@@ -74,7 +303,6 @@ html {
   animation: fade-up 0.32s ease both;
 }
 
-/* 列表（行为历史等）增删/换序过渡 */
 .list-enter-active {
   transition: opacity 0.25s ease, transform 0.25s ease;
 }
@@ -94,7 +322,6 @@ html {
   transition: transform 0.25s ease;
 }
 
-/* 尊重系统的「减少动效」偏好 */
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;

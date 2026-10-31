@@ -52,7 +52,7 @@ function cancel() {
         <p class="mt-1 truncate text-sm text-ink-secondary">@{{ user.username }} · {{ user.email }}</p>
         <p class="data-num mt-0.5 text-xs text-ink-muted">注册于 {{ formatDate(user.created_at) }}</p>
       </div>
-      <el-button v-if="!editing" class="shrink-0" @click="editing = true">编辑资料</el-button>
+      <el-button v-if="!editing" class="w-full sm:w-auto sm:shrink-0" @click="editing = true">编辑资料</el-button>
     </div>
 
     <div v-if="editing" class="mt-6 border-t border-border pt-5">

@@ -116,9 +116,9 @@ watch(pathId, load)
               按先修关系逐节解锁；已掌握的内容会跳过，只推荐路径上还没掌握的部分。
             </p>
           </div>
-          <div class="data-num text-right">
+          <div class="data-num flex w-full items-end justify-between gap-4 sm:block sm:w-auto sm:text-right">
             <p class="text-4xl font-bold leading-none">{{ progress }}<span class="text-lg font-semibold text-white/60">%</span></p>
-            <p class="mt-2 text-xs text-white/60">已完成 {{ doneCount }} / {{ path.steps.length }} 节</p>
+            <p class="text-xs text-white/60 sm:mt-2">已完成 {{ doneCount }} / {{ path.steps.length }} 节</p>
           </div>
         </div>
         <div class="mt-5 h-1.5 overflow-hidden rounded-full bg-white/15" role="progressbar" :aria-valuenow="progress" aria-valuemin="0" aria-valuemax="100">

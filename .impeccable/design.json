@@ -451,14 +451,15 @@
   ],
   "narrative": {
     "northStar": "学习线路牌 / The Study Line",
-    "overview": "edurec is a Chinese educational-resource recommender, and its visual world is the transit route map: knowledge points are stations on a prerequisite line, the current goal is \"你在这里,\" and a learning path is a printed itinerary. The system operates in **Operate** mode — the route metaphor contributes palette, type, density, and one signature move (the route strip and station line); layout, controls, and form semantics stay conventional so the user can act quickly. The result reads as a rail system on paper, not as a generic white SaaS dashboard.\n\nThe ground is a cool off-white paper, the orientation surfaces are deep station navy, and one signal vermilion marks the current stop or the action. Line colors are semantic, not decorative: they encode level and resource type wherever a line, chip, or station appears. Density is deliberately tight: pages are organized by section rules and 20px card gaps rather than by generous whitespace or oversized type.\n\nChinese is set in the system sans stack — no webfont is loaded — and codes, counts, levels, percentages, and ratings use tabular numerals. The shape language is small and exact: 4px cards, 3px chips and controls, 2px route strokes, and round station dots as the only recurring circles.",
+    "overview": "edurec is a Chinese educational-resource recommender, and its visual world is the transit route map: knowledge points are stations on a prerequisite line, the current goal is \"你在这里,\" and a learning path is a printed itinerary. The system operates in **Operate** mode — the route metaphor contributes palette, type, density, and one signature move (the route strip and station line); layout, controls, and form semantics stay conventional so the user can act quickly. The result reads as a rail system on paper, not as a generic white SaaS dashboard.\n\nThe ground is a cool off-white paper, the orientation surfaces are deep station navy, and one signal vermilion marks the current stop or the action. Line colors are semantic, not decorative: they encode level and resource type wherever a line, chip, or station appears. Density is deliberately tight: pages are organized by section rules and 20px card gaps rather than by generous whitespace or oversized type.\n\nChinese is set in the system sans stack — no webfont is loaded — and codes, counts, levels, percentages, and ratings use tabular numerals. The shape language is small and exact: 4px cards, 3px chips and controls, 2px route strokes, and round station dots as the only recurring circles.\n\nThe paper ground itself carries a sparse route-network texture (thin line-colored paths and hollow station dots at 5–10% opacity). It is texture, never content: text always sits on opaque panels. Section headers repeat the route cue as a 2px line-colored rule with a station node, and discipline cards carry the same cue as an inset top rule, so colour is distributed through the page without turning the pattern into data.",
     "keyCharacteristics": [
       "Deep navy rail surfaces for orientation and mastheads; cool paper for reading.",
       "Signal vermilion reserved for the primary action and the current station.",
       "Four semantic line colors (teal, blue, amber, rose) mapped to levels and resource types.",
       "System Chinese sans with tabular numerals and 11px uppercase micro-labels.",
       "4px / 3px / 2px geometry, flat by default, one ink-tinted hover lift.",
-      "The route strip and station line as the one recurring custom component."
+      "The route strip and station line as the one recurring custom component.",
+      "A 5–10% route-network paper texture and 2px line-colored section rules distribute colour without carrying data."
     ],
     "rules": [
       {
@@ -500,6 +501,11 @@
         "name": "The Square-End Rule",
         "body": "Use 4px for cards, 3px for chips and controls, 2px for route strokes, and square-capped connector strokes. Do not introduce 8px+ radii, pill buttons, or large blobs; circles are reserved for stations, avatars, and progress.",
         "section": "shapes"
+      },
+      {
+        "name": "The Map-Texture Rule",
+        "body": "The paper texture is a background, not a surface: keep its strokes at or below 10% opacity, keep all text on opaque panels, and never let the pattern carry meaning or data.",
+        "section": "layout"
       }
     ],
     "dos": [
@@ -509,7 +515,9 @@
       "Do use Signal Vermilion only for the primary action, the current station, the active nav underline, and small current-state tints.",
       "Do use tabular numerals for every count, rating, percentage, level, and code.",
       "Do set Chinese in the system sans stack and keep micro-labels at 11px uppercase with 0.14em tracking inside chips and data rows.",
-      "Do provide a clear next action inside every empty state, using a dashed hairline container rather than a bare blank region."
+      "Do provide a clear next action inside every empty state, using a dashed hairline container rather than a bare blank region.",
+      "Do introduce sections with a 2px line-colored rule and a station node; use teal for discovery, blue for resources, rose for concept layers.",
+      "Do repeat the line cue as an inset 2px top rule on discipline cards, and keep the paper map texture at or below 10% opacity."
     ],
     "donts": [
       "Don't introduce large radii (8px+), pill buttons, gradients, or soft gray ambient shadows; the only elevation is the ink-tinted hover lift.",
@@ -517,7 +525,9 @@
       "Don't use vermilion as a section background, a wide wash, or a generic accent.",
       "Don't use the 11px uppercase micro-label as a decorative kicker/eyebrow above headings.",
       "Don't convey done/current/locked or error/success states by color alone; carry the label.",
-      "Don't load a webfont or switch Chinese body copy to a serif/display face."
+      "Don't load a webfont or switch Chinese body copy to a serif/display face.",
+      "Don't place text or controls directly on the map texture, and don't let the pattern cross an opaque panel.",
+      "Don't use a thick accent border on a rounded card; inset the 2px rule as its own positioned element instead."
     ]
   }
 }

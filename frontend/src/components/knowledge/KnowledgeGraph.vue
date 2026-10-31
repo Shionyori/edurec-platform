@@ -87,7 +87,7 @@ function onSelect(node: KnowledgeNode) {
           refY="4"
           orient="auto"
         >
-          <path d="M 0 0 L 8 4 L 0 8 z" fill="#E4572E" />
+          <path d="M 0 0 L 8 4 L 0 8 z" fill="#C9451F" />
         </marker>
       </defs>
 
@@ -101,7 +101,7 @@ function onSelect(node: KnowledgeNode) {
           font-size="10"
           font-weight="700"
           letter-spacing="1.5"
-          fill="#77828C"
+          fill="#6B7681"
         >L{{ tick.level }}</text>
       </g>
 
@@ -110,7 +110,7 @@ function onSelect(node: KnowledgeNode) {
         :key="index"
         :d="edgePath(edge.from.x, edge.from.y + nodeHeight / 2, edge.to.x, edge.to.y + nodeHeight / 2)"
         fill="none"
-        :stroke="edge.to.id === currentId ? '#E4572E' : '#C9C5B8'"
+        :stroke="edge.to.id === currentId ? '#C9451F' : '#C9C5B8'"
         :stroke-width="edge.to.id === currentId ? 2 : 2"
         :opacity="edge.to.id === currentId ? 1 : 0.75"
         :marker-end="`url(#${edge.to.id === currentId ? `${arrowId}-active` : arrowId})`"
@@ -133,7 +133,7 @@ function onSelect(node: KnowledgeNode) {
           :height="nodeHeight"
           rx="3"
           :fill="node.id === currentId ? '#0B1B2B' : '#FFFFFF'"
-          :stroke="node.id === currentId ? '#E4572E' : '#DCD9CF'"
+          :stroke="node.id === currentId ? '#C9451F' : '#DCD9CF'"
           :stroke-width="node.id === currentId ? 2 : 1.5"
           class="transition-colors duration-150"
         />
@@ -141,7 +141,7 @@ function onSelect(node: KnowledgeNode) {
           cx="14"
           :cy="nodeHeight / 2"
           r="4"
-          :fill="node.id === currentId ? '#E4572E' : levelColor(node.level)"
+          :fill="node.id === currentId ? '#C9451F' : levelColor(node.level)"
         />
         <text
           x="26"
@@ -156,7 +156,7 @@ function onSelect(node: KnowledgeNode) {
           x="26"
           :y="compact ? 37 : 42"
           font-size="11"
-          :fill="node.id === currentId ? 'rgba(255,255,255,0.62)' : '#77828C'"
+          :fill="node.id === currentId ? 'rgba(255,255,255,0.62)' : '#6B7681'"
         >
           资源 {{ node.resource_count }} · 概念 {{ node.concept_count }}
         </text>

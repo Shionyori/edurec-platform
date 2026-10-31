@@ -66,8 +66,8 @@ onMounted(fetchList)
     <div class="mt-6 rounded-lg border border-border bg-surface p-5">
       <h2 class="text-sm font-semibold text-ink">新建分类</h2>
       <div class="mt-3 flex flex-wrap items-start gap-3">
-        <el-input v-model="name" placeholder="分类名称（必填）" clearable class="w-48" maxlength="64" />
-        <el-input v-model="description" placeholder="描述（选填）" clearable class="w-80" maxlength="256" />
+        <div class="w-48"><el-input v-model="name" placeholder="分类名称（必填）" clearable maxlength="64" /></div>
+        <div class="w-80"><el-input v-model="description" placeholder="描述（选填）" clearable maxlength="256" /></div>
         <el-button type="primary" :loading="creating" @click="handleCreate">创建</el-button>
       </div>
       <p v-if="createError" class="mt-2 text-sm text-red-500">{{ createError }}</p>

@@ -5,16 +5,17 @@
    深墨蓝站牌 + 冷白纸面 + 信号朱红；线路色承担层级/类型语义。
    --------------------------------------------------------------------------- */
 @theme {
-  --color-primary: #e4572e;
-  --color-primary-hover: #f06a42;
-  --color-primary-active: #c9451f;
+  --color-primary: #c9451f;
+  --color-primary-hover: #b93c18;
+  --color-primary-active: #a32f10;
 
   --color-bg: #f5f4ef;
   --color-surface: #ffffff;
   --color-border: #dcd9cf;
   --color-ink: #0b1b2b;
   --color-ink-secondary: #4a5763;
-  --color-ink-muted: #77828c;
+  /* 11px 微标签也要达到 4.5:1，因此比常见的 muted gray 更深 */
+  --color-ink-muted: #6b7681;
 
   --color-rail: #0b1b2b;
   --color-rail-soft: #14293d;
@@ -29,13 +30,13 @@
 }
 
 :root {
-  --el-color-primary: #e4572e;
-  --el-color-primary-light-3: #ec8565;
-  --el-color-primary-light-5: #f2a58d;
-  --el-color-primary-light-7: #f7c8b8;
-  --el-color-primary-light-8: #fadbd0;
-  --el-color-primary-light-9: #fdf0ea;
-  --el-color-primary-dark-2: #c9451f;
+  --el-color-primary: #c9451f;
+  --el-color-primary-light-3: #d96f4f;
+  --el-color-primary-light-5: #e49a82;
+  --el-color-primary-light-7: #efc5b6;
+  --el-color-primary-light-8: #f4d9ce;
+  --el-color-primary-light-9: #faeee9;
+  --el-color-primary-dark-2: #a32f10;
   --el-border-radius-base: 4px;
   --el-border-radius-small: 3px;
   --el-font-family: inherit;

@@ -6,7 +6,7 @@
           <span class="flex h-9 w-9 items-center justify-center rounded-[3px] bg-rail" aria-hidden="true">
             <svg viewBox="0 0 24 24" class="h-5 w-5" fill="none">
               <path d="M8 5v6.5a3 3 0 0 0 3 3h5" stroke="#FFFFFF" stroke-width="2" stroke-linecap="square" />
-              <circle cx="8" cy="4" r="2" fill="#E4572E" />
+              <circle cx="8" cy="4" r="2" fill="#C9451F" />
               <circle cx="17" cy="14.5" r="2" fill="#0E7C7B" />
             </svg>
           </span>

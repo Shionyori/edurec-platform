@@ -370,27 +370,36 @@ onBeforeUnmount(() => {
 
     <div class="mt-5 rounded-[4px] border border-border bg-surface p-4 md:sticky md:top-16 md:z-30">
       <div class="flex flex-wrap items-center gap-2.5">
-        <el-input
-          v-model="keyword"
-          placeholder="输入关键词…"
-          clearable
-          class="w-full sm:w-56"
-          @keyup.enter="handleSearch"
-        />
-        <el-select v-model="categoryId" placeholder="全部分类" clearable class="w-36" @change="handleSearch">
-          <el-option v-for="c in categories" :key="c.id" :label="c.name" :value="c.id" />
-        </el-select>
-        <el-select v-model="type" placeholder="全部类型" clearable class="w-32" @change="handleSearch">
-          <el-option label="课程" value="course" />
-          <el-option label="文章" value="article" />
-          <el-option label="视频" value="video" />
-        </el-select>
-        <el-select v-model="sort" class="w-32" @change="handleSearch">
-          <el-option label="最新" value="latest" />
-          <el-option label="热门" value="popular" />
-          <el-option label="评分" value="rating" />
-        </el-select>
-        <el-input v-model="tags" placeholder="标签（逗号分隔）" clearable class="w-44" @keyup.enter="handleSearch" />
+        <div class="w-full sm:w-56">
+          <el-input
+            v-model="keyword"
+            placeholder="输入关键词…"
+            clearable
+            @keyup.enter="handleSearch"
+          />
+        </div>
+        <div class="w-36">
+          <el-select v-model="categoryId" placeholder="全部分类" clearable @change="handleSearch">
+            <el-option v-for="c in categories" :key="c.id" :label="c.name" :value="c.id" />
+          </el-select>
+        </div>
+        <div class="w-32">
+          <el-select v-model="type" placeholder="全部类型" clearable @change="handleSearch">
+            <el-option label="课程" value="course" />
+            <el-option label="文章" value="article" />
+            <el-option label="视频" value="video" />
+          </el-select>
+        </div>
+        <div class="w-32">
+          <el-select v-model="sort" @change="handleSearch">
+            <el-option label="最新" value="latest" />
+            <el-option label="热门" value="popular" />
+            <el-option label="评分" value="rating" />
+          </el-select>
+        </div>
+        <div class="w-44">
+          <el-input v-model="tags" placeholder="标签（逗号分隔）" clearable @keyup.enter="handleSearch" />
+        </div>
         <el-button type="primary" @click="handleSearch">搜索</el-button>
         <button
           v-if="hasFilters"

@@ -70,8 +70,11 @@ onMounted(load)
           <span class="line-chip" :style="{ '--chip': lineColor(index) }">{{ item.code.toUpperCase() }}</span>
           <span
             v-if="item.resource_count === 0"
-            class="rounded-[3px] bg-warning/10 px-2 py-0.5 text-[11px] font-semibold text-warning"
-          >自动抓取</span>
+            class="inline-flex items-center gap-1 rounded-[3px] bg-bg px-1.5 py-0.5 text-[11px] text-ink-muted"
+          >
+            <span class="h-1 w-1 rounded-full bg-warning" aria-hidden="true"></span>
+            自动抓取
+          </span>
         </div>
 
         <h2 class="mt-3 text-lg font-semibold text-ink transition-colors group-hover:text-primary">

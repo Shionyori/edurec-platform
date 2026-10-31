@@ -29,7 +29,7 @@ describe('KnowledgeGraph', () => {
     expect(rects).toHaveLength(2)
     // 当前节点：深墨蓝底 + 信号朱红描边
     expect(rects[1].attributes('fill')).toBe('#0B1B2B')
-    expect(rects[1].attributes('stroke')).toBe('#E4572E')
+    expect(rects[1].attributes('stroke')).toBe('#C9451F')
     // 非当前节点保持白底
     expect(rects[0].attributes('fill')).toBe('#FFFFFF')
   })

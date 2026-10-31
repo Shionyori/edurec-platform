@@ -61,13 +61,17 @@ describe('QuestionnairePage', () => {
     expect(headers[1].attributes('aria-expanded')).toBe('true')
   })
 
-  it('「全部按没接触过」把答案重置为 0 并标记为已修改', async () => {
+  it('「全部按没接触过」把答案重置为 0，并支持撤销', async () => {
     const wrapper = await mountPage()
 
     const bulk = wrapper.findAll('button').find((b) => b.text().includes('全部按'))
     await bulk!.trigger('click')
-
     expect(wrapper.text()).toContain('已修改 2 项')
+    expect(wrapper.text()).toContain('撤销全设')
+
+    const undo = wrapper.findAll('button').find((b) => b.text().includes('撤销全设'))
+    await undo!.trigger('click')
+    expect(wrapper.text()).not.toContain('已修改')
   })
 
   it('保存时把自评等级提交给接口并返回知识点页', async () => {

@@ -55,21 +55,29 @@ async function save() {
       </div>
       <span class="line-chip" style="--chip: var(--color-line-amber)">冷启动</span>
     </div>
-    <div class="px-5 py-4">
-      <div v-if="loading" class="text-sm text-ink-muted">加载中…</div>
-      <el-checkbox-group v-else v-model="selected" class="flex flex-wrap gap-2">
-        <el-checkbox-button v-for="c in categories" :key="c.id" :value="c.id">
-          {{ c.name }}
-        </el-checkbox-button>
-      </el-checkbox-group>
-      <div class="mt-4 flex flex-wrap items-center gap-3">
-        <el-button type="primary" :loading="saving" @click="save">保存并刷新推荐</el-button>
-        <span class="text-xs text-ink-muted">至少选择一个方向</span>
-      </div>
+    <div class="grid gap-5 px-5 py-4 sm:grid-cols-2">
+      <section>
+        <h3 class="text-sm font-semibold text-ink">按方向订阅推荐</h3>
+        <p class="mt-1 text-xs text-ink-muted">保存后用于冷启动推荐</p>
+        <div v-if="loading" class="mt-3 text-sm text-ink-muted">加载中…</div>
+        <el-checkbox-group v-else v-model="selected" class="mt-3 flex flex-wrap gap-2">
+          <el-checkbox-button v-for="c in categories" :key="c.id" :value="c.id">
+            {{ c.name }}
+          </el-checkbox-button>
+        </el-checkbox-group>
+        <div class="mt-3 flex flex-wrap items-center gap-3">
+          <el-button type="primary" :loading="saving" @click="save">保存并刷新推荐</el-button>
+          <span class="text-xs text-ink-muted">至少选择一个方向</span>
+        </div>
+      </section>
 
-      <div v-if="disciplines.length > 0" class="mt-4 border-t border-border pt-3">
-        <p class="text-xs text-ink-muted">也可以直接按学科开始：</p>
-        <div class="mt-2 flex flex-wrap gap-1.5">
+      <section
+        v-if="disciplines.length > 0"
+        class="border-t border-border pt-4 sm:border-l sm:border-t-0 sm:pl-5 sm:pt-0"
+      >
+        <h3 class="text-sm font-semibold text-ink">或按学科直接开始</h3>
+        <p class="mt-1 text-xs text-ink-muted">不确定兴趣时，先从一个学科进入</p>
+        <div class="mt-3 flex flex-wrap gap-1.5">
           <RouterLink
             v-for="discipline in disciplines"
             :key="discipline.code"
@@ -77,7 +85,7 @@ async function save() {
             class="rounded-[3px] border border-border px-2 py-1 text-xs text-ink-secondary transition-colors hover:border-ink/30 hover:text-primary"
           >{{ discipline.name }}</RouterLink>
         </div>
-      </div>
+      </section>
     </div>
   </div>
 </template>

@@ -12,6 +12,8 @@ const answers = ref<Record<string, number>>({})
 // 原始值用于区分「未改动」与「已改动」：朱红只留给真正的改动与保存动作
 const baseline = ref<Record<string, number>>({})
 const openLevels = ref<Record<number, boolean>>({})
+// 批量“全部按没接触过”的撤销快照：避免一键覆盖已填/行为估计的答案
+const bulkUndo = ref<Record<string, number> | null>(null)
 const loading = ref(true)
 const saving = ref(false)
 const error = ref('')
@@ -61,11 +63,19 @@ function toggleAll() {
 }
 
 function setAllUnseen() {
+  if (!bulkUndo.value) bulkUndo.value = { ...answers.value }
   for (const item of items.value) answers.value[item.point_code] = 0
+}
+
+function undoBulk() {
+  if (!bulkUndo.value) return
+  answers.value = { ...bulkUndo.value }
+  bulkUndo.value = null
 }
 
 function answer(item: LearningProfileItem, value: number) {
   answers.value[item.point_code] = value
+  bulkUndo.value = null
 }
 
 function isChanged(item: LearningProfileItem): boolean {
@@ -146,6 +156,12 @@ onMounted(load)
         <p class="text-xs text-ink-muted">0 = 没接触，3 = 熟练；掌握度 ≥ 80% 的节点会从路径中跳过</p>
         <div class="ml-auto flex flex-wrap items-center gap-2">
           <el-button size="small" @click="setAllUnseen">全部按「没接触过」</el-button>
+          <button
+            v-if="bulkUndo"
+            type="button"
+            class="text-xs font-semibold text-primary-active underline-offset-4 hover:underline"
+            @click="undoBulk"
+          >撤销全设</button>
           <button
             type="button"
             class="text-xs text-ink-secondary underline-offset-4 hover:text-primary hover:underline"

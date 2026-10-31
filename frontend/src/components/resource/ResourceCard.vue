@@ -11,7 +11,7 @@ const coverFailed = ref(false)
 // 推荐流里没有个性化理由时给出诚实的兜底说明；普通列表不显示理由。
 const reasonText = computed(() => {
   if (props.resource.reason) return props.resource.reason
-  return props.showReasonFallback ? '按热度与评分推荐' : ''
+  return props.showReasonFallback ? '为你推荐' : ''
 })
 
 const typeMeta = computed(() => {

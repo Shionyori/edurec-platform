@@ -14,3 +14,7 @@ scripts/.run/
 EMBEDD-ER/
 # 临时分析脚本/中间结果
 .tmp_*
+# Impeccable 的机器本地状态与缓存（surfaces/ 下的是设计契约，需要入库）
+.impeccable/config.local.json
+.impeccable/hook.cache.json
+.impeccable/questions/

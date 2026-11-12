@@ -1,4 +1,4 @@
-import { get, post } from './client'
+import { post } from './client'
 import type { LoginResult, RefreshResult, RegisterPayload } from '@/types'
 
 export interface LoginPayload {

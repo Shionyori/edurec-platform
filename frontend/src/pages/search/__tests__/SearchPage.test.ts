@@ -318,7 +318,7 @@ describe('SearchPage', () => {
   })
 
   it('带筛选时本地翻完即停，不爬 B 站', async () => {
-    mockedListResources.mockImplementation(async (params) => {
+    mockedListResources.mockImplementation(async () => {
       return { list: [resource], total: 1, page: 1, page_size: 12 }
     })
     const wrapper = await mountPage()

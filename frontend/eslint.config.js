@@ -13,5 +13,13 @@ export default defineConfigWithVueTs(
   },
   pluginVue.configs['flat/essential'],
   vueTsConfigs.recommended,
+  {
+    name: 'app/page-index-names',
+    files: ['src/pages/**/index.vue'],
+    rules: {
+      // 路由页面统一用 index.vue，文件名即路由；不强制多词组件名
+      'vue/multi-word-component-names': 'off',
+    },
+  },
   skipFormatting,
 )

@@ -88,6 +88,14 @@ knowledge:
   # 启动：cd edurec-engine && .venv/bin/python scripts/kg_server.py --port 8090
   generator_url: "http://127.0.0.1:8090"
   generator_timeout_seconds: 180
+  # 生产环境通过 KNOWLEDGE_GENERATOR_TOKEN 注入，不要把密钥写进仓库。
+  # engine 侧用 KG_SERVICE_TOKEN 或 --token 启用鉴权；两边必须一致。
+  generator_token: ""
+  # 同时请求 engine 的上限，避免在线服务被打满。
+  generator_max_concurrency: 4
+  # 连续失败达到阈值后熔断；0 = 用默认值 3，负数 = 关闭熔断。
+  generator_failure_threshold: 3
+  generator_circuit_cooldown_seconds: 30
 
 # 第三方数据集导入（cmd/import_dataset）。各家数据集的字段名和格式都不一样，
 # 所以对应关系全部写在下面，换数据集只改这一段，不动代码。

@@ -39,6 +39,15 @@ type KnowledgeConfig struct {
 	SourceDir               string `mapstructure:"source_dir"`
 	GeneratorURL            string `mapstructure:"generator_url"`
 	GeneratorTimeoutSeconds int    `mapstructure:"generator_timeout_seconds"`
+	// GeneratorToken 非空时以 Authorization: Bearer 调用 engine KG 服务。
+	// 生产环境应通过 KNOWLEDGE_GENERATOR_TOKEN 注入，不要写进仓库。
+	GeneratorToken string `mapstructure:"generator_token"`
+	// GeneratorMaxConcurrency 同时请求 engine 的上限，保护在线服务。
+	GeneratorMaxConcurrency int `mapstructure:"generator_max_concurrency"`
+	// GeneratorFailureThreshold 连续失败多少次后熔断（0 = 不熔断）。
+	GeneratorFailureThreshold int `mapstructure:"generator_failure_threshold"`
+	// GeneratorCircuitCooldownSeconds 熔断冷却时间（秒）。
+	GeneratorCircuitCooldownSeconds int `mapstructure:"generator_circuit_cooldown_seconds"`
 }
 
 // 数据集字段映射支持的内部字段名。出现词表外的 key 一律报错：
@@ -437,6 +446,22 @@ func Load(configPath string) (*Config, error) {
 	}
 	if cfg.Knowledge.GeneratorTimeoutSeconds <= 0 {
 		cfg.Knowledge.GeneratorTimeoutSeconds = 180
+	}
+	// token 优先取环境变量，避免把密钥写进配置文件。
+	if token := strings.TrimSpace(os.Getenv("KNOWLEDGE_GENERATOR_TOKEN")); token != "" {
+		cfg.Knowledge.GeneratorToken = token
+	}
+	if cfg.Knowledge.GeneratorMaxConcurrency <= 0 {
+		cfg.Knowledge.GeneratorMaxConcurrency = 4
+	}
+	// 0 = 用默认阈值；负数 = 显式关闭熔断。
+	if cfg.Knowledge.GeneratorFailureThreshold == 0 {
+		cfg.Knowledge.GeneratorFailureThreshold = 3
+	} else if cfg.Knowledge.GeneratorFailureThreshold < 0 {
+		cfg.Knowledge.GeneratorFailureThreshold = 0
+	}
+	if cfg.Knowledge.GeneratorCircuitCooldownSeconds <= 0 {
+		cfg.Knowledge.GeneratorCircuitCooldownSeconds = 30
 	}
 
 	if err := cfg.validateDatasets(); err != nil {

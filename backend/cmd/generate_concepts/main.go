@@ -60,7 +60,14 @@ func main() {
 		log.Fatalf("MySQL 初始化失败: %v", err)
 	}
 	knowledgeRepo := repository.NewKnowledgeRepository(db)
-	runner := service.NewHTTPConceptRunner(baseURL, time.Duration(timeoutSeconds)*time.Second)
+	runner := service.NewHTTPConceptRunner(service.HTTPConceptRunnerConfig{
+		BaseURL:          baseURL,
+		Timeout:          time.Duration(timeoutSeconds) * time.Second,
+		Token:            cfg.Knowledge.GeneratorToken,
+		MaxConcurrency:   cfg.Knowledge.GeneratorMaxConcurrency,
+		FailureThreshold: cfg.Knowledge.GeneratorFailureThreshold,
+		CircuitCooldown:  time.Duration(cfg.Knowledge.GeneratorCircuitCooldownSeconds) * time.Second,
+	})
 	generator := service.NewConceptGenerator(knowledgeRepo, runner, time.Hour)
 
 	codes := []string{*code}

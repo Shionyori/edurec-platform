@@ -59,10 +59,14 @@ func New(cfg *config.Config, db *gorm.DB, rdb *redis.Client) *gin.Engine {
 	disciplineService := service.NewDisciplineService(knowledgeRepo)
 	learningService := service.NewLearningService(knowledgeRepo, learningRepo)
 	// 概念生成：只通过 HTTP 调 engine 的 kg_server.py，平台不执行 Python
-	conceptRunner := service.NewHTTPConceptRunner(
-		cfg.Knowledge.GeneratorURL,
-		time.Duration(cfg.Knowledge.GeneratorTimeoutSeconds)*time.Second,
-	)
+	conceptRunner := service.NewHTTPConceptRunner(service.HTTPConceptRunnerConfig{
+		BaseURL:          cfg.Knowledge.GeneratorURL,
+		Timeout:          time.Duration(cfg.Knowledge.GeneratorTimeoutSeconds) * time.Second,
+		Token:            cfg.Knowledge.GeneratorToken,
+		MaxConcurrency:   cfg.Knowledge.GeneratorMaxConcurrency,
+		FailureThreshold: cfg.Knowledge.GeneratorFailureThreshold,
+		CircuitCooldown:  time.Duration(cfg.Knowledge.GeneratorCircuitCooldownSeconds) * time.Second,
+	})
 	conceptGenerator := service.NewConceptGenerator(knowledgeRepo, conceptRunner, 10*time.Minute)
 	recommendationImportService := service.NewRecommendationImportService(
 		recommendationRepo, recommendationRunRepo, userRepo, resourceRepo, cfg.Engine.RecommendationsFile,

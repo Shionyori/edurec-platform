@@ -7,9 +7,9 @@
 
 ---
 
-## 0. 实施状态（2026-09）
+## 0. 实施状态（2026-11）
 
-分支：platform `feat/recsys-improvement`；engine `feat/recsys-improvement`。
+两仓均在 `main`；engine 的模型与契约已合并，platform 侧按 `scripts/handoff.sh` 刷新。
 
 | 阶段 | 里程碑 | 状态 |
 |---|---|---|
@@ -22,7 +22,7 @@
 ### 已完成的关键交付
 
 - **反馈信号**：曝光（独立 `resource_impressions` 表，不污染 behaviors 正样本）、点击（资源卡片）、收藏（详情页）。
-- **链路打通**：`export_snapshot` 导出 `description`/`difficulty`/`duration_minutes`；engine 新增 `scripts/infer_batch.py`（产出推荐结果 + 旁挂信封）；`handoff.sh` 调用真实入口。
+- **链路打通**：`export_snapshot` 导出 `description`/`difficulty`/`duration_minutes`；engine 的 `scripts/run_batch_infer.py` 产出推荐结果 + 旁挂信封；`handoff.sh` 调用真实入口并在交接前跑契约校验。
 - **可追溯**：`recommendation_runs` 记录每次运行的 run_id / 快照 / 模型 / 生成时间 / 导入统计；`recommendations.run_id` 关联到用户。
 - **可解释**：信封 reasons 落库并在首页卡片透出。
 - **可度量**：`GET /admin/recommendation-stats` 提供曝光/点击/CTR；`cmd/evaluate_recommendations` 对比「实际推荐 vs 热门基线」。
@@ -128,111 +128,62 @@
 
 ## 4. 现状与差距
 
-对照 §3 逐层核对（截至 `main @ bf6d0e6`）：
+对照 §3 逐层核对（2026-11）：
 
 | 层 | 应该有的 | 现状 | 判断 |
 |---|---|---|---|
-| 数据·内容 | 多源统一 + 结构化属性 | 多源统一 ✅；**正文未随快照导出** ⚠️；无难度/时长结构 ❌ | 半成品 |
-| 数据·用户 | 画像 + 目标 | 平台无画像；engine 从行为反推 | 偏弱 |
-| 数据·**反馈** | 曝光 + 点击 + 收藏 + 完成 | **前端仅上报 view**；无曝光；无完成 | **最致命短板** |
-| 特征 | 用户/内容/交叉 | engine 有文本编码 ✅；平台无 | 单薄 |
-| 召回 | 多路 | engine **仅单路语义** | 脆弱 |
-| 排序 | 多目标学习排序 | **无学习排序**，仅线性质量融合 | **缺失** |
-| 重排 | 多样性/难度/新鲜度/去重 | 重建后移除；`seen` 过滤实测未生效 | 缺失 |
-| 服务 | 多场景/解释/版本 | 仅首页单场景；无解释；无结果版本 | 半成品 |
-| 评估 | 离线 + 基线 + 在线 | engine 有离线 + 基线 ✅；平台未接；无在线 | 一半 |
-| 闭环 | 反馈回流 | **`handoff.sh` 调已删除脚本，链路断** | 不成立 |
+| 数据·内容 | 多源统一 + 结构化属性 | 多源统一 ✅；正文/难度/时长已随快照导出 ✅ | 达标 |
+| 数据·用户 | 画像 + 目标 | 平台有 `interests` 与初始问卷；engine 从行为反推需求 | 可用 |
+| 数据·反馈 | 曝光 + 点击 + 收藏 + 完成 | 曝光/点击/收藏已上报 ✅；**完成（complete）尚未建模** | 基本可用 |
+| 特征 | 用户/内容/交叉 | engine 有文本编码 + 热度/评分融合 ✅；平台不做特征 | 单薄 |
+| 召回 | 多路 | engine **仅单路语义 + 质量融合** | 待补 |
+| 排序 | 多目标学习排序 | **无学习排序**，仅线性质量融合 | 待补 |
+| 重排 | 去重/多样性/难度/新鲜度 | 出口过滤已交互 + top-N；无多样性/难度约束 | 待补 |
+| 服务 | 多场景/解释/版本 | 首页单场景；有推荐理由与 `run_id` 追溯 | 半成品 |
+| 评估 | 离线 + 基线 + 在线 | engine 有离线指标与基线 ✅；platform 有运行记录/CTR/离线评估 ✅ | 达标 |
+| 闭环 | 反馈回流 | 行为/曝光落库 → 快照 → 训练 → 导入 ✅ | 成立 |
 
-**结论**：数据治理与服务降级尚可；**反馈信号、排序阶段、评估闭环**三块是硬缺口，
-其中"反馈信号"是根——没有曝光与完成，一切推荐评估无从谈起。
+**结论**：数据治理、反馈采集、服务与评估链路已打通；**模型侧的多路召回/学习排序/重排**
+是下一阶段（P2）的主要工作。它属于研究性工作，不影响现有契约：platform 只认
+「快照进、排名 ID 出」，换模型不需要改 platform 代码。
 
-### 4.1 关键断点（已核实）
+### 4.1 已解决的历史断点
 
-1. `backend/cmd/export_snapshot/main.go:77` 的 `resources.csv` 表头**无 `description`** →
-   engine 语义模型拿到空正文（`platform.py` 降级为空串）。
-2. `scripts/handoff.sh:75,83` 调用 `scripts.train_all` / `scripts.run_batch_infer`，
-   二者**已在 engine 重建中删除**。
-3. engine 当前入口为 `scripts/train_semantic.py`，**只训练+评估，无批量推理**，
-   产不出 `recommendations.json`。
-4. 前端仅 `ResourceDetailPage` 上报 `view`；`click`/`favorite` 后端支持但前端无上报点。
-5. 全仓无 `impression`/`exposure`/`CTR` 相关代码。
+1. ✅ `export_snapshot` 已导出 `description`（以及 `difficulty` / `duration_minutes`），
+   engine 能读到非空正文。
+2. ✅ 批量推理入口统一为 `scripts/run_batch_infer.py`；旧文档里的
+   `scripts.train_all` / `scripts.infer_batch` 已清理。
+3. ✅ `handoff.sh` 调用真实入口，并在交接前后校验快照/产物。
+4. ✅ 曝光、点击、收藏上报已落地；`impression` 独立于 `behaviors`，不污染正样本。
+5. ✅ 推荐运行记录（run_id / 快照 / 模型 / 生成时间 / 导入统计）与效果看板已落地。
 
 ---
 
-## 5. 改进路线
-
-### 阶段一 · 打通推荐链路（P0，最高优先）
-
-**目标**：让 engine 结果进得来、让反馈信号采得到。不做此阶段，后续全部悬空。
-
-| # | 任务 | 仓库 | 验收标准 |
-|---|---|---|---|
-| 1 | 快照导出资源正文 `description` | platform | `resources.csv` 含 description 列，engine 能读到非空正文 |
-| 2 | 补回批量推理入口 | engine | 产出 `model/recommendations.json`（平台 ID、去重、覆盖全量用户） |
-| 3 | 修正 `handoff.sh` 调用真实入口 | platform | 一键跑通导出→训练→推理→导入 |
-| 4 | 详情页上报 `click` | platform | `user_behaviors` 出现 click 记录 |
-| 5 | 新增收藏按钮与 `favorite` 上报 | platform | 收藏落 `user_behaviors`，个人中心可见 |
-| 6 | 新增**曝光打点**接口与前端上报 | platform | 每次推荐展示落一条曝光日志 |
-
-### 阶段二 · 内容结构化（P1）
-
-**目标**：补上教育场景最关键的排序特征（难度匹配的前提）。
-
-| # | 任务 | 仓库 | 验收标准 |
-|---|---|---|---|
-| 7 | 资源新增 `难度` / `时长` 结构化字段 | platform | 模型/迁移/接口/前端展示贯通 |
-| 8 | 导入链路映射结构化字段 | platform | B 站 metadata 与数据集字段可映射入库 |
-
-### 阶段三 · 模型补全（P2，engine 为主）
+## 5. 剩余路线（P2，engine 为主）
 
 | # | 任务 | 验收标准 |
 |---|---|---|
-| 9 | 多路召回（语义 + 热门 + 协同） | 各单路与融合的离线指标可对比 |
-| 10 | 多目标排序（pClick/pComplete/pSatisfy） | 精排 AUC 与融合指标优于单信号 |
-| 11 | 重排（去重/多样性/新鲜度），修好 `seen` | 推荐去重率 100%，多样性指标可度量 |
+| 1 | 多路召回（语义 + 热门 + 协同/内容） | 各单路与融合的离线指标可对比；出口显式去重 |
+| 2 | 多目标排序（pClick / pComplete / pSatisfy） | 精排 AUC 与融合指标优于单信号 |
+| 3 | 重排（多样性/难度梯度/新鲜度） | 去重率 100%，多样性/新鲜度可度量 |
+| 4 | 完成信号（complete）采集与建模 | `behaviors` 或独立表有完成事件，进入快照与训练 |
 
-### 阶段四 · 评估中心（P3）
-
-**目标**：让"推荐有没有用"可证明——软著/答辩的硬证据。
-
-| # | 任务 | 仓库 | 验收标准 |
-|---|---|---|---|
-| 12 | 推荐运行记录表 + 指标导入 | platform | 记录 run_id/模型版本/生成时间/覆盖用户/指标 |
-| 13 | 管理后台推荐效果看板 | platform | 展示离线指标与"语义 vs 热门"对比 |
-| 14 | 离线评估与基线对比脚本 | platform | 一条命令产出指标并与基线对比 |
-
-### 阶段五 · 服务增强（P4）
-
-| # | 任务 | 仓库 | 验收标准 |
-|---|---|---|---|
-| 15 | 推荐结果版本可追溯 | platform | 接口返回 run_id/模型版本/生成时间 |
-| 16 | 推荐理由透出 | platform | 卡片/详情展示"为什么推荐" |
-| 17 | 注册后兴趣引导（冷启动） | platform | 新用户注册即有合理推荐 |
+约束：P2 只改 engine 与快照字段（新增列必须向后兼容），**不改主文件形状**；
+任何破坏性变更先升 `contract_version` 并同步两侧校验。
 
 ---
 
-## 6. 提交计划（里程碑）
+## 6. 实施记录（已完成，保留备查）
 
-> 每个里程碑一个分支、一次提交，完成后停下等待确认。
+| 阶段 | 交付 | 状态 |
+|---|---|---|
+| P0 打通链路 | 快照导正文、批量推理入口、handoff 修正、点击/收藏/曝光上报 | ✅ |
+| P1 内容结构化 | 难度/时长字段、导入映射、快照导出与 engine 读取 | ✅ |
+| P3 评估中心 | 运行记录与可追溯、效果看板、离线评估 | ✅ |
+| P4 服务增强 | 结果可追溯、推荐理由、注册后兴趣引导 | ✅ |
+| 契约 | `contracts/v1` schema + fixtures + 校验器；两侧同步检查 | ✅ |
 
-| 里程碑 | 分支 | 提交信息 | 阶段 |
-|---|---|---|---|
-| M0.0 | `docs/recsys-improvement-plan` | `docs: 新增教育资源推荐系统完善方案` | — |
-| M1.1 | `fix/export-snapshot-description` | `fix(backend): 数据快照导出资源正文 description` | P0 |
-| M1.2 | （engine 仓库） | `feat(infer): 补回批量推理入口` | P0 |
-| M1.3 | `fix/handoff-engine-entry` | `fix(scripts): handoff 调用 engine 真实入口` | P0 |
-| M1.4 | `feat/frontend-click-report` | `feat(frontend): 资源详情页上报点击行为` | P0 |
-| M1.5 | `feat/frontend-favorite` | `feat(frontend): 新增收藏按钮与收藏上报` | P0 |
-| M1.6 | `feat/backend-impression-log` | `feat(backend): 新增推荐曝光打点` | P0 |
-| M2.1 | `feat/resource-structured-fields` | `feat(backend): 资源新增难度与时长字段` | P1 |
-| M2.2 | `feat/import-structured-fields` | `feat(backend): 导入链路映射结构化字段` | P1 |
-| M3.x | engine 仓库 | 多路召回 / 多目标排序 / 重排 | P2 |
-| M4.1 | `feat/recommendation-run-tracking` | `feat(backend): 推荐运行记录与指标导入` | P3 |
-| M4.2 | `feat/admin-recsys-dashboard` | `feat(frontend): 管理后台推荐效果看板` | P3 |
-| M4.3 | `feat/offline-evaluation` | `feat(backend): 离线评估与基线对比脚本` | P3 |
-| M5.1 | `feat/recommendation-provenance` | `feat(backend): 推荐结果版本可追溯` | P4 |
-| M5.2 | `feat/recommendation-reasons` | `feat(backend): 推荐理由透出` | P4 |
-| M5.3 | `feat/onboarding-interests` | `feat(frontend): 注册后兴趣引导` | P4 |
+（P2 未开始，见 §5。）
 
 ---
 
@@ -240,7 +191,7 @@
 
 - ANN 索引（资源量小，全量点积更简单精确）
 - 实时在线推理（batch 形态已够，数据量不足）
-- 复杂深度排序模型（先多目标浅层）
+- 复杂深度排序模型（先多路召回 + 浅层多目标）
 - 学习路径 / 知识图谱 / 掌握度 / 测评（属另一选题）
 
 ---
@@ -249,10 +200,11 @@
 
 | 风险 | 缓解 |
 |---|---|
-| engine 仓库改动需另行提交（跨仓） | 每个 engine 任务单独提交并说明依赖 |
-| engine 语义模型目前打不过热门基线 | 通过补正文 + 多路召回 + 排序逐步改进；以离线指标为准 |
-| 曝光打点会放大数据量 | 批量写入 + 定期清理，先保证有数据 |
+| engine 仓库改动需另行提交（跨仓） | 每个 engine 任务单独提交；契约先改 `contracts/v1` 再同步 |
+| engine 语义模型单独用弱于热门基线 | 已用「语义 + 热度融合」；后续以离线指标为准 |
+| 曝光打点放大数据量 | 批量写入 + 定期清理，先保证有数据 |
 | 结构化字段历史数据缺失 | 允许为空，逐步回填，不阻塞链路 |
+| platform 数据量小 | 先积累真实行为，再评估模型收益 |
 
 ---
 

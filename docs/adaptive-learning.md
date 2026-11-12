@@ -37,10 +37,10 @@
   （标题 1.0、标签 0.6、描述 0.3，阈值 0.5），当前 380+ 条。
 - 层级由先修边拓扑推导，**有环直接报错**（知识点层必须严格无环）。
 
-### 概念层（engine / MOOCCube + generate.py）
+### 概念层（MOOCCube + engine 生成）
 
-- 数据来源：`E:\work\learn\edurec-engine\model\data\MOOCCube`（engine 仓库的 model/，不入库；
-  代码在 `src/kg/`）。
+- 离线数据来源：平台本地的 `backend/data/MOOCCube`（不入库；MOOCCube 是公开数据集，
+  由使用者下载/挂载）。engine 侧生成能力在 `src/kg/`，平台不直接读 engine 目录。
 - 规模：425 个概念、1027 条先修边（数学 + 计算机科学技术）。
 - 概念没有学科标签，导入时通过「课程 → 概念」反推：
   课程名按学科关键词归类 → 概念按所属课程投票 → 票数最多的学科即归属。
@@ -54,14 +54,14 @@
 
 ```yaml
 knowledge:
-  source_dir: "E:/work/learn/edurec-engine/model/data/MOOCCube"
+  source_dir: "data/MOOCCube"
 ```
 
-迁入 engine 仓库后只改这一处路径，**不改代码**：
+换目录只改这一处路径（或用环境变量 `KNOWLEDGE_SOURCE_DIR`），**不改代码**：
 
-```powershell
-.\scripts\set-kg-source.ps1 -Show
-.\scripts\set-kg-source.ps1 -Path 'D:\engine\data\MOOCCube'
+```bash
+bash scripts/set-kg-source.sh --show
+bash scripts/set-kg-source.sh data/MOOCCube
 ```
 
 图谱规则调整后整体重建（只清图谱派生表，资源/用户/行为不动）：
@@ -150,9 +150,9 @@ knowledge:
 
 概念不再只靠离线导入：engine 提供 `scripts/kg_server.py`，平台在搜索时实时调用。
 
-```powershell
-cd E:\work\learn\edurec-engine
-python scripts/kg_server.py --host 127.0.0.1 --port 8090
+```bash
+cd <engine 仓库根目录>
+.venv/bin/python scripts/kg_server.py --host 127.0.0.1 --port 8090
 ```
 
 engine 接口（标准库 HTTP，无额外依赖）：

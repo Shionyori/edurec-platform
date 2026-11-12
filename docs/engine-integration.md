@@ -1,35 +1,44 @@
 # edurec-engine 接入说明
 
-## 背景
+## 1. 边界
 
-edurec-engine 是独立仓库（`github.com/Shionyori/edurec-engine`），离线完成「语义双塔召回 + 质量信号融合」。
-platform 与 engine 的接入形态为**离线批量训练 + 结果物化落库**：engine 消费平台导出的数据快照完成训练与全量推理，
-产出每个用户的推荐结果列表；platform 将结果导入 `Recommendation` 缓存表，推荐接口读缓存返回。
-**platform 侧不运行模型、不做推理**——个性化结果完全来自 engine 离线产出，模型权重只保留在 engine。
-
-该形态对齐真实推荐系统的离线 batch 链路：训练与全量推理代价高，按周期批量执行；serving 只消费预计算结果。
-batch 形态为本项目**既定接入方式**，不以实时服务化为前提。
-
-两仓之间的**交叉接口即 platform 的 MySQL**：engine 的训练输入是业务表（users/resources/behaviors/ratings）的快照导出，
-serving 输出落在 `Recommendation` 缓存表；快照与推荐结果文件只是该库数据的序列化载体（见 [data-handoff.md](./data-handoff.md)）。
-
-## 接入形态：离线批量 + 结果落库
-
-### 数据流
+edurec-engine 是独立仓库（`github.com/Shionyori/edurec-engine`），离线完成
+「语义双塔召回 + 质量信号融合」。platform 与 engine 的接入形态是**离线批量训练 + 结果物化落库**：
 
 ```
-platform 导出快照（export_snapshot，平台真实数据）
+platform 导出快照 → engine 训练 + 全量推理 → 推荐结果文件 → platform 导入缓存表
+```
+
+- **platform 不运行模型、不做推理**；模型权重只保留在 engine。
+- 两仓库**不共享数据库、不共享代码**；交叉接口是 platform 的 MySQL 数据的序列化载体
+  （CSV 快照进、排名 ID 列表出）。
+- 唯一允许的在线调用是**可选**的知识生成服务（`kg_server.py`），
+  只用于「标题/描述 → 概念」，不参与推荐主链路（见 §7）。
+
+规范契约（engine 仓库）：
+
+- 主契约：[`docs/platform-contract.md`](https://github.com/Shionyori/edurec-engine/blob/main/docs/platform-contract.md)
+- 可执行版本：`../edurec-engine/contracts/v1/`（JSON Schema + fixtures + 校验器）
+- 当前数据流：[`docs/data-flow.md`](https://github.com/Shionyori/edurec-engine/blob/main/docs/data-flow.md)
+
+## 2. 数据流
+
+```
+platform 导出快照（cmd/export_snapshot，平台真实数据）
    ↓ 拷至 engine dataset/platform_snapshot/<run_id>/
-engine 训练 + 全量推理（train_semantic / infer_batch，同一快照目录）
-   ↓ model/recommendations.json（平台原始 ID，覆盖全量用户，冷启动走热门兜底）
-拷回 platform data/ 后，POST /api/v1/admin/recommendations/import（管理员）
+engine 训练 + 全量推理（train_semantic / run_batch_infer，同一快照目录）
+   ↓ model/recommendations.json（+ 可选 recommendations.meta.json）
+拷回 platform backend/data/ 后，POST /api/v1/admin/recommendations/import（管理员）
    ↓
 Recommendation 缓存表（每个用户一条）
    ↓
 GET /api/v1/recommendations → 命中缓存按序返回；未命中按评分降序热门兜底并写缓存
 ```
 
-### 配置文件
+一轮完整刷新（含校验步骤）见 [data-handoff.md](./data-handoff.md)，
+一键脚本为 [`scripts/handoff.sh`](../scripts/handoff.sh)。
+
+## 3. 配置
 
 `backend/configs/config.yaml`：
 
@@ -41,53 +50,76 @@ engine:
   dataset_dir: "data/sim"
   # 数据快照导出目录（export_snapshot 输出；交由 engine 训练）
   snapshot_dir: "data/snapshots"
+
+knowledge:
+  # MOOCCube 数据目录：平台本地外部数据（默认 backend/data/MOOCCube，不入库）。
+  # 不指向 engine 仓库；为空时只建学科层、跳过概念层。
+  source_dir: "data/MOOCCube"
+  # 可选在线能力：engine 的 kg_server.py；未启动只影响自动生成概念。
+  generator_url: "http://127.0.0.1:8090"
+  generator_timeout_seconds: 180
 ```
 
-### 数据快照（platform → engine）
-
-`CONFIG_PATH=configs/config.yaml go run ./cmd/export_snapshot` 将平台真实数据导出到 `data/snapshots/<run_id>/`
-（`meta.json` + `users/resources/categories/behaviors/ratings.csv` + sha256）。快照拷给 engine 后：
+## 4. 数据快照（platform → engine）
 
 ```bash
-python -m scripts.train_semantic --data-source platform --snapshot-dir dataset/platform_snapshot/<run_id>
-python -m scripts.infer_batch    --data-source platform --snapshot-dir dataset/platform_snapshot/<run_id>
+cd backend
+CONFIG_PATH=configs/config.yaml go run ./cmd/export_snapshot
+# → data/snapshots/<run_id>/
 ```
 
-### 导入接口（engine → platform）
+快照内容：`meta.json` + `users.csv / resources.csv / behaviors.csv / ratings.csv`
+（`categories.csv` 附带）。engine 加载前会校验：
+
+- `contract_version == 1`（不认识就报错退出）；
+- `files_sha256`（挡住拷贝中断）；
+- `resources.csv` 的必需列（`description` 为可选，缺失时降级为空串）。
+
+## 5. 导入接口（engine → platform）
 
 `POST /api/v1/admin/recommendations/import`（需管理员），无参数。
 
-- 读取 `engine.recommendations_file` 指向的 JSON，格式为 `{ "<user_id>": [<resource_id>, ...] }`（每用户 top-N）
-- 按平台库中实际存在的用户/资源过滤后，覆盖写入该用户的 `Recommendation` 缓存行
-- 返回统计：`imported_users / skipped_users / imported_resources / skipped_resources`
+- 读取 `engine.recommendations_file` 指向的 JSON，格式为
+  `{ "<user_id>": [<resource_id>, ...] }`（每用户 top-N，按相关性降序、已去重）。
+- 按平台库中实际存在的用户/资源过滤后，覆盖写入该用户的 `Recommendation` 缓存行。
+- 返回统计：`imported_users / skipped_users / imported_resources / skipped_resources`。
+- 同目录的 `<主文件名>.meta.json` 是可选旁挂信封（run_id、生成时间、模型、分数、理由）；
+  缺失/损坏不影响导入。
 
-### ID 与覆盖口径
+## 6. ID、覆盖与服务语义
 
-- platform 数据源下 engine 全程使用**平台原始 ID**：快照导出全量用户（含冷启动）；engine 的清洗过滤只作用于训练集，
-  推理对快照全量用户产出并在出口回映射为平台 ID——导入可全量命中，不存在 ID 错位匹配。
-- sim / movielens 轨道仅用于演示与回归测试，其数据与平台 ID 无关，**不得**作为导入真实平台的来源。
+- **ID 原样透传**：platform 轨道上 engine 使用平台原始整数 ID；sim / movielens 轨道仅用于
+  演示与回归，其输出**不得**导入 platform。
+- **覆盖全量用户**：包括冷启动用户（走热门兜底）。单用户为空数组或缺席 = 「本次不更新」，
+  平台保留旧缓存行。
+- **服务始终有返回**：缓存未命中 → 按评分热门兜底并写缓存；导入失败 → 旧结果或兜底继续服务
+  （陈旧但可用）。
+- **时效**：结果反映「截至导出时刻」的快照；新行为/新资源在下一轮刷新后生效。
 
-### 服务语义：空 / 缺失 / 陈旧
+## 7. 可选在线能力：知识生成
 
-- 用户无缓存行（新注册、未被覆盖）→ `GET` 按评分热门兜底并写缓存，不会无推荐。
-- 单用户结果为空或用户不在平台库 → 导入跳过该用户，保留其旧缓存行。
-- 整份文件为空或导入失败 → 缓存不变，服务继续返回旧结果或兜底（陈旧但可用）。
+engine 提供 `scripts/kg_server.py`：
 
-### 刷新节奏与时效口径
+| 方法 | 路径 | 说明 |
+|---|---|---|
+| GET | `/health` | 状态 + `contract_version` |
+| POST | `/knowledge/generate` | `{title, description, point_code}` → 概念列表 |
+| POST | `/knowledge/generate_batch` | 批量，单条失败不阻断整批 |
 
-- 结果反映「截至导出时刻」的快照；用户新行为/新资源在下一轮「导出 → 训练/推理 → 导入」后生效。
-- 一轮完整刷新见 [data-handoff.md](./data-handoff.md)；由人工或后续定时任务驱动。
+契约见 engine 的 [`docs/kg-service-contract.md`](https://github.com/Shionyori/edurec-engine/blob/main/docs/kg-service-contract.md)。
+平台侧只在「自动生成概念」时调用；engine 未启动不影响推荐、搜索、学习路径。
+这也与「两仓库目录互不读写」不冲突：它是显式、可选的 HTTP 契约。
 
-## 演进方向（可选）
+## 8. 演进方向（可选，不改变主链路）
 
-batch 形态为既定选择，以下作为可选演进，不改变主链路：
+1. **近线增强**：请求时过滤「最近已看」、新资源曝光通道、曝光打点与效果指标。
+2. **在线推理**：engine 增加 serving 层（FastAPI + ANN），缓存未命中时实时调用；
+   成本高，仅在场景确需时引入。
 
-1. **在线服务化**：engine 增加 HTTP serving 层（如 FastAPI + ANN），缓存未命中时实时调用——属于实时推理，成本高，仅在场景确需时引入。
-2. **近线增强**：请求时过滤「最近已看」、为新上架资源提供曝光通道、曝光打点与效果指标——在 batch 之外补时效与反馈。
+## 9. 相关文档
 
-## 相关文档
-
-- [design.md](./design.md) —— 决策记录 #12
-- [api-design.md](./api-design.md) —— 6.1 推荐接口、6.2 导入接口
-- [data-handoff.md](./data-handoff.md) —— 数据交接与一轮刷新流程
-- [README.md](../README.md) —— 推荐数据流速览
+- [data-handoff.md](./data-handoff.md) —— 一轮刷新的完整步骤与校验
+- [design.md](./design.md) —— 架构与决策记录
+- [api-design.md](./api-design.md) —— 推荐接口与导入接口
+- engine 侧：[`docs/platform-contract.md`](https://github.com/Shionyori/edurec-engine/blob/main/docs/platform-contract.md)、
+  [`docs/data-flow.md`](https://github.com/Shionyori/edurec-engine/blob/main/docs/data-flow.md)

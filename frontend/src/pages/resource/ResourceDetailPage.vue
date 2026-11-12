@@ -46,7 +46,7 @@ const initialComment = ref('')
 let prefilled = false
 
 // 只有 B 站来源才有可爬取的评论。判据是「来源是 B 站」而非「类型是 video」：
-// 长合集会被归入 course（见 docs/bilibili-import.md），若绑在 type 上这些课程就没了评论区。
+// 长合集会被归入 course（见 docs/guides/bilibili-import.md），若绑在 type 上这些课程就没了评论区。
 const isBilibiliResource = computed(
   () => !!resource.value?.source_url?.includes('bilibili.com'),
 )

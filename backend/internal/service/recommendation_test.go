@@ -18,14 +18,15 @@ type replaceCall struct {
 }
 
 type fakeRecommendationRepository struct {
-	found         *model.Recommendation
-	findErr       error
-	replaceUserID uint
-	replaceIDs    string
-	replaceRunID  string
-	replaceErr    error
-	saved         *model.Recommendation
-	replaceCalls  []replaceCall
+	found            *model.Recommendation
+	findErr          error
+	replaceUserID    uint
+	replaceIDs       string
+	replaceRunID     string
+	replaceErr       error
+	saved            *model.Recommendation
+	replaceCalls     []replaceCall
+	replaceManyCalls []int // 每次 ReplaceMany 的批量大小，用于断言分批写入
 }
 
 func (f *fakeRecommendationRepository) FindByUserID(userID uint) (*model.Recommendation, error) {
@@ -36,23 +37,34 @@ func (f *fakeRecommendationRepository) FindByUserID(userID uint) (*model.Recomme
 }
 
 func (f *fakeRecommendationRepository) Replace(input repository.RecommendationUpsert) (*model.Recommendation, error) {
-	if f.replaceErr != nil {
-		return nil, f.replaceErr
-	}
-	f.replaceUserID = input.UserID
-	f.replaceIDs = input.ResourceIDs
-	f.replaceRunID = input.RunID
-	f.replaceCalls = append(f.replaceCalls, replaceCall{userID: input.UserID, ids: input.ResourceIDs})
-	f.saved = &model.Recommendation{
-		ID:          1,
-		UserID:      input.UserID,
-		ResourceIDs: input.ResourceIDs,
-		RunID:       input.RunID,
-		Reasons:     input.Reasons,
-		CreatedAt:   input.Now,
-		UpdatedAt:   input.Now,
+	if err := f.ReplaceMany([]repository.RecommendationUpsert{input}); err != nil {
+		return nil, err
 	}
 	return f.saved, nil
+}
+
+func (f *fakeRecommendationRepository) ReplaceMany(inputs []repository.RecommendationUpsert) error {
+	if f.replaceErr != nil {
+		return f.replaceErr
+	}
+	f.replaceManyCalls = append(f.replaceManyCalls, len(inputs))
+	for _, input := range inputs {
+		f.replaceUserID = input.UserID
+		f.replaceIDs = input.ResourceIDs
+		f.replaceRunID = input.RunID
+		f.replaceCalls = append(f.replaceCalls,
+			replaceCall{userID: input.UserID, ids: input.ResourceIDs})
+		f.saved = &model.Recommendation{
+			ID:          1,
+			UserID:      input.UserID,
+			ResourceIDs: input.ResourceIDs,
+			RunID:       input.RunID,
+			Reasons:     input.Reasons,
+			CreatedAt:   input.Now,
+			UpdatedAt:   input.Now,
+		}
+	}
+	return nil
 }
 
 func TestRecommendGetCacheHitReturnsCachedOrder(t *testing.T) {

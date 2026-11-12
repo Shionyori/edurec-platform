@@ -1,6 +1,6 @@
 """B 站公开 JSON 接口客户端。
 
-设计原则（见 docs/bilibili-import.md）：
+设计原则（见 docs/guides/bilibili-import.md）：
 
 - **只用官方 web 接口的 JSON 返回**，不解析 HTML 页面（B 站改版即失效）
 - **不伪造设备指纹、不绕过人机校验**：`buvid3` 由直接访问首页让 B 站正常下发，

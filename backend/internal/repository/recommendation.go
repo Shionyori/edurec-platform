@@ -6,6 +6,7 @@ import (
 
 	"github.com/Shionyori/edurec-platform/backend/internal/model"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 // RecommendationUpsert 覆盖写某用户推荐缓存的入参。
@@ -24,6 +25,9 @@ type RecommendationRepository interface {
 	FindByUserID(userID uint) (*model.Recommendation, error)
 	// Replace 整行替换某用户的推荐缓存（每个用户只保留一份）
 	Replace(input RecommendationUpsert) (*model.Recommendation, error)
+	// ReplaceMany 在一个事务里批量覆盖多个用户的缓存。
+	// 导入是「一批结果一起生效」的操作，逐用户删除+插入既慢又可能留下半批状态。
+	ReplaceMany(inputs []RecommendationUpsert) error
 }
 
 type RecommendationRepo struct {
@@ -47,14 +51,49 @@ func (r *RecommendationRepo) FindByUserID(userID uint) (*model.Recommendation, e
 }
 
 func (r *RecommendationRepo) Replace(input RecommendationUpsert) (*model.Recommendation, error) {
-	// 先删除旧缓存再写入，保证 CreatedAt / UpdatedAt 均为本次生成时间
-	if err := r.db.Where("user_id = ?", input.UserID).Delete(&model.Recommendation{}).Error; err != nil {
-		return nil, fmt.Errorf("清理旧推荐缓存失败: %w", err)
+	if err := r.ReplaceMany([]RecommendationUpsert{input}); err != nil {
+		return nil, err
 	}
+	return toRecommendation(input), nil
+}
+
+// ReplaceMany 批量覆盖写：利用 user_id 唯一索引做一次 UPSERT。
+//
+// 为什么不是「逐用户先删后插」：导入一份全量结果可能有数万用户，逐条往返
+// 既慢，又会在中途失败时留下「一部分用户已更新、另一部分还是旧结果」的半批状态。
+// CreateInBatches + ON DUPLICATE KEY UPDATE 把**本次传入的这一批**放进一个事务；
+// 调用方（导入服务）再按 ≤500 用户切分，避免单事务长时间持锁。
+// 语义：每一批内部要么全部生效，要么全部不生效。
+func (r *RecommendationRepo) ReplaceMany(inputs []RecommendationUpsert) error {
+	if len(inputs) == 0 {
+		return nil
+	}
+	rows := make([]model.Recommendation, 0, len(inputs))
+	for _, input := range inputs {
+		rows = append(rows, *toRecommendation(input))
+	}
+
+	err := r.db.Transaction(func(tx *gorm.DB) error {
+		return tx.Clauses(clause.OnConflict{
+			Columns: []clause.Column{{Name: "user_id"}},
+			DoUpdates: clause.AssignmentColumns([]string{
+				"resource_ids", "run_id", "reasons", "created_at", "updated_at",
+			}),
+		}).CreateInBatches(&rows, 200).Error
+	})
+	if err != nil {
+		return fmt.Errorf("批量保存推荐缓存失败: %w", err)
+	}
+	return nil
+}
+
+// toRecommendation 把入参归一成模型；Reasons 为空时写 `[]`，
+// 保证读侧可以无条件 JSON 解析。
+func toRecommendation(input RecommendationUpsert) *model.Recommendation {
 	if input.Reasons == "" {
 		input.Reasons = "[]"
 	}
-	rec := &model.Recommendation{
+	return &model.Recommendation{
 		UserID:      input.UserID,
 		ResourceIDs: input.ResourceIDs,
 		RunID:       input.RunID,
@@ -62,8 +101,4 @@ func (r *RecommendationRepo) Replace(input RecommendationUpsert) (*model.Recomme
 		CreatedAt:   input.Now,
 		UpdatedAt:   input.Now,
 	}
-	if err := r.db.Create(rec).Error; err != nil {
-		return nil, fmt.Errorf("保存推荐缓存失败: %w", err)
-	}
-	return rec, nil
 }

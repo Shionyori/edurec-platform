@@ -1,11 +1,11 @@
 <#
 .SYNOPSIS
-  一键切换知识图谱数据源路径（engine / MOOCCube）。
+  一键切换知识图谱数据源路径（MOOCCube）。
 
 .DESCRIPTION
   修改 backend/configs/<Config> 里 knowledge.source_dir 的值，并在首次修改前保留 .bak 备份。
-  后续把 platform 迁入 engine 仓库时，只需重新执行本脚本指向新数据目录，
-  不需要改任何代码。
+  数据目录是平台本地的外部数据（默认 backend/data/MOOCCube），不指向 engine 仓库；
+  换目录只需重新执行本脚本，不需要改任何代码。
 
   数据源目录应包含：
     relations/prerequisite-dependency.json
@@ -15,7 +15,7 @@
     entities/course.json
 
 .PARAMETER Path
-  新的 MOOCCube 数据目录。建议相对 backend/ 运行目录（如 ../../edurec-engine/model/data/MOOCCube），
+  新的 MOOCCube 数据目录。建议相对 backend/ 运行目录（如 data/MOOCCube），
   也可以给绝对路径。
 
 .PARAMETER Config
@@ -26,8 +26,8 @@
 
 .EXAMPLE
   .\scripts\set-kg-source.ps1 -Show
-  .\scripts\set-kg-source.ps1 -Path 'D:\engine\data\MOOCCube'
-  .\scripts\set-kg-source.ps1 -Path '..\..\edurec-engine\dataset\MOOCCube'
+  .\scripts\set-kg-source.ps1 -Path 'D:\data\MOOCCube'
+  .\scripts\set-kg-source.ps1 -Path '..\backend\data\MOOCCube'
 #>
 param(
   [string]$Path,
@@ -129,7 +129,7 @@ if (-not $found -and $inBlock) {
 }
 if (-not $found) {
   $newLines.Add('')
-  $newLines.Add('# 知识图谱数据源（临时路径，迁入 engine 后改这里或用 scripts/set-kg-source.ps1）')
+  $newLines.Add('# 知识图谱数据源（平台本地外部数据，或用 scripts/set-kg-source.ps1 切换）')
   $newLines.Add('knowledge:')
   $newLines.Add("  source_dir: `"$value`"")
   $inserted = $true

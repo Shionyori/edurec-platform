@@ -12,6 +12,7 @@
 #
 # 用法：
 #   bash scripts/start.sh           # 一键启动
+#   bash scripts/start.sh --with-kg # 另起 engine 的 KG 在线服务（可选旁路）
 #   bash scripts/stop.sh            # 停止服务
 #   bash scripts/stop.sh --with-db  # 连容器一起停
 #
@@ -19,6 +20,9 @@
 #   CONFIG_PATH    后端配置（默认 configs/config.yaml，相对 backend/）
 #   MYSQL_PASSWORD MySQL root 密码（默认 root，与 config.yaml 对齐）
 #   MYSQL_DATABASE 数据库名（默认 edurec）
+#   ENGINE_ROOT    engine 仓库（默认 ../edurec-engine）
+#   KG_PORT        KG 服务端口（默认 8090）
+#   KNOWLEDGE_GENERATOR_TOKEN  KG 服务 token（可选；与 engine 侧一致）
 # =============================================================================
 set -euo pipefail
 
@@ -33,6 +37,18 @@ MYSQL_PASSWORD="${MYSQL_PASSWORD:-root}"
 MYSQL_DATABASE="${MYSQL_DATABASE:-edurec}"
 BACKEND_PORT="${BACKEND_PORT:-8080}"
 FRONTEND_PORT="${FRONTEND_PORT:-5173}"
+ENGINE_ROOT="${ENGINE_ROOT:-$PLATFORM_ROOT/../edurec-engine}"
+ENGINE_PYTHON="${ENGINE_PYTHON:-$ENGINE_ROOT/.venv/bin/python}"
+KG_PORT="${KG_PORT:-8090}"
+
+WITH_KG=0
+for arg in "$@"; do
+  case "$arg" in
+    --with-kg) WITH_KG=1 ;;
+    -h|--help) sed -n '2,22p' "$0"; exit 0 ;;
+    *) echo "未知参数: $arg" >&2; exit 2 ;;
+  esac
+done
 
 log() { echo "[start] $*"; }
 die() { echo "[start] 错误: $*" >&2; exit 1; }
@@ -82,6 +98,7 @@ if port_listening "$BACKEND_PORT"; then
   echo "  端口 ${BACKEND_PORT} 已被占用，跳过"
 else
   ( cd "$BACKEND_DIR" && CONFIG_PATH="$CONFIG_PATH" \
+    KNOWLEDGE_GENERATOR_TOKEN="${KNOWLEDGE_GENERATOR_TOKEN:-}" \
     nohup go run ./cmd/server > "$RUN_DIR/backend.log" 2>&1 & \
     echo $! > "$RUN_DIR/backend.pid" )
   echo "  后端已启动，日志: scripts/.run/backend.log"
@@ -98,8 +115,28 @@ else
   echo "  前端已启动，日志: scripts/.run/frontend.log"
 fi
 
+# ---- [4.5] 可选：engine KG 在线服务 -------------------------------------------
+if [ "$WITH_KG" = 1 ]; then
+  log "[4.5] 启动 engine KG 服务 (port=${KG_PORT})"
+  [ -d "$ENGINE_ROOT" ] || die "engine 目录不存在: $ENGINE_ROOT（可用 ENGINE_ROOT 覆盖）"
+  [ -x "$ENGINE_PYTHON" ] || die "engine 依赖未安装: $ENGINE_PYTHON"
+  if port_listening "$KG_PORT"; then
+    echo "  端口 ${KG_PORT} 已被占用，跳过"
+  else
+    KG_ARGS=(--host 127.0.0.1 --port "$KG_PORT")
+    [ -n "${KG_READY_FILE:-}" ] && KG_ARGS+=(--ready-file "$KG_READY_FILE")
+    ( cd "$ENGINE_ROOT" && \
+      nohup env KG_SERVICE_TOKEN="${KNOWLEDGE_GENERATOR_TOKEN:-}" \
+      "$ENGINE_PYTHON" scripts/kg_server.py "${KG_ARGS[@]}" \
+      > "$RUN_DIR/kg.log" 2>&1 & \
+      echo $! > "$RUN_DIR/kg.pid" )
+    echo "  KG 服务已启动，日志: scripts/.run/kg.log"
+  fi
+fi
+
 # ---- [5] 总结 ------------------------------------------------------------------
 log "[5] 全部完成"
 echo "  后端:   http://localhost:${BACKEND_PORT}"
 echo "  前端:   http://localhost:${FRONTEND_PORT}"
+[ "$WITH_KG" = 1 ] && echo "  KG:     http://127.0.0.1:${KG_PORT}（可选在线能力）"
 echo "  数据库: MySQL root/${MYSQL_PASSWORD} @ localhost:3306 / ${MYSQL_DATABASE}"

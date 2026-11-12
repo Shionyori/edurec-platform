@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-  一键重建知识图谱（学科层 + engine 概念层）。
+  一键重建知识图谱（学科层 + MOOCCube 概念层）。
 
 .DESCRIPTION
   默认先清空上一版图谱派生数据再重建（-KeepOld 可保留旧数据做增量）。
@@ -27,7 +27,7 @@
 .EXAMPLE
   .\scripts\rebuild-kg.ps1
   .\scripts\rebuild-kg.ps1 -DryRun
-  .\scripts\rebuild-kg.ps1 -Source 'D:\engine\data\MOOCCube'
+  .\scripts\rebuild-kg.ps1 -Source 'D:\data\MOOCCube'
 #>
 param(
   [string]$Source,

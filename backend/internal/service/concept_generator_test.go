@@ -5,6 +5,9 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"os"
+	"strings"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -25,17 +28,16 @@ func TestHTTPConceptRunnerParsesConcepts(t *testing.T) {
 		if err := json.NewDecoder(r.Body).Decode(&got); err != nil {
 			t.Errorf("decode body: %v", err)
 		}
-		_ = json.NewEncoder(w).Encode(map[string]any{
-			"point_code": "mathematical-analysis",
-			"concepts": []map[string]any{
-				{"name": "积分", "page_rank": 0.045},
-				{"name": "导数", "page_rank": 0.042},
-			},
-		})
+		// 响应样本来自 engine 的契约 fixture（scripts/check-contract-sync.sh 同步）
+		body, err := os.ReadFile("testdata/kg-generate.contract.json")
+		if err != nil {
+			t.Fatalf("read fixture: %v", err)
+		}
+		_, _ = w.Write(body)
 	}))
 	defer server.Close()
 
-	runner := service.NewHTTPConceptRunner(server.URL, 5*time.Second)
+	runner := service.NewHTTPConceptRunner(service.HTTPConceptRunnerConfig{BaseURL: server.URL, Timeout: 5 * time.Second})
 	concepts, err := runner.Generate(context.Background(), &model.KnowledgePoint{
 		Code: "mathematical-analysis", Name: "数学分析", Description: "极限与积分",
 	})
@@ -57,7 +59,7 @@ func TestHTTPConceptRunnerReturnsEngineError(t *testing.T) {
 	}))
 	defer server.Close()
 
-	runner := service.NewHTTPConceptRunner(server.URL, 5*time.Second)
+	runner := service.NewHTTPConceptRunner(service.HTTPConceptRunnerConfig{BaseURL: server.URL, Timeout: 5 * time.Second})
 	if _, err := runner.Generate(context.Background(), &model.KnowledgePoint{Name: "数学分析"}); err == nil {
 		t.Fatal("engine 500 时应当报错")
 	}
@@ -74,5 +76,81 @@ func TestGeneratedConceptCodeIsStableAndUnique(t *testing.T) {
 	}
 	if a1 == b || a1 == c {
 		t.Errorf("不同概念/学科应得到不同 code")
+	}
+}
+
+func TestHTTPConceptRunnerSendsAuthAndRequestID(t *testing.T) {
+	var gotAuth, gotRequestID string
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		gotAuth = r.Header.Get("Authorization")
+		gotRequestID = r.Header.Get("X-Request-ID")
+		body, err := os.ReadFile("testdata/kg-generate.contract.json")
+		if err != nil {
+			t.Fatalf("read fixture: %v", err)
+		}
+		_, _ = w.Write(body)
+	}))
+	defer server.Close()
+
+	runner := service.NewHTTPConceptRunner(service.HTTPConceptRunnerConfig{
+		BaseURL: server.URL, Timeout: 5 * time.Second, Token: "secret",
+	})
+	ctx := service.WithRequestID(context.Background(), "req-abc")
+	if _, err := runner.Generate(ctx, &model.KnowledgePoint{Name: "数学分析"}); err != nil {
+		t.Fatalf("Generate() error = %v", err)
+	}
+	if gotAuth != "Bearer secret" {
+		t.Fatalf("Authorization = %q, want Bearer secret", gotAuth)
+	}
+	if gotRequestID != "req-abc" {
+		t.Fatalf("X-Request-ID = %q, want req-abc", gotRequestID)
+	}
+}
+
+func TestHTTPConceptRunnerRejectsUnknownContractVersion(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		_ = json.NewEncoder(w).Encode(map[string]any{
+			"contract_version": 2,
+			"concepts":         []map[string]any{{"name": "积分", "page_rank": 0.1}},
+		})
+	}))
+	defer server.Close()
+
+	runner := service.NewHTTPConceptRunner(service.HTTPConceptRunnerConfig{
+		BaseURL: server.URL, Timeout: 5 * time.Second,
+	})
+	_, err := runner.Generate(context.Background(), &model.KnowledgePoint{Name: "数学分析"})
+	if err == nil || !strings.Contains(err.Error(), "契约版本") {
+		t.Fatalf("Generate() error = %v, want 契约版本错误", err)
+	}
+}
+
+func TestHTTPConceptRunnerCircuitBreakerOpens(t *testing.T) {
+	var hits int32
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		atomic.AddInt32(&hits, 1)
+		w.WriteHeader(http.StatusInternalServerError)
+		_ = json.NewEncoder(w).Encode(map[string]any{"error": "boom"})
+	}))
+	defer server.Close()
+
+	runner := service.NewHTTPConceptRunner(service.HTTPConceptRunnerConfig{
+		BaseURL:          server.URL,
+		Timeout:          5 * time.Second,
+		FailureThreshold: 2,
+		CircuitCooldown:  time.Hour,
+	})
+	point := &model.KnowledgePoint{Name: "数学分析"}
+	for i := 0; i < 2; i++ {
+		if _, err := runner.Generate(context.Background(), point); err == nil {
+			t.Fatalf("第 %d 次调用应失败", i+1)
+		}
+	}
+	_, err := runner.Generate(context.Background(), point)
+	if err == nil || !strings.Contains(err.Error(), "熔断") {
+		t.Fatalf("熔断后的调用 error = %v, want 熔断提示", err)
+	}
+	if got := atomic.LoadInt32(&hits); got != 2 {
+		t.Fatalf("engine 实际被调用 %d 次, want 2（熔断后不应再发请求）", got)
 	}
 }

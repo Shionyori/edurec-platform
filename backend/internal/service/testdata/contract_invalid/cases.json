@@ -1,0 +1,46 @@
+[
+  {
+    "file": "bom.json",
+    "target": "recommendations"
+  },
+  {
+    "file": "string_id.json",
+    "target": "recommendations"
+  },
+  {
+    "file": "float_id.json",
+    "target": "recommendations"
+  },
+  {
+    "file": "negative_id.json",
+    "target": "recommendations"
+  },
+  {
+    "file": "extra_top_level.json",
+    "target": "recommendations"
+  },
+  {
+    "file": "non_numeric_key.json",
+    "target": "recommendations"
+  },
+  {
+    "file": "not_object.json",
+    "target": "recommendations"
+  },
+  {
+    "file": "duplicate_ids.json",
+    "target": "recommendations"
+  },
+  {
+    "file": "trailing_garbage.json",
+    "target": "recommendations"
+  },
+  {
+    "file": "envelope_bad_scores.json",
+    "target": "envelope"
+  },
+  {
+    "file": "envelope_bad_version.json",
+    "target": "envelope"
+  }
+]

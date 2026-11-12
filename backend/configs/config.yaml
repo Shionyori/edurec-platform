@@ -26,7 +26,7 @@ jwt:
   refresh_expire: 10080
 
 engine:
-  # 推荐结果文件：engine 侧生成后【手动拷贝】到这里（见 docs/data-handoff.md）
+  # 推荐结果文件：engine 侧生成后【手动拷贝】到这里（见 docs/guides/data-handoff.md）
   recommendations_file: "data/recommendations.json"
   # 演示/模拟数据集：engine 侧 dataset/sim【手动拷贝】到这里（demo_seed 播种用）
   dataset_dir: "data/sim"
@@ -75,19 +75,27 @@ content_rules:
     - 讲解
   longform_min_minutes: 600
 
-# 知识图谱数据源（engine / MOOCCube）：学科层用本仓库数据，概念层从这里导入。
+# 知识图谱数据源（MOOCCube）：学科层用本仓库数据，概念层从平台本地数据目录导入。
 #
-# engine 仓库与本仓库并列，代码在 src/kg/、数据在 model/（不入库）：
-#   E:\work\learn\edurec-engine\model\data\MOOCCube
-# 只需改这一处（或设置环境变量 KNOWLEDGE_SOURCE_DIR），
-# 也可以用 scripts/set-kg-source.ps1 一键切换，不必改代码。
-# 路径相对 backend/ 运行目录解析。
+# 这里**不指向 engine 仓库**：两仓库目录互不读写。MOOCCube 是公开数据集，
+# 请下载/挂载到 backend/data/MOOCCube（已被 .gitignore 覆盖），或设置
+# 环境变量 KNOWLEDGE_SOURCE_DIR / 用 scripts/set-kg-source.sh 覆盖。
+# 为空时只建学科层，跳过概念层。路径相对 backend/ 运行目录解析。
 knowledge:
-  source_dir: "../../edurec-engine/model/data/MOOCCube"
+  source_dir: "data/MOOCCube"
   # 知识生成服务（engine 侧 scripts/kg_server.py）：平台只通过 HTTP 调用，不直接跑 Python。
-  # 启动：cd edurec-engine && python scripts/kg_server.py --port 8090
+  # 这是独立于「快照进、排名出」主契约的可选在线能力；不启动只影响自动生成概念。
+  # 启动：cd edurec-engine && .venv/bin/python scripts/kg_server.py --port 8090
   generator_url: "http://127.0.0.1:8090"
   generator_timeout_seconds: 180
+  # 生产环境通过 KNOWLEDGE_GENERATOR_TOKEN 注入，不要把密钥写进仓库。
+  # engine 侧用 KG_SERVICE_TOKEN 或 --token 启用鉴权；两边必须一致。
+  generator_token: ""
+  # 同时请求 engine 的上限，避免在线服务被打满。
+  generator_max_concurrency: 4
+  # 连续失败达到阈值后熔断；0 = 用默认值 3，负数 = 关闭熔断。
+  generator_failure_threshold: 3
+  generator_circuit_cooldown_seconds: 30
 
 # 第三方数据集导入（cmd/import_dataset）。各家数据集的字段名和格式都不一样，
 # 所以对应关系全部写在下面，换数据集只改这一段，不动代码。

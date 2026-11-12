@@ -3,7 +3,7 @@
 # handoff.sh — 一轮推荐刷新（platform -> engine -> platform）
 #
 # 把「导出 -> 训练 -> 推理 -> 导入」整条离线交接链路固化为一条命令，
-# 与 docs/data-handoff.md 的手动步骤一一对应。平台只认「CSV 快照进、
+# 与 docs/guides/data-handoff.md 的手动步骤一一对应。平台只认「CSV 快照进、
 # 排名 ID 列表出」这一对契约，engine 内部算法（如语义双塔）不可见，
 # 换算法或模型时本脚本无需改动。
 #
@@ -54,20 +54,29 @@ die() { echo "[handoff] 错误: $*" >&2; exit 1; }
 # ---- 前置检查 ---------------------------------------------------------------
 [ -d "$ENGINE_ROOT" ] || die "engine 目录不存在: $ENGINE_ROOT（可用 ENGINE_ROOT 覆盖）"
 [ -x "$ENGINE_PYTHON" ] || die "engine 依赖未安装: $ENGINE_ROOT/.venv/bin/python（先 cd $ENGINE_ROOT && pip install -e .[dev]）"
+[ -f "$ENGINE_ROOT/contracts/v1/validate.py" ] || die "engine 缺少契约校验器: $ENGINE_ROOT/contracts/v1/validate.py"
 [ -d "$BACKEND_DIR" ] || die "backend 目录不存在: $BACKEND_DIR"
 
 # [1] 导出快照
 log "[1] 导出数据快照 (config=$CONFIG_PATH)"
 ( cd "$BACKEND_DIR" && CONFIG_PATH="$CONFIG_PATH" go run ./cmd/export_snapshot )
 
-run_id="$(ls -1t "$BACKEND_DIR/$SNAPSHOT_DIR" | head -1)"
-[ -n "$run_id" ] || die "未在 $SNAPSHOT_DIR 下找到快照目录"
+case "$SNAPSHOT_DIR" in
+  /*) SNAPSHOT_ROOT="$SNAPSHOT_DIR" ;;
+  *)  SNAPSHOT_ROOT="$BACKEND_DIR/$SNAPSHOT_DIR" ;;
+esac
+run_id="$(ls -1t "$SNAPSHOT_ROOT" | head -1)"
+[ -n "$run_id" ] || die "未在 $SNAPSHOT_ROOT 下找到快照目录"
 log "快照 ID: $run_id"
 
-# [2] 快照交给 engine
+# [2] 快照交给 engine，并按契约校验
 log "[2] 拷贝快照到 engine (run_id=$run_id)"
 mkdir -p "$ENGINE_ROOT/dataset/platform_snapshot"
-cp -r "$BACKEND_DIR/$SNAPSHOT_DIR/$run_id" "$ENGINE_ROOT/dataset/platform_snapshot/"
+SNAPSHOT_DEST="$ENGINE_ROOT/dataset/platform_snapshot/$run_id"
+rm -rf "$SNAPSHOT_DEST"
+cp -r "$SNAPSHOT_ROOT/$run_id" "$SNAPSHOT_DEST"
+"$ENGINE_PYTHON" "$ENGINE_ROOT/contracts/v1/validate.py" snapshot "$SNAPSHOT_DEST" \
+  || die "快照不符合 contracts/v1，停止交接"
 
 # [3] 训练（--infer-only 跳过）
 if [ "$INFER_ONLY" -eq 0 ]; then
@@ -80,8 +89,15 @@ fi
 
 # [4] 全量推理
 log "[4] 全量推理"
-( cd "$ENGINE_ROOT" && "$ENGINE_PYTHON" -m scripts.infer_batch \
+( cd "$ENGINE_ROOT" && "$ENGINE_PYTHON" -m scripts.run_batch_infer \
     --data-source platform --snapshot-dir "dataset/platform_snapshot/$run_id" )
+
+# [4.5] 产物按契约校验（校验器是 engine 仓库的一部分）
+log "[4.5] 校验推荐产物"
+"$ENGINE_PYTHON" "$ENGINE_ROOT/contracts/v1/validate.py" recommendations \
+  "$ENGINE_ROOT/model/recommendations.json" \
+  --envelope "$ENGINE_ROOT/model/recommendations.meta.json" \
+  || die "推荐产物不符合 contracts/v1，停止交接"
 
 # [5] 推理结果放回 platform
 log "[5] 回传推荐结果 (data/recommendations.json)"
@@ -99,7 +115,7 @@ login_resp="$(curl -sf -X POST "$BASE_URL/api/v1/auth/login" \
   -d "{\"username\":\"$ADMIN_USER\",\"password\":\"$ADMIN_PASS\"}")" \
   || die "登录失败——请确认后端已启动 ($BASE_URL) 且管理员账号正确"
 
-token="$(printf '%s' "$login_resp" | python -c \
+token="$(printf '%s' "$login_resp" | "$ENGINE_PYTHON" -c \
   'import sys,json; print(json.load(sys.stdin)["data"]["access_token"])')"
 curl -sf -X POST "$BASE_URL/api/v1/admin/recommendations/import" \
   -H "Authorization: Bearer $token" \

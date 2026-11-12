@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { DATA_CONFIG, generateMockData } from '../generator'
+import { generateMockData } from '../generator'
 import type { DbResource, DbUser } from '../db'
 
 const baseUsers: DbUser[] = [

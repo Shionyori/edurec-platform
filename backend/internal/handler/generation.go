@@ -21,7 +21,11 @@ func NewGenerationHandler(generator *service.ConceptGenerator, knowledge *servic
 
 // Start POST /knowledge-points/:code/generate
 func (h *GenerationHandler) Start(c *gin.Context) {
-	status, err := h.generator.Start(c.Param("code"))
+	ctx := c.Request.Context()
+	if rid := strings.TrimSpace(c.GetHeader("X-Request-ID")); rid != "" {
+		ctx = service.WithRequestID(ctx, rid)
+	}
+	status, err := h.generator.Start(ctx, c.Param("code"))
 	if err != nil {
 		handleError(c, err)
 		return
@@ -85,7 +89,11 @@ func (h *GenerationHandler) StartByKeyword(c *gin.Context) {
 		return
 	}
 
-	status, err := h.generator.Start(bestCode)
+	ctx := c.Request.Context()
+	if rid := strings.TrimSpace(c.GetHeader("X-Request-ID")); rid != "" {
+		ctx = service.WithRequestID(ctx, rid)
+	}
+	status, err := h.generator.Start(ctx, bestCode)
 	if err != nil {
 		handleError(c, err)
 		return

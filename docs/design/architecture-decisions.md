@@ -1,0 +1,400 @@
+# edurec-platform 设计文档
+
+> 最终更新：2026-07-27
+
+## 1. 项目概述
+
+edurec-platform 是一个教育资源推荐平台，核心目标：
+
+1. **应用场景** — 作为 [edurec-engine](https://github.com/) 的具体应用场景，用于测试和演示推荐模型的效果
+2. **完整实践** — 从头到尾实现完整的前后端项目，覆盖主流技术栈和功能模块，便于学习和参考
+
+## 2. 仓库与分支管理
+
+### 2.1 仓库结构
+
+```
+edurec-platform/
+  frontend/          # 前端项目（Vue 3 + Vite）
+  backend/           # 后端项目（Go + Gin + GORM）
+  docs/              # 架构、API、数据交接、推荐方案等文档
+  scripts/           # 本地开发/采集/推荐刷新脚本（.sh + .ps1）
+  DESIGN.md          # 前端设计系统
+  PRODUCT.md         # 产品定位
+```
+
+- frontend 和 backend 同仓库管理，与 edurec-engine 并列放于同一上级目录，便于展示项目间关系
+- 不拆分成独立仓库，避免管理负担
+
+### 2.2 分支与提交规范
+
+- **分支命名**：按模块开发，如 `feat/frontend-user-auth`、`feat/backend-recommendation`
+- **提交信息**：遵循 Conventional Commits，使用 scope 区分模块
+
+```
+feat(frontend): 实现用户登录页面
+feat(backend): 实现 JWT 认证中间件
+fix(backend): 修复 token 过期判断
+chore: 更新本地启动脚本
+```
+
+## 3. 技术栈
+
+| 层 | 技术 | 说明 |
+|---|---|---|
+| **前端** | TypeScript + Vue 3 | 主流前端框架，TypeScript 保证类型安全 |
+| **后端** | Go + Gin | 高性能 HTTP 框架 |
+| **数据库** | MySQL | 主数据存储 |
+| **缓存** | Redis | 仅存 JWT refresh token；推荐结果落在 MySQL 的 `recommendations` 表 |
+| **容器化** | Docker + Docker Compose | 统一部署编排 |
+
+### 3.1 前端技术选型
+
+| 用途 | 选择 | 说明 |
+|---|---|---|
+| 框架 | Vue 3 (Composition API) | |
+| 语言 | TypeScript | |
+| 构建工具 | Vite | Vue 3 官方推荐 |
+| 状态管理 | **Pinia** | Vue 3 官方推荐，TypeScript 友好 |
+| 路由 | Vue Router 4 | |
+| UI 组件库 | **Element Plus** | Vue 3 最主流组件库，组件齐全 |
+| CSS | **Tailwind CSS** | 处理自定义布局和页面级样式 |
+| HTTP 客户端 | **Axios** | 拦截器链适合 JWT 自动附加和错误统一处理 |
+| Mock | **MSW** | 浏览器级别请求拦截，开发体验接近真实联调 |
+| 测试 | **Vitest + Vue Test Utils** | |
+| 包管理 | pnpm | |
+
+### 3.2 后端技术选型
+
+| 用途 | 选择 | 说明 |
+|---|---|---|
+| 语言 | Go 1.21+ | |
+| HTTP 框架 | **Gin** | 高性能，中间件生态丰富 |
+| ORM | **GORM** | Go 生态 ORM 事实标准，跨语言 ORM 概念一致 |
+| 迁移工具 | **golang-migrate** | 独立 SQL up/down 脚本，版本化管理 |
+| 配置管理 | **Viper + 环境变量** | YAML 文件 + 环境变量覆盖，适配 Docker 部署 |
+| 认证 | **JWT (Access + Refresh Token)** | Refresh token 存 Redis |
+| 日志 | **log/slog** | Go 1.21+ 标准库，结构化日志，零依赖 |
+| 测试 | **testify + httptest** | 单元测试 + API 集成测试 |
+
+## 4. 架构设计
+
+### 4.1 系统架构
+
+```
+┌──────────┐    HTTP/REST    ┌──────────────┐   文件交接    ┌──────────────┐
+│  Frontend │ ◄────────────► │   Backend    │ ◄───────────► │ edurec-engine│
+│  (Vue 3)  │                │  (Go + Gin)  │               │ (离线训练/推理)│
+└──────────┘                └──────┬───────┘                └──────────────┘
+                                   │
+                            ┌──────┴───────┐
+                            │  MySQL  Redis │
+                            └──────────────┘
+```
+
+- **Frontend ↔ Backend**：REST API (HTTP + JSON)，JWT 认证
+- **Backend ↔ edurec-engine**：离线批量协作（见「决策记录 #12」）：engine 消费平台导出的数据快照完成训练与全量推理；platform 通过管理接口将 engine 产出的推荐结果导入缓存表，推荐接口读缓存返回、未命中按评分兜底。platform 侧无模型推理，推荐实时服务化留作可选演进。
+- **Backend ↔ engine 概念生成（可选在线）**：平台在「自动生成概念」时调用 engine 的 `kg_server.py`（见「决策记录 #36」）。它独立于推荐主链路，engine 未启动只影响该功能；两仓目录仍互不读写。
+- **Backend ↔ B 站**：`backend/crawler`（Python）采集 B 站公开视频元数据。**离线链路**：JSON 落到 `backend/data/bilibili/` → `cmd/import_bilibili` 导入 `resources` 表（`type=video`）；**在线链路**：搜索本地结果耗尽后逐页爬取、或打开 B 站视频详情页时，后端 `exec` 调用 `crawler/online.py` 实时抓取搜索结果与评论并落库（见「决策记录 #28 / #29 / #30」，详见 [bilibili-import.md](../guides/bilibili-import.md)）
+- **Backend ↔ 第三方数据集（慕课等）**：纯离线导入，无在线抓取。用户自行下载的数据集（json / jsonl / csv）经**配置驱动的字段映射**（`configs/config.yaml` 的 `datasets.<名称>`）解析为采集契约，再由 `cmd/import_dataset` 导入 `resources` 表（`type=course`），复用与 B 站完全相同的判重/分类/截断内核（见「决策记录 #31」，详见 [dataset-import.md](../guides/dataset-import.md)）
+- 所有接口遵循统一响应格式和错误码规范
+
+### 4.2 后端分层架构
+
+采用 **Handler → Service → Repository** 扁平三层：
+
+```
+cmd/                        # 可执行入口
+  server/                   # 应用入口，初始化依赖
+  export_snapshot/          # 导出平台数据快照供 engine 训练/推理
+  import_bilibili/          # 导入 B 站采集结果（见 docs/guides/bilibili-import.md）
+  import_dataset/           # 导入第三方数据集（见 docs/guides/dataset-import.md）
+  demo_seed/                # 播种演示数据
+  mock_users/               # 生成模拟用户/行为（冷启动）
+  seed_knowledge/           # 建学科/知识点/概念图
+  generate_concepts/        # 调 engine 生成概念（可选）
+  evaluate_recommendations/ # 离线评估（vs 热门基线）
+  fetch_frames/             # B 站关键帧采集
+crawler/                    # B 站元数据采集脚本（Python，与 Go 代码隔离）
+internal/
+  handler/                   # HTTP handler — 参数校验、序列化、调用 service
+  service/                   # 业务逻辑层
+  repository/                # 数据访问层（GORM 操作）
+  model/                     # 数据模型 struct 定义
+  middleware/                 # 认证、错误处理、CORS 等中间件
+  router/                    # 路由注册
+  response/                  # 统一响应格式
+  apperror/                  # 业务错误码
+configs/                     # YAML 配置模板
+```
+
+> 建表当前走 GORM `AutoMigrate`（决策 #9 的 golang-migrate 尚未落地）。
+
+单向依赖：`handler → service → repository → model`，下层不依赖上层。
+
+### 4.3 前端目录结构
+
+混合组织——公共资源按技术类型放，业务页面按模块放：
+
+```
+frontend/
+  src/
+    api/                     # API client 实例 + Axios 拦截器配置
+    components/              # 公共 UI 组件
+      common/                # 通用组件（按钮、卡片等）
+      layout/                # 布局组件（前台布局、后台布局）
+    composables/             # 公共组合式函数
+    mocks/                   # MSW handlers
+    pages/                   # 页面（按功能模块组织）
+      home/                  # 首页
+      auth/                  # 登录/注册
+      resource/              # 资源详情、搜索
+      user/                  # 个人中心
+      upload/                # 资源上传（管理员）
+      admin/                 # 管理后台
+    router/                  # 路由配置 + 路由守卫
+    stores/                  # Pinia stores
+    types/                   # TypeScript 类型定义
+    utils/                   # 工具函数
+```
+
+### 4.4 API 设计规范
+
+- **CRUD 操作**：使用 RESTful 风格（`GET /resources/:id`, `POST /resources`）
+- **复杂操作**：使用 RPC 风格（`POST /auth/login`, `GET /recommendations`）
+- **URL 前缀**：`/api/v1/`
+- **统一响应格式**：
+
+```json
+{
+  "code": 0,
+  "message": "ok",
+  "data": {}
+}
+```
+
+- **错误处理**：HTTP 状态码（2xx/4xx/5xx）+ 业务错误码 + Gin middleware 统一封装
+- 详细接口定义见 `docs/design/api-design.md`
+
+## 5. 数据模型
+
+### 5.1 实体关系
+
+```
+users ──1:1── admins
+users ──1:N── user_behaviors
+users ──1:N── ratings
+resources ──1:N── ratings
+resources ──1:N── resource_comments
+resources ──1:N── user_behaviors
+resources ──N:1── categories
+users ──1:N── recommendations
+```
+
+### 5.2 数据表设计
+
+#### users（用户）
+
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| id | INT UNSIGNED AUTO_INCREMENT PK | |
+| username | VARCHAR(64) UNIQUE NOT NULL | |
+| email | VARCHAR(128) UNIQUE NOT NULL | |
+| password_hash | VARCHAR(256) NOT NULL | |
+| display_name | VARCHAR(128) | 昵称 |
+| avatar_url | VARCHAR(512) | |
+| created_at | DATETIME | |
+| updated_at | DATETIME | |
+
+#### admins（管理员）
+
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| id | INT UNSIGNED AUTO_INCREMENT PK | |
+| user_id | INT UNSIGNED FK → users.id | |
+
+#### resources（教育资源，统一抽象）
+
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| id | INT UNSIGNED AUTO_INCREMENT PK | |
+| title | VARCHAR(256) NOT NULL | |
+| description | TEXT | |
+| cover_url | VARCHAR(512) | 封面图 |
+| type | ENUM('course', 'article', 'video') NOT NULL | 资源类型 |
+| category_id | INT UNSIGNED FK → categories.id | |
+| tags | JSON | 标签数组，例 `["AI", "入门"]` |
+| metadata | JSON | 扩展字段（视频时长、文章字数等） |
+| author | VARCHAR(128) | 作者/来源 |
+| source_url | VARCHAR(512) | 原始链接 |
+| avg_rating | DECIMAL(2,1) DEFAULT 0 | 平均评分 |
+| view_count | INT UNSIGNED DEFAULT 0 | 浏览数 |
+| created_at | DATETIME | |
+| updated_at | DATETIME | |
+
+#### categories（分类）
+
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| id | INT UNSIGNED AUTO_INCREMENT PK | |
+| name | VARCHAR(64) NOT NULL | |
+| description | VARCHAR(256) | |
+| created_at | DATETIME | |
+
+#### user_behaviors（用户行为）
+
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| id | BIGINT UNSIGNED AUTO_INCREMENT PK | |
+| user_id | INT UNSIGNED FK → users.id | |
+| resource_id | INT UNSIGNED FK → resources.id | |
+| action | ENUM('view', 'click', 'favorite') NOT NULL | |
+| created_at | DATETIME | |
+
+#### ratings（评分评论）
+
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| id | INT UNSIGNED AUTO_INCREMENT PK | |
+| user_id | INT UNSIGNED FK → users.id | |
+| resource_id | INT UNSIGNED FK → resources.id | |
+| score | TINYINT UNSIGNED NOT NULL | 1-5 评分 |
+| comment | TEXT | 评论内容 |
+| created_at | DATETIME | |
+| updated_at | DATETIME | |
+
+#### resource_comments（B 站评论，独立于站内评分）
+
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| id | INT UNSIGNED AUTO_INCREMENT PK | |
+| resource_id | INT UNSIGNED FK → resources.id | 归属资源 |
+| bvid | VARCHAR(64) | 来源 BV 号 |
+| author_name | VARCHAR(128) | 评论作者昵称 |
+| content | TEXT | 评论正文 |
+| like_count | INT UNSIGNED DEFAULT 0 | 点赞数 |
+| floor | INT DEFAULT 0 | 楼层 |
+| published_at | BIGINT DEFAULT 0 | 发布时间（Unix 秒） |
+| created_at | DATETIME | |
+| updated_at | DATETIME | |
+
+#### recommendations（推荐结果缓存）
+
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| id | INT UNSIGNED AUTO_INCREMENT PK | |
+| user_id | INT UNSIGNED FK → users.id | |
+| resource_ids | JSON | 推荐资源 ID 列表 |
+| created_at | DATETIME | 生成时间 |
+
+## 6. 页面设计
+
+| 页面 | 路由 | 说明 | 认证要求 |
+|------|------|------|---------|
+| 首页 | `/` | 推荐流、热门资源、分类入口 | 是 |
+| 登录 | `/login` | 用户登录 | 否 |
+| 注册 | `/register` | 用户注册 | 否 |
+| 资源详情 | `/resources/:id` | 内容展示、评分评论 | 是 |
+| 资源搜索 | `/search` | 关键词 + 分类/标签筛选 | 是 |
+| 个人中心 | `/user/me` | 个人信息、行为历史、收藏 | 是 |
+| 资源上传 | `/resources/upload` | 管理员上传资源 | 管理员 |
+| 管理后台 | `/admin` | 用户管理、资源审核、分类管理 | 管理员 |
+
+### 6.1 布局方案
+
+- **前台布局**（`/`, `/resources/*`, `/search`, `/user/*`）：顶部导航 + 内容区 — 参考 Coursera、Bilibili 课堂的沉浸式浏览体验
+- **后台布局**（`/resources/upload`, `/admin/*`）：侧边栏 + 顶栏 — 参考 Element Plus Admin 的高效管理操作
+- 路由 `/admin/*` 前缀自动切换后台布局
+
+## 7. 认证与安全
+
+- 认证协议：JWT Access Token + Refresh Token
+- Access Token 有效期：15 分钟
+- Refresh Token：存 Redis，有效期 7 天
+- Access Token 过期后，客户端用 refresh token 换新 access token（`POST /api/v1/auth/refresh`）
+- 路由守卫：未登录自动重定向到 `/login`
+- 管理员权限：检查 `admins` 表中是否存在对应用户
+
+## 8. 本地运行与部署
+
+### 8.1 本地开发（当前落地）
+
+`scripts/start.sh` 负责：用 `docker run` 起 MySQL 8 / Redis 7 容器 → 等 MySQL 就绪 →
+后台启动后端（`go run ./cmd/server`）→ 启动前端（`pnpm dev`）。
+`scripts/stop.sh` 停止进程，`--with-db` 连容器一起停。
+
+### 8.2 部署规划（未落地）
+
+仓库当前**没有** Dockerfile / docker-compose.yml。规划中的形态：
+
+```
+services:
+  frontend   — Nginx，端口 80
+  backend    — Go server，端口 8080
+  mysql      — 端口 3306
+  redis      — 端口 6379
+```
+
+- Backend 通过 Viper 读 YAML 默认配置，敏感信息通过 compose 环境变量注入
+
+## 9. 测试策略
+
+| 层级 | 工具 | 覆盖范围 |
+|------|------|---------|
+| 后端单元测试 | testify | Service 层核心逻辑 |
+| 后端集成测试 | httptest + testify | API handler 完整链路（含认证、数据库） |
+| 前端组件测试 | Vitest + Vue Test Utils | 核心交互流程和关键组件 |
+
+- 实用主义策略：覆盖关键路径（认证、推荐、CRUD），不追求覆盖率数字
+
+## 10. 开发流程
+
+1. 写 API 设计文档（`docs/design/api-design.md`）
+2. 前后端各自对照文档实现
+3. 分支开发：`feat/frontend-xxx` / `feat/backend-xxx`
+4. 完成后合入 main
+5. 联调测试
+
+---
+
+## 决策记录
+
+| # | 决策项 | 选择 |
+|---|--------|------|
+| 1 | 与 edurec-engine 集成方式 | 离线批量 + 结果落库（落地，见 #12） |
+| 2 | 与 engine 通信协议 | 推荐主链路用文件/目录交接（快照与推荐结果文件）；推荐在线 REST 留作演进；概念生成另有无状态 HTTP 契约（可选） |
+| 3 | engine 具体设计 | engine 独立仓库，消费平台快照完成训练/推理；platform 侧提供导入接口 |
+| 4 | 后端分层架构 | Handler → Service → Repository |
+| 5 | 认证方案 | JWT Access + Refresh Token |
+| 6 | API 设计规范 | 混合（CRUD RESTful + 操作 RPC），统一规范 |
+| 7 | 状态管理 | Pinia |
+| 8 | 数据库 ORM | GORM |
+| 9 | 数据库迁移 | 规划 golang-migrate；当前用 GORM AutoMigrate（未落地） |
+| 10 | API 文档 | 手写设计文档先行 |
+| 11 | UI 组件库 | Element Plus |
+| 12 | engine 接入 | 离线批量 + 结果落库（已实现）：engine 消费平台数据快照完成训练/全量推理，产出平台原始 ID 的推荐结果；platform 经 `POST /api/v1/admin/recommendations/import` 导入 `Recommendation` 缓存表，推荐接口查表返回、未命中按评分兜底。platform 无在线推理，实时服务化留作可选演进 |
+| 13 | 分支提交规范 | feat(frontend): / feat(backend): |
+| 14 | Docker 部署 | 规划：独立 Dockerfile + 多阶段构建；当前本地用 `scripts/start.sh` + `docker run` 起 MySQL/Redis |
+| 15 | 配置管理 | Viper + 环境变量覆盖 |
+| 16 | 前端路由守卫 | Vue Router，未登录 → /login |
+| 17 | 前台布局 | 顶部导航 + 内容区（参考 Coursera） |
+| 18 | 后台布局 | 侧边栏 + 顶栏（参考 Element Plus Admin） |
+| 19 | 后端日志 | Go 标准库 log/slog |
+| 20 | 错误处理 | HTTP 状态码 + 业务错误码 + middleware |
+| 21 | 测试策略 | testify + httptest（后端），Vitest + Vue Test Utils（前端） |
+| 22 | 前端目录 | 混合（公共按类型，页面按模块） |
+| 23 | 后端目录 | cmd / internal / configs（无 migrations 目录，建表走 AutoMigrate） |
+| 24 | 资源建模 | 统一抽象 + JSON metadata，type 字段区分 |
+| 25 | 管理员 | 独立 admins 表（id, user_id） |
+| 26 | 前端 HTTP 客户端 | Axios |
+| 27 | CSS 方案 | Tailwind CSS + Element Plus |
+| 28 | 外部内容来源 | 爬虫采集 + 命令导入（落地）：B 站公开视频元数据由 `backend/crawler`（Python）采集为 JSON，经 `cmd/import_bilibili` 落 `resources` 表。与 engine 链路同构——离线产出 + 命令导入，platform 不参与在线抓取 |
+| 29 | 采集内容建模 | 以 `type=video` 的**普通资源**混入现有资源列表，不新增专区、不改推荐链路；按 `source_url` 判重，命中只刷新 `view_count` / `metadata`，不覆盖平台侧字段（保证幂等、不冲掉人工编辑） |
+| 30 | 在线搜索 + 评论爬取 | 在线实时（落地）：搜索在本地无结果（`total==0` 且只有 keyword）时 `exec` 调用 `crawler/online.py search` 实时抓取并复用导入落库；打开 B 站视频详情页时 `GET /resources/:id/comments` 无缓存则 `exec` 调用 `online.py comments` 抓评论，落独立 `resource_comments` 表。评论独立建模不污染站内评分；子进程 stdout 只输出 UTF-8 JSON、30s 超时、风控（-352/-412）不重试。搜索后演进为**无限滚动**：本地翻完（`resources.length >= total`）且纯关键词搜索时改带 `online_page=M` 逐页爬取，受 `search_max_pages` 上限约束 |
+| 31 | 第三方数据集（慕课等）导入 | 纯离线导入（落地）：给慕课网做在线爬虫的方案**已验证不可行**——全站由腾讯 EdgeOne 机器人管理接管，对非浏览器客户端下发混淆 JS 挑战页，同机同 IP 同 UA 下 `curl` 拿到真 JSON 而 Python（requests/httpx/urllib）只拿到挑战页，换任何 UA 与 HTTP 头均无效，说明拦在 **TLS 指纹**层；打通只能解 JS 挑战或伪造指纹，违反合规红线，故放弃。改为导入用户自行下载的本地数据集：`DatasetConfig` 把「外部字段 → 平台采集契约」的映射外置到 YAML（`datasets.<名称>`，未知字段名在启动时硬报错），`cmd/import_dataset` 提供 `--preview`（不连库）/ `--dry-run`（连库不写）/ 真导入三步走。落库以 `type=course` 的普通资源身份混入，**复用与 B 站完全相同的 `ImportItems` 内核**（泛化见 #32），判重与幂等语义沿用 #29。据此不引入任何新的 Python 代码 |
+| 32 | 采集落库契约泛化 | 泛化（落地）：B 站导入的主体（`FindBySourceURLs` 判重、分类 find-or-create、`truncateRunes` 截断）本就通用，唯二的来源耦合是「`bvid` 为必填身份键」与「`toResource` 写死 `type=video`」，故抽为通用契约 `CrawlImportService.ImportItems(items, CrawlImportOptions{ResourceType, SourceURLTemplate}, write)`。身份键改为 `SourceID` 并保留 `bvid` 兼容别名（采集脚本仍只发 `bvid`）；校验口径由「必须有身份键」放宽为「`source_url` 必须能确定」——它才是判重依据。落库类型经 `model.IsValidResourceType` 在写库前校验，杜绝写入枚举外的值 |
+| 33 | Mock 方案 | MSW（开发期用；`VITE_MOCK=0` 关闭） |
+| 34 | 交接契约可执行化 | engine 的 `contracts/v1/` 提供 JSON Schema + golden fixtures + 校验器；platform 通过 `scripts/check-contract-sync.sh` 复用同一份 fixtures，导入测试用同一份样本。契约版本 `contract_version=1`，破坏性变更必须升版本并两侧同步 |
+| 35 | 知识图谱数据源 | MOOCCube 是平台本地外部数据（默认 `backend/data/MOOCCube`，不入库），**不指向 engine 仓库**；`knowledge.source_dir` 或 `KNOWLEDGE_SOURCE_DIR` 可覆盖，为空时只建学科层 |
+| 36 | 概念生成服务（可选在线） | engine 的 `kg_server.py` 提供无状态 HTTP 接口（`/health`、`/knowledge/generate`、`/knowledge/generate_batch`），平台只在自动生成概念时调用；契约见 engine `docs/contracts/kg-service-contract.md`；不参与推荐主链路，engine 未启动只影响该功能 |
+| 37 | 仓库边界 | **保持双仓**：engine 是可独立引用/复现的模型工件（含 `CITATION.cff`），platform 是 Go + Vue 应用；合并会把 Go/Node/Python/PyTorch 工具链与大数据集塞进一个仓库，且不修复任何耦合问题。边界由 `contracts/v1` + 校验/同步脚本固化。若未来「一次功能改动需同时改两仓」的频率达到每周≥1 次，再评估 monorepo |

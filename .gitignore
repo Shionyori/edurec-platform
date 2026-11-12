@@ -9,12 +9,19 @@ frontend/package-lock.json
 .gocache/
 # 一键启动/停止脚本运行时产生的 pid/日志
 scripts/.run/
-# 知识图谱数据源（EMBEDD-ER / MOOCCube）的本地副本：临时依赖，不入库；
-# 实际路径由 backend/configs/*.yaml 的 knowledge.source_dir 指定
-EMBEDD-ER/
+# Python 缓存（避免把 .pyc 带进仓库）
+__pycache__/
+*.py[cod]
 # 临时分析脚本/中间结果
 .tmp_*
 # Impeccable 的机器本地状态与缓存（surfaces/ 下的是设计契约，需要入库）
 .impeccable/config.local.json
 .impeccable/hook.cache.json
 .impeccable/questions/
+
+# 本地 AI/技能工作流的临时状态（不属于产品代码）
+.superpowers/
+.claude/skills/*/scripts/__pycache__/
+frontend/.impeccable/hook.cache.json
+frontend/.impeccable/hook.pending.json
+frontend/.impeccable/config.local.json

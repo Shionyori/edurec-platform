@@ -1,9 +1,11 @@
 package service_test
 
 import (
+	"encoding/json"
 	"errors"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"testing"
 
@@ -38,8 +40,9 @@ type errRecRepo struct {
 	err error
 }
 
-func (f *errRecRepo) Replace(repository.RecommendationUpsert) (*model.Recommendation, error) {
-	return nil, f.err
+// Import 现在走 ReplaceMany（批量事务）；单用户的 Replace 只用于平台兜底。
+func (f *errRecRepo) ReplaceMany([]repository.RecommendationUpsert) error {
+	return f.err
 }
 
 // fakeRecommendationRunRepository 记录写入的运行记录，供断言。
@@ -254,6 +257,66 @@ func TestImportMapsReplaceError(t *testing.T) {
 
 	_, err := svc.Import()
 	assertErrorCode(t, err, apperror.CodeInternal)
+}
+
+type chunkRecordingUserRepo struct {
+	*fakeUserRepository
+	sizes []int
+}
+
+func (f *chunkRecordingUserRepo) FindByIDs(ids []uint) ([]model.User, error) {
+	f.sizes = append(f.sizes, len(ids))
+	return f.fakeUserRepository.FindByIDs(ids)
+}
+
+// TestImportChunksLargeIdLookupsAndWrites 钉住「全量导入不能一次性 IN / 一次性事务」：
+// 资源 ID 规模是用户数 × top_n，真实数据会远超单条 SQL 的占位符上限。
+func TestImportChunksLargeIdLookupsAndWrites(t *testing.T) {
+	const n = 2500
+	users := newFakeUsers()
+	payload := make(map[string][]uint, n)
+	for i := 1; i <= n; i++ {
+		users.users = append(users.users, &model.User{Model: gorm.Model{ID: uint(i)}})
+		payload[strconv.Itoa(i)] = []uint{101}
+	}
+	data, err := json.Marshal(payload)
+	if err != nil {
+		t.Fatalf("marshal payload: %v", err)
+	}
+
+	countingUsers := &chunkRecordingUserRepo{fakeUserRepository: users}
+	recs := &fakeRecommendationRepository{}
+	svc := newImportService(recs, countingUsers, newFakeResources(101),
+		writeRecommendations(t, string(data)))
+
+	result, err := svc.Import()
+	if err != nil {
+		t.Fatalf("Import() error = %v", err)
+	}
+	if result.ImportedUsers != n || result.ImportedResources != n {
+		t.Fatalf("stats = %+v, want %d users / %d resources", result, n, n)
+	}
+
+	if len(countingUsers.sizes) < 3 {
+		t.Fatalf("user FindByIDs calls = %v, want >= 3（分批查询）", countingUsers.sizes)
+	}
+	for _, size := range countingUsers.sizes {
+		if size > service.IDLookupChunk {
+			t.Fatalf("FindByIDs chunk = %d, want <= %d", size, service.IDLookupChunk)
+		}
+	}
+
+	total := 0
+	for _, size := range recs.replaceManyCalls {
+		if size > service.ImportWriteChunk {
+			t.Fatalf("ReplaceMany batch = %d, want <= %d", size, service.ImportWriteChunk)
+		}
+		total += size
+	}
+	if total != n || len(recs.replaceManyCalls) < 2 {
+		t.Fatalf("write batches = %v, total %d; want %d across >= 2 batches",
+			recs.replaceManyCalls, total, n)
+	}
 }
 
 func TestImportReadsEnvelopeRecordsRunAndReasons(t *testing.T) {

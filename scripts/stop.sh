@@ -2,7 +2,7 @@
 # =============================================================================
 # stop.sh — 停止本地开发/演示服务
 #
-# 停止 start.sh 启动的后端 / 前端进程（按 PID 文件 + 进程名兜底）。
+# 停止 start.sh 启动的后端 / 前端 / 可选 KG 服务进程（按 PID 文件 + 进程名兜底）。
 # 加 --with-db 参数时连 MySQL/Redis 容器一起停（默认不动容器）。
 #
 # 用法：
@@ -36,12 +36,14 @@ stop_by_pid() {
   fi
 }
 
-log "停止后端与前端"
+log "停止后端、前端与可选 KG 服务"
 stop_by_pid "$RUN_DIR/backend.pid" "后端"
 stop_by_pid "$RUN_DIR/frontend.pid" "前端"
+stop_by_pid "$RUN_DIR/kg.pid" "engine KG 服务"
 # 兜底：清理可能的残留进程（go run 会派生实际 server 子进程）
 pkill -f "go run ./cmd/server" 2>/dev/null && echo "  后端残留进程: 已清理" || true
 pkill -f "edurec-platform/frontend" 2>/dev/null && echo "  前端残留进程: 已清理" || true
+pkill -f "scripts/kg_server.py" 2>/dev/null && echo "  KG 残留进程: 已清理" || true
 
 if [ "$WITH_DB" = 1 ]; then
   log "停止 MySQL / Redis 容器"

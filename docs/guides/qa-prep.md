@@ -16,11 +16,11 @@ platform（Go + Vue）负责数据治理、在线服务、评估与运营；edur
 
 **Q3. 平台里有模型代码吗？**
 没有。platform 无 PyTorch、无 inference 路径；`Recommendation` 是物化结果表。
-见 `docs/engine-integration.md`、`docs/design.md` 决策 #12。
+见 `docs/contracts/engine-integration.md`、`docs/design/architecture-decisions.md` 决策 #12。
 
 **Q4. engine 没启动，平台会怎样？**
 推荐照常：未命中缓存按 `avg_rating DESC, id DESC` 兜底并写缓存；导入失败则缓存不变。
-只有「自动生成概念」不可用。见 `docs/engine-integration.md` §6。
+只有「自动生成概念」不可用。见 `docs/contracts/engine-integration.md` §6。
 
 **Q5. 两仓怎么防止契约漂移？**
 engine 的 `contracts/v1/` 是单一来源：JSON Schema + golden fixtures + 校验器。
@@ -51,7 +51,7 @@ platform 不做容错解析：顶层只能是 `{user_id: [resource_id,…]}`，�
 **Q10. 去重/排序/覆盖由谁负责？**
 engine 出口负责：按相关性降序、自行去重、覆盖快照全量用户（冷启动走热门兜底）。
 platform 端到端保序、不去重、不重排、不截断（展示层 limit 除外）。
-见 `docs/platform-contract.md`（engine 仓库）。
+见 `docs/contracts/platform-contract.md`（engine 仓库）。
 
 **Q11. 用户/资源 ID 对不上怎么办？**
 platform 轨道上 engine 原样透传平台整数 ID。导入时按平台库中真实存在的用户/资源过滤：
@@ -106,7 +106,7 @@ platform 侧：`recommendation_runs` 记录 run_id / 快照 / 模型 / 生成时
 
 **Q22. 概念是实时的吗？**
 可选：engine 的 `kg_server.py` 提供 `/knowledge/generate`；平台只在「自动生成概念」时调用，
-失败只影响该功能。契约见 engine `docs/kg-service-contract.md`。
+失败只影响该功能。契约见 engine `docs/contracts/kg-service-contract.md`。
 
 **Q23. 学习路径与推荐什么关系？**
 路径页按先修关系逐节解锁，只推荐当前未掌握内容；首页推荐流仍走 engine 结果。

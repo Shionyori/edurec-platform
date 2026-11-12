@@ -3,7 +3,7 @@
 # handoff.sh — 一轮推荐刷新（platform -> engine -> platform）
 #
 # 把「导出 -> 训练 -> 推理 -> 导入」整条离线交接链路固化为一条命令，
-# 与 docs/data-handoff.md 的手动步骤一一对应。平台只认「CSV 快照进、
+# 与 docs/guides/data-handoff.md 的手动步骤一一对应。平台只认「CSV 快照进、
 # 排名 ID 列表出」这一对契约，engine 内部算法（如语义双塔）不可见，
 # 换算法或模型时本脚本无需改动。
 #

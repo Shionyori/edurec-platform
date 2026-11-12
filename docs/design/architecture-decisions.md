@@ -95,8 +95,8 @@ chore: 更新本地启动脚本
 - **Frontend ↔ Backend**：REST API (HTTP + JSON)，JWT 认证
 - **Backend ↔ edurec-engine**：离线批量协作（见「决策记录 #12」）：engine 消费平台导出的数据快照完成训练与全量推理；platform 通过管理接口将 engine 产出的推荐结果导入缓存表，推荐接口读缓存返回、未命中按评分兜底。platform 侧无模型推理，推荐实时服务化留作可选演进。
 - **Backend ↔ engine 概念生成（可选在线）**：平台在「自动生成概念」时调用 engine 的 `kg_server.py`（见「决策记录 #36」）。它独立于推荐主链路，engine 未启动只影响该功能；两仓目录仍互不读写。
-- **Backend ↔ B 站**：`backend/crawler`（Python）采集 B 站公开视频元数据。**离线链路**：JSON 落到 `backend/data/bilibili/` → `cmd/import_bilibili` 导入 `resources` 表（`type=video`）；**在线链路**：搜索本地结果耗尽后逐页爬取、或打开 B 站视频详情页时，后端 `exec` 调用 `crawler/online.py` 实时抓取搜索结果与评论并落库（见「决策记录 #28 / #29 / #30」，详见 [bilibili-import.md](bilibili-import.md)）
-- **Backend ↔ 第三方数据集（慕课等）**：纯离线导入，无在线抓取。用户自行下载的数据集（json / jsonl / csv）经**配置驱动的字段映射**（`configs/config.yaml` 的 `datasets.<名称>`）解析为采集契约，再由 `cmd/import_dataset` 导入 `resources` 表（`type=course`），复用与 B 站完全相同的判重/分类/截断内核（见「决策记录 #31」，详见 [dataset-import.md](dataset-import.md)）
+- **Backend ↔ B 站**：`backend/crawler`（Python）采集 B 站公开视频元数据。**离线链路**：JSON 落到 `backend/data/bilibili/` → `cmd/import_bilibili` 导入 `resources` 表（`type=video`）；**在线链路**：搜索本地结果耗尽后逐页爬取、或打开 B 站视频详情页时，后端 `exec` 调用 `crawler/online.py` 实时抓取搜索结果与评论并落库（见「决策记录 #28 / #29 / #30」，详见 [bilibili-import.md](../guides/bilibili-import.md)）
+- **Backend ↔ 第三方数据集（慕课等）**：纯离线导入，无在线抓取。用户自行下载的数据集（json / jsonl / csv）经**配置驱动的字段映射**（`configs/config.yaml` 的 `datasets.<名称>`）解析为采集契约，再由 `cmd/import_dataset` 导入 `resources` 表（`type=course`），复用与 B 站完全相同的判重/分类/截断内核（见「决策记录 #31」，详见 [dataset-import.md](../guides/dataset-import.md)）
 - 所有接口遵循统一响应格式和错误码规范
 
 ### 4.2 后端分层架构
@@ -107,8 +107,8 @@ chore: 更新本地启动脚本
 cmd/                        # 可执行入口
   server/                   # 应用入口，初始化依赖
   export_snapshot/          # 导出平台数据快照供 engine 训练/推理
-  import_bilibili/          # 导入 B 站采集结果（见 docs/bilibili-import.md）
-  import_dataset/           # 导入第三方数据集（见 docs/dataset-import.md）
+  import_bilibili/          # 导入 B 站采集结果（见 docs/guides/bilibili-import.md）
+  import_dataset/           # 导入第三方数据集（见 docs/guides/dataset-import.md）
   demo_seed/                # 播种演示数据
   mock_users/               # 生成模拟用户/行为（冷启动）
   seed_knowledge/           # 建学科/知识点/概念图
@@ -174,7 +174,7 @@ frontend/
 ```
 
 - **错误处理**：HTTP 状态码（2xx/4xx/5xx）+ 业务错误码 + Gin middleware 统一封装
-- 详细接口定义见 `docs/api-design.md`
+- 详细接口定义见 `docs/design/api-design.md`
 
 ## 5. 数据模型
 
@@ -349,7 +349,7 @@ services:
 
 ## 10. 开发流程
 
-1. 写 API 设计文档（`docs/api-design.md`）
+1. 写 API 设计文档（`docs/design/api-design.md`）
 2. 前后端各自对照文档实现
 3. 分支开发：`feat/frontend-xxx` / `feat/backend-xxx`
 4. 完成后合入 main
@@ -396,5 +396,5 @@ services:
 | 33 | Mock 方案 | MSW（开发期用；`VITE_MOCK=0` 关闭） |
 | 34 | 交接契约可执行化 | engine 的 `contracts/v1/` 提供 JSON Schema + golden fixtures + 校验器；platform 通过 `scripts/check-contract-sync.sh` 复用同一份 fixtures，导入测试用同一份样本。契约版本 `contract_version=1`，破坏性变更必须升版本并两侧同步 |
 | 35 | 知识图谱数据源 | MOOCCube 是平台本地外部数据（默认 `backend/data/MOOCCube`，不入库），**不指向 engine 仓库**；`knowledge.source_dir` 或 `KNOWLEDGE_SOURCE_DIR` 可覆盖，为空时只建学科层 |
-| 36 | 概念生成服务（可选在线） | engine 的 `kg_server.py` 提供无状态 HTTP 接口（`/health`、`/knowledge/generate`、`/knowledge/generate_batch`），平台只在自动生成概念时调用；契约见 engine `docs/kg-service-contract.md`；不参与推荐主链路，engine 未启动只影响该功能 |
+| 36 | 概念生成服务（可选在线） | engine 的 `kg_server.py` 提供无状态 HTTP 接口（`/health`、`/knowledge/generate`、`/knowledge/generate_batch`），平台只在自动生成概念时调用；契约见 engine `docs/contracts/kg-service-contract.md`；不参与推荐主链路，engine 未启动只影响该功能 |
 | 37 | 仓库边界 | **保持双仓**：engine 是可独立引用/复现的模型工件（含 `CITATION.cff`），platform 是 Go + Vue 应用；合并会把 Go/Node/Python/PyTorch 工具链与大数据集塞进一个仓库，且不修复任何耦合问题。边界由 `contracts/v1` + 校验/同步脚本固化。若未来「一次功能改动需同时改两仓」的频率达到每周≥1 次，再评估 monorepo |

@@ -215,7 +215,7 @@ describe('ResourceDetailPage', () => {
     expect(mockedListComments).not.toHaveBeenCalled()
   })
 
-  // 长合集会被归入 course（docs/bilibili-import.md）。评论判据是「来源是 B 站」而非「类型是 video」，
+  // 长合集会被归入 course（docs/guides/bilibili-import.md）。评论判据是「来源是 B 站」而非「类型是 video」，
   // 否则这些课程的详情页会没有评论区。
   it('B 站来源的课程（长合集）同样加载并显示评论', async () => {
     const biliCourse: Resource = {

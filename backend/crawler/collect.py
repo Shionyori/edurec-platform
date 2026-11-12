@@ -3,7 +3,7 @@
 把 B 站两种来源（搜索接口 / 视频详情接口）的原始返回，统一成同一种 item 结构，
 供 run.py 写出 JSON，再交给 Go 侧 cmd/import_bilibili 落库。
 
-item 结构见 docs/bilibili-import.md 的「交接文件格式」一节。
+item 结构见 docs/guides/bilibili-import.md 的「交接文件格式」一节。
 """
 
 from __future__ import annotations

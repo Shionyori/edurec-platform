@@ -659,7 +659,7 @@ POST /api/v1/admin/recommendations/import
 | imported_resources | 写入缓存的资源 ID 总数 |
 | skipped_resources | 被过滤掉的资源 ID 数（平台库中不存在） |
 
-> 读取配置 `engine.recommendations_file` 指向的 engine 输出 JSON（格式 `{ "<user_id>": [<resource_id>, ...] }`）。platform 数据源下 engine 输出平台原始 ID；导入时按平台库中实际存在的用户/资源过滤、跳过不存在的，并覆盖写入缓存行。详见 `docs/engine-integration.md`。
+> 读取配置 `engine.recommendations_file` 指向的 engine 输出 JSON（格式 `{ "<user_id>": [<resource_id>, ...] }`）。platform 数据源下 engine 输出平台原始 ID；导入时按平台库中实际存在的用户/资源过滤、跳过不存在的，并覆盖写入缓存行。详见 `docs/contracts/engine-integration.md`。
 
 ---
 

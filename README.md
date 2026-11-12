@@ -37,7 +37,7 @@ cp config.example.yaml config.yaml            # 可以按需更改任务与目�
 ```
 2. **导入自己的数据集**：json / jsonl / csv，在 `configs/config.yaml` 的
    `datasets.<名称>` 配好字段映射，再走 `cmd/import_dataset`（先 `--preview` / `--dry-run`）。
-   见 [docs/dataset-import.md](docs/dataset-import.md)。
+   见 [docs/guides/dataset-import.md](docs/guides/dataset-import.md)。
 3. **纯模拟数据**（仅离线测试）：`bash scripts/seed.sh`。
 
 也可以通过脚本一键完成
@@ -137,7 +137,7 @@ bash scripts/handoff.sh
 | 推荐运营 | 运行记录、效果看板（曝光/点击/CTR）、离线评估（vs 热门基线） |
 | 管理后台 | 用户/资源/分类管理、推荐导入与推荐管理 |
 | B 站采集 | 离线批量采集 + 在线搜索/评论爬取 |
-| 数据集导入 | 配置驱动的 json/jsonl/csv 字段映射 → `resources`（`cmd/import_dataset`，见 docs/dataset-import.md） |
+| 数据集导入 | 配置驱动的 json/jsonl/csv 字段映射 → `resources`（`cmd/import_dataset`，见 docs/guides/dataset-import.md） |
 | 知识图谱 | 21 个学科 / 72 个知识点 + 19 条先修边，关联 380+ 资源；导入 MOOCCube 概念图（425 概念 / 1027 边） |
 | 学科导航 | 主页面按学科组织；学科页展示知识点与资源，无资源时自动爬取 B 站 |
 | 自适应学习 | 初始问卷 → 知识画像（问卷/行为/完成度）→ 先修路径 → 逐节解锁，只推荐当前未掌握内容 |
@@ -148,7 +148,7 @@ bash scripts/handoff.sh
 | 功能 | 现状 |
 |---|---|
 | 用户发表评论 | 评论接口只读（来自 B 站爬取），无发表能力 |
-| 多路召回 / 学习排序 / 重排 | engine 侧待做（见 docs/recsys-design.md 阶段 P2） |
+| 多路召回 / 学习排序 / 重排 | engine 侧待做（见 docs/design/recsys-design.md 阶段 P2） |
 | 完成信号（complete） | 当前只采 view/click/favorite + 曝光，未建模「学完」 |
 
 ## 测试
@@ -160,17 +160,11 @@ cd frontend && pnpm test && pnpm type-check && pnpm lint
 
 ## 文档
 
-- [docs/README.md](docs/README.md) —— 文档索引（按主题）
+- [docs/README.md](docs/README.md) —— **文档地图（从这里开始）**
+- [docs/architecture.md](docs/architecture.md) —— 双仓目标架构与部署形态
+- [docs/status.md](docs/status.md) —— 当前设计状态与路线图
+- [docs/constraints.md](docs/constraints.md) —— 可执行的架构约束
+- [docs/contracts/README.md](docs/contracts/README.md) —— 跨仓契约（C1 / C2）
 
-- [docs/design.md](docs/design.md) —— 平台架构设计与决策记录
-- [docs/target-architecture.md](docs/target-architecture.md) —— 双仓工程最终形态与交互契约
-- [docs/architecture-constraints.md](docs/architecture-constraints.md) —— 可执行的架构约束
-- [docs/architecture-review.md](docs/architecture-review.md) —— 双仓架构评估、重构记录与路线图
-- [docs/api-design.md](docs/api-design.md) —— REST API 设计（推荐模块：读缓存 + 导入）
-- [docs/engine-integration.md](docs/engine-integration.md) —— edurec-engine 接入说明（离线批量 + 结果落库）
-- [docs/data-handoff.md](docs/data-handoff.md) —— 数据交接与一轮刷新流程
-- [docs/bilibili-import.md](docs/bilibili-import.md) —— B 站教育视频采集与导入（字段映射、判重语义、合规边界）
-- [docs/adaptive-learning.md](docs/adaptive-learning.md) —— 知识图谱、初始问卷、学习画像与先修路径
-- [docs/recsys-design.md](docs/recsys-design.md) —— 推荐系统完善方案与实施状态
-- engine 契约的可执行版本：`../edurec-engine/contracts/v1/`（schema + fixtures + 校验器）
+详细设计在 `docs/design/`，操作指南在 `docs/guides/`；均已由文档地图索引。
 

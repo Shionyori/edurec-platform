@@ -3,7 +3,7 @@
 # bilibili.sh — B 站教育资源采集 + 导入 一键脚本
 #
 # 依次完成：准备 crawler 环境（幂等建 venv）-> 采集 B 站公开视频元数据 ->
-# 导入 resources 表。与 docs/bilibili-import.md 的手动步骤一一对应。
+# 导入 resources 表。与 docs/guides/bilibili-import.md 的手动步骤一一对应。
 #
 # 用法：
 #   bash scripts/bilibili.sh               # 采集 + 导入（一条龙）

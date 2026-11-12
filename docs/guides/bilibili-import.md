@@ -5,7 +5,7 @@
 
 > 慕课等第三方数据集走**完全不同的链路**（纯离线导入，配置驱动字段映射），见
 > [dataset-import.md](./dataset-import.md)。两条链路复用同一段落库内核
-> （[crawl_import.go](../backend/internal/service/crawl_import.go) 的 `ImportItems`），
+> （[crawl_import.go](../../backend/internal/service/crawl_import.go) 的 `ImportItems`），
 > 故下文的判重与幂等语义对二者同样成立。
 
 链路分两种模式，**离线批量 + 在线实时并存**：
@@ -39,7 +39,7 @@ CONFIG_PATH=configs/config.yaml go run ./cmd/import_bilibili            # 落库
 
 ## 采集器
 
-详见 [backend/crawler/README.md](../backend/crawler/README.md)。要点：
+详见 [backend/crawler/README.md](../../backend/crawler/README.md)。要点：
 
 - **走的接口**：关键词搜索 `/x/web-interface/wbi/search/type`（WBI 签名 + `buvid3`，**不需要登录**）、
   BV 详情 `/x/web-interface/view`（完全免登录）、UP 主投稿 `/x/space/wbi/arc/search`（风控较严）。

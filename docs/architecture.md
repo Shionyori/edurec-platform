@@ -1,9 +1,9 @@
 # 目标架构：platform 与 engine 的工程最终形态
 
 > 状态：设计基线（2026-11-12）
-> 关联文档：[`architecture-constraints.md`](architecture-constraints.md)（可执行约束）、
-> [`architecture-review.md`](architecture-review.md)（现状评估与已落地重构）
-> engine 侧组件视图：`edurec-engine/docs/target-architecture.md`
+> 关联文档：[`architecture-constraints.md`](constraints.md)（可执行约束）、
+> [`architecture-review.md`](design/architecture-review.md)（现状评估与已落地重构）
+> engine 侧组件视图：`edurec-engine/docs/architecture.md`
 
 ---
 
@@ -88,7 +88,7 @@ platform-api :8080 ──文件──> ../edurec-engine/model/...
 
 ### 3.1 C1：离线工件契约（主链路）
 
-权威规范：engine 仓库 `docs/platform-contract.md`，可执行版本 `contracts/v1/`。
+权威规范：engine 仓库 `docs/contracts/platform-contract.md`，可执行版本 `contracts/v1/`。
 
 | 项 | 约定 |
 |---|---|
@@ -111,7 +111,7 @@ platform-api :8080 ──文件──> ../edurec-engine/model/...
 
 ### 3.2 C2：在线 KG 契约（可选旁路）
 
-权威规范：engine 仓库 `docs/kg-service-contract.md`。
+权威规范：engine 仓库 `docs/contracts/kg-service-contract.md`。
 
 | 项 | 约定 |
 |---|---|

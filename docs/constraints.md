@@ -1,6 +1,6 @@
 # 架构约束（可执行）
 
-> 配套设计：[`target-architecture.md`](target-architecture.md)
+> 配套设计：[`target-architecture.md`](architecture.md)
 > 适用范围：`edurec-platform` 与 `edurec-engine` 两个仓库的全部改动
 > 约束级别：**MUST / MUST NOT 为合并门禁；SHOULD 需在 PR 说明理由**
 
@@ -26,7 +26,7 @@
 
 | ID | 约束 | 理由 | 检查方式 |
 |---|---|---|---|
-| B1 | **MUST** 批量交接只走 C1：快照进、推荐 ID 出；不得新增平台↔engine 的数据库/HTTP 旁路 | 契约是唯一耦合面 | 评审；`docs/platform-contract.md` 变更流程 |
+| B1 | **MUST** 批量交接只走 C1：快照进、推荐 ID 出；不得新增平台↔engine 的数据库/HTTP 旁路 | 契约是唯一耦合面 | 评审；`docs/contracts/platform-contract.md` 变更流程 |
 | B2 | **MUST** 工件不可变、带 `run_id`、带校验和、原子写出 | 可复现、可追溯、防半份文件 | engine 校验器 + `write_handoff`；`handoff.sh` 校验 |
 | B3 | **MUST** 导入幂等；失败保留旧缓存；不交付半份工件 | 在线服务始终有可用结果 | platform 导入测试 + 契约测试 |
 | B4 | **MUST** 推荐工件使用平台原始 ID，禁止引擎内部编号 | 平台不感知模型内部空间 | 契约校验器 / 导入统计 |
@@ -79,7 +79,7 @@
 |---|---|---|---|
 | F1 | **MUST** 新增交互方式/部署单元/外部依赖，先补架构文档 + 契约 + 测试，再实现 | 防止架构漂移 | PR 模板/评审 |
 | F2 | **MUST** 合并前运行 `bash scripts/verify-all.sh --with-frontend` | 统一门禁 | CI/本地脚本 |
-| F3 | **MUST** 契约变更同时更新 `docs/platform-contract.md` 或 `docs/kg-service-contract.md` | 文档与实现一致 | 评审 |
+| F3 | **MUST** 契约变更同时更新 `docs/contracts/platform-contract.md` 或 `docs/contracts/kg-service-contract.md` | 文档与实现一致 | 评审 |
 | F4 | **SHOULD** 每个 PR 只做一个逻辑变更；破坏性变更单独提交并标注 | 可回滚、可审计 | 评审 |
 | F5 | **MUST NOT** 把 `docs/` 里的设计文档当作可选项；与代码冲突时以文档中的约束为准并先修文档 | 文档是架构的一部分 | 评审 |
 
@@ -112,5 +112,5 @@
 - [ ] 在线调用是否有超时、并发上限、熔断、鉴权、request id？
 - [ ] 新增字段/接口是否保持向后兼容？破坏性变更是否升 `contract_version`？
 - [ ] 是否引入 PII 或把密钥写进仓库？
-- [ ] 是否更新了 `docs/target-architecture.md` / 约束文档？
+- [ ] 是否更新了 `docs/architecture.md` / 约束文档？
 - [ ] `verify-all.sh --with-frontend` 是否通过？

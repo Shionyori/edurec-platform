@@ -47,7 +47,7 @@
              推荐 ID 列表（方向 B，旁挂信封）
 ```
 
-保持双仓的理由与 `docs/design.md` #37 一致：engine 是可独立引用/复现的模型工件，
+保持双仓的理由与 `docs/design/architecture-decisions.md` #37 一致：engine 是可独立引用/复现的模型工件，
 platform 是 Web 应用；两者工具链与数据体量差异大。**边界由 `contracts/v1` 固化**，
 换模型不需要改 platform 代码。
 
@@ -101,7 +101,7 @@ recommendations 缓存表 → GET /recommendations（按数组顺序返回）
 | P5 | `cmd/export_snapshot` | 用户/资源全量读入内存、行为/评分行累积在内存后才写 CSV | 数据量上来后导出进程 OOM | ⏳ 路线图 P1（改为流式写出） |
 | P6 | `handler/resource.go`、`user_behavior.go`、`admin.go` | Handler 仍直接构造 `repository.*Query` 结构 | 耦合较浅但仍是 DTO 泄漏 | ⏳ 路线图 P2（service 自有权重入参） |
 | P7 | `service/recommendation.go` | 平台兜底推荐不排除「用户已交互」资源 | 冷启动/未导入用户可能被推荐已看内容 | ⏳ 路线图 P2（注入行为仓储做过滤） |
-| P8 | `docs/design.md` #9 | 建表仍靠 GORM `AutoMigrate`，无版本化迁移 | 生产变更不可审计、不可回滚 | ⏳ 路线图 P2（golang-migrate） |
+| P8 | `docs/design/architecture-decisions.md` #9 | 建表仍靠 GORM `AutoMigrate`，无版本化迁移 | 生产变更不可审计、不可回滚 | ⏳ 路线图 P2（golang-migrate） |
 | P9 | `service/recommendation.go` | 缓存无 TTL / 新鲜度策略；旧结果会一直返回 | 长期不刷新时推荐陈旧 | ⏳ 路线图 P3（读取信封 `generated_at`，超期走兜底并告警） |
 
 > P1–P4 是本轮实际修改；P5–P9 已确认但不在本轮改动范围，避免一次提交过宽。

@@ -180,7 +180,7 @@ go run ./cmd/import_dataset --dataset mooc [--file X] [--format auto] [--limit N
 ## 判重与幂等
 
 判重键是 `source_url`，语义与 B 站导入完全一致（同一段代码，见
-[crawl_import.go](../backend/internal/service/crawl_import.go) 的 `ImportItems`）：
+[crawl_import.go](../../backend/internal/service/crawl_import.go) 的 `ImportItems`）：
 
 - **未命中** → 插入新行
 - **命中** → **不新增行**，只刷新 `view_count` 与 `metadata`。标题、简介、分类等**保持平台侧的值**，
@@ -232,7 +232,7 @@ go run ./cmd/import_dataset --dataset mooc [--file X] [--format auto] [--limit N
 2. **分类自动创建**。`default_category` 或数据里的分类名写错不会报错，会静默新建一个分类
    （与 B 站导入同款行为）。
 3. **`resources` 表无 `source_url` 唯一索引**（仅有普通索引，见
-   [resource.go](../backend/internal/model/resource.go)）。本命令单进程串行执行，不会产生重复行；
+   [resource.go](../../backend/internal/model/resource.go)）。本命令单进程串行执行，不会产生重复行；
    若将来引入并发导入，需要用 migration 加唯一索引。
 4. **`resource_type` 只影响落库的 `type` 列**，不影响推荐链路——课程与视频在推荐里同等对待。
 5. **数据集若没有课程元数据**（如公开的 XuetangX/KDD 交互日志只有 user–course 行为，没有标题封面），

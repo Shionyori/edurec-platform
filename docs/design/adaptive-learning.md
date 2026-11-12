@@ -184,7 +184,7 @@ CONFIG_PATH=configs/config.local.yaml go run ./cmd/generate_concepts -all
 ## 7. 关键帧与封面
 
 资源详情页还展示 B 站关键帧（雪碧图 CSS 裁切），详见
-[bilibili-import.md](bilibili-import.md#关键帧与封面资源特征)。
+[bilibili-import.md](../guides/bilibili-import.md#关键帧与封面资源特征)。
 
 ## 8. 已知限制
 

@@ -30,14 +30,14 @@ platform 侧对应约束：
 - KG 调用有超时、并发上限、熔断、鉴权与 request id，不自动重试；
 - platform 不加载模型、不执行 Python、不读 engine 目录。
 
-完整设计见 [`target-architecture.md`](target-architecture.md)，可执行约束见
-[`architecture-constraints.md`](architecture-constraints.md)。
+完整设计见 [`target-architecture.md`](../architecture.md)，可执行约束见
+[`architecture-constraints.md`](../constraints.md)。
 
 规范契约（engine 仓库）：
 
-- 主契约：[`docs/platform-contract.md`](https://github.com/Shionyori/edurec-engine/blob/main/docs/platform-contract.md)
+- 主契约：[`docs/contracts/platform-contract.md`](https://github.com/Shionyori/edurec-engine/blob/main/docs/contracts/platform-contract.md)
 - 可执行版本：`../edurec-engine/contracts/v1/`（JSON Schema + fixtures + 校验器）
-- 当前数据流：[`docs/data-flow.md`](https://github.com/Shionyori/edurec-engine/blob/main/docs/data-flow.md)
+- 当前数据流：[`docs/contracts/data-flow.md`](https://github.com/Shionyori/edurec-engine/blob/main/docs/contracts/data-flow.md)
 
 ## 2. 数据流
 
@@ -53,8 +53,8 @@ Recommendation 缓存表（每个用户一条）
 GET /api/v1/recommendations → 命中缓存按序返回；未命中按评分降序热门兜底并写缓存
 ```
 
-一轮完整刷新（含校验步骤）见 [data-handoff.md](./data-handoff.md)，
-一键脚本为 [`scripts/handoff.sh`](../scripts/handoff.sh)。
+一轮完整刷新（含校验步骤）见 [data-handoff.md](../guides/data-handoff.md)，
+一键脚本为 [`scripts/handoff.sh`](../../scripts/handoff.sh)。
 
 ## 3. 配置
 
@@ -62,7 +62,7 @@ GET /api/v1/recommendations → 命中缓存按序返回；未命中按评分降
 
 ```yaml
 engine:
-  # 推荐结果文件：engine 生成后放至此处（见 docs/data-handoff.md）
+  # 推荐结果文件：engine 生成后放至此处（见 docs/guides/data-handoff.md）
   recommendations_file: "data/recommendations.json"
   # 演示/模拟数据集：engine dataset/sim 拷至此处（demo_seed 播种用）
   dataset_dir: "data/sim"
@@ -134,7 +134,7 @@ engine 提供 `scripts/kg_server.py`：
 - **客户端**：超时 + 并发上限 + 连续失败熔断；**不自动重试生成**。
 - **降级**：engine 未启动/熔断时只影响「自动生成概念」，推荐、搜索、学习路径不受影响。
 
-契约见 engine 的 [`docs/kg-service-contract.md`](https://github.com/Shionyori/edurec-engine/blob/main/docs/kg-service-contract.md)。
+契约见 engine 的 [`docs/contracts/kg-service-contract.md`](https://github.com/Shionyori/edurec-engine/blob/main/docs/contracts/kg-service-contract.md)。
 这也与「两仓库目录互不读写」不冲突：它是显式、可选的 HTTP 契约。
 
 ## 8. 演进方向（可选，不改变主链路）
@@ -145,8 +145,8 @@ engine 提供 `scripts/kg_server.py`：
 
 ## 9. 相关文档
 
-- [data-handoff.md](./data-handoff.md) —— 一轮刷新的完整步骤与校验
-- [design.md](./design.md) —— 架构与决策记录
-- [api-design.md](./api-design.md) —— 推荐接口与导入接口
-- engine 侧：[`docs/platform-contract.md`](https://github.com/Shionyori/edurec-engine/blob/main/docs/platform-contract.md)、
-  [`docs/data-flow.md`](https://github.com/Shionyori/edurec-engine/blob/main/docs/data-flow.md)
+- [data-handoff.md](../guides/data-handoff.md) —— 一轮刷新的完整步骤与校验
+- [design.md](../design/architecture-decisions.md) —— 架构与决策记录
+- [api-design.md](../design/api-design.md) —— 推荐接口与导入接口
+- engine 侧：[`docs/contracts/platform-contract.md`](https://github.com/Shionyori/edurec-engine/blob/main/docs/contracts/platform-contract.md)、
+  [`docs/contracts/data-flow.md`](https://github.com/Shionyori/edurec-engine/blob/main/docs/contracts/data-flow.md)

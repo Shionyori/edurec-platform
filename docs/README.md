@@ -5,6 +5,8 @@
 | 文档 | 内容 |
 |---|---|
 | [`design.md`](design.md) | 平台架构、技术栈、决策记录 |
+| [`target-architecture.md`](target-architecture.md) | 双仓工程最终形态：角色、部署单元、交互契约与演进路线 |
+| [`architecture-constraints.md`](architecture-constraints.md) | 可执行的架构约束与 PR 检查清单 |
 | [`architecture-review.md`](architecture-review.md) | 双仓架构评估、目标设计、本轮重构与路线图 |
 | [`api-design.md`](api-design.md) | REST API 设计（含推荐读缓存与导入） |
 | [`engine-integration.md`](engine-integration.md) | 与 edurec-engine 的边界、数据流、可选在线能力 |

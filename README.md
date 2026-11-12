@@ -163,6 +163,8 @@ cd frontend && pnpm test && pnpm type-check && pnpm lint
 - [docs/README.md](docs/README.md) —— 文档索引（按主题）
 
 - [docs/design.md](docs/design.md) —— 平台架构设计与决策记录
+- [docs/target-architecture.md](docs/target-architecture.md) —— 双仓工程最终形态与交互契约
+- [docs/architecture-constraints.md](docs/architecture-constraints.md) —— 可执行的架构约束
 - [docs/architecture-review.md](docs/architecture-review.md) —— 双仓架构评估、重构记录与路线图
 - [docs/api-design.md](docs/api-design.md) —— REST API 设计（推荐模块：读缓存 + 导入）
 - [docs/engine-integration.md](docs/engine-integration.md) —— edurec-engine 接入说明（离线批量 + 结果落库）

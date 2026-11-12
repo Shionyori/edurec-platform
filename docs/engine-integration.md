@@ -15,6 +15,24 @@ platform 导出快照 → engine 训练 + 全量推理 → 推荐结果文件 �
 - 唯一允许的在线调用是**可选**的知识生成服务（`kg_server.py`），
   只用于「标题/描述 → 概念」，不参与推荐主链路（见 §7）。
 
+### 1.1 工程最终形态：一个仓库、两个部署单元
+
+engine 虽然同时提供离线与在线能力，但**不是同一个部署单元**：
+
+| 单元 | 形态 | 资源/失败域 | 交互 |
+|---|---|---|---|
+| `engine-batch` | Job（无入站端口） | 训练/推理资源；失败只影响本轮刷新 | C1 工件契约（快照进、推荐出） |
+| `engine-kg` | 常驻 HTTP 服务（内网） | CPU/IO；无状态、可多副本；失败只影响自动生成概念 | C2 在线契约 |
+
+platform 侧对应约束：
+
+- 离线推荐永远不依赖 KG 服务；
+- KG 调用有超时、并发上限、熔断、鉴权与 request id，不自动重试；
+- platform 不加载模型、不执行 Python、不读 engine 目录。
+
+完整设计见 [`target-architecture.md`](target-architecture.md)，可执行约束见
+[`architecture-constraints.md`](architecture-constraints.md)。
+
 规范契约（engine 仓库）：
 
 - 主契约：[`docs/platform-contract.md`](https://github.com/Shionyori/edurec-engine/blob/main/docs/platform-contract.md)
@@ -102,12 +120,21 @@ engine 提供 `scripts/kg_server.py`：
 
 | 方法 | 路径 | 说明 |
 |---|---|---|
-| GET | `/health` | 状态 + `contract_version` |
+| GET | `/health` | liveness + `contract_version` + capabilities |
+| GET | `/ready` | readiness（可选检查模型就绪标记） |
 | POST | `/knowledge/generate` | `{title, description, point_code}` → 概念列表 |
 | POST | `/knowledge/generate_batch` | 批量，单条失败不阻断整批 |
 
+生产约束：
+
+- **鉴权**：engine 启用 `KG_SERVICE_TOKEN`，platform 配置
+  `KNOWLEDGE_GENERATOR_TOKEN`；两边一致，token 不写仓库。
+- **限额**：请求体 ≤1 MiB、批量 ≤50、并发 ≤4（均可配置）；超限返回 4xx。
+- **关联**：透传 `X-Request-ID`；响应带 `X-Contract-Version: 1`。
+- **客户端**：超时 + 并发上限 + 连续失败熔断；**不自动重试生成**。
+- **降级**：engine 未启动/熔断时只影响「自动生成概念」，推荐、搜索、学习路径不受影响。
+
 契约见 engine 的 [`docs/kg-service-contract.md`](https://github.com/Shionyori/edurec-engine/blob/main/docs/kg-service-contract.md)。
-平台侧只在「自动生成概念」时调用；engine 未启动不影响推荐、搜索、学习路径。
 这也与「两仓库目录互不读写」不冲突：它是显式、可选的 HTTP 契约。
 
 ## 8. 演进方向（可选，不改变主链路）

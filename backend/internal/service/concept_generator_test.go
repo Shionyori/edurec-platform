@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"testing"
 	"time"
 
@@ -25,13 +26,12 @@ func TestHTTPConceptRunnerParsesConcepts(t *testing.T) {
 		if err := json.NewDecoder(r.Body).Decode(&got); err != nil {
 			t.Errorf("decode body: %v", err)
 		}
-		_ = json.NewEncoder(w).Encode(map[string]any{
-			"point_code": "mathematical-analysis",
-			"concepts": []map[string]any{
-				{"name": "积分", "page_rank": 0.045},
-				{"name": "导数", "page_rank": 0.042},
-			},
-		})
+		// 响应样本来自 engine 的契约 fixture（scripts/check-contract-sync.sh 同步）
+		body, err := os.ReadFile("testdata/kg-generate.contract.json")
+		if err != nil {
+			t.Fatalf("read fixture: %v", err)
+		}
+		_, _ = w.Write(body)
 	}))
 	defer server.Close()
 

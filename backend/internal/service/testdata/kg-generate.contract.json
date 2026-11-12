@@ -1,0 +1,10 @@
+{
+  "contract_version": 1,
+  "point_code": "mathematical-analysis",
+  "title": "数学分析",
+  "concepts": [
+    {"name": "积分", "page_rank": 0.045},
+    {"name": "导数", "page_rank": 0.042}
+  ],
+  "elapsed_seconds": 1.2
+}

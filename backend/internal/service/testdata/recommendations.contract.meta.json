@@ -1,0 +1,48 @@
+{
+  "contract_version": 1,
+  "generated_at": 1767225700,
+  "run_id": "20260101_000100",
+  "snapshot_run_id": "20260101_000000",
+  "model": {
+    "name": "semantic_deterministic_two_tower",
+    "version": "v1",
+    "encoder": "local-hashidf-svd"
+  },
+  "method": {
+    "recall": "semantic",
+    "rank": "quality_fusion"
+  },
+  "top_n": 20,
+  "users_count": 3,
+  "quality_weights": {
+    "semantic": 0.6,
+    "rating": 0.0,
+    "popularity": 0.4
+  },
+  "scores": {
+    "1": [
+      0.93,
+      0.62
+    ],
+    "2": [
+      0.88
+    ],
+    "3": [
+      0.71,
+      0.55
+    ]
+  },
+  "reasons": {
+    "1": [
+      "与你学过的《线性代数》相关",
+      "根据你的学习记录推荐"
+    ],
+    "2": [
+      "与你学过的《实变函数》相关"
+    ],
+    "3": [
+      "热门课程",
+      "与你的兴趣相关"
+    ]
+  }
+}

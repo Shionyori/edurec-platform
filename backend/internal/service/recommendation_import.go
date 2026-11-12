@@ -75,6 +75,61 @@ func envelopePath(filePath string) string {
 	return filePath + ".meta.json"
 }
 
+const (
+	// IDLookupChunk 限制单条 SQL 的 IN 参数个数。
+	// 全量推荐文件的资源 ID 可能达到「用户数 × top_n」量级（数万～数十万），
+	// 一次性 `IN (...)` 会撞上 max_allowed_packet / 占位符上限。
+	IDLookupChunk = 1000
+	// ImportWriteChunk 单事务写入的用户数。整份文件一个事务会长时间持锁；
+	// 按批提交既控制锁范围，又保证每一批内部原子。
+	ImportWriteChunk = 500
+)
+
+// uniqueUint 去重但保留首次出现顺序；用于「存在性查询」的输入归一。
+func uniqueUint(ids []uint) []uint {
+	seen := make(map[uint]struct{}, len(ids))
+	out := make([]uint, 0, len(ids))
+	for _, id := range ids {
+		if _, ok := seen[id]; ok {
+			continue
+		}
+		seen[id] = struct{}{}
+		out = append(out, id)
+	}
+	return out
+}
+
+func chunkUint(ids []uint, size int) [][]uint {
+	if size <= 0 {
+		size = len(ids)
+	}
+	chunks := make([][]uint, 0, (len(ids)+size-1)/size)
+	for start := 0; start < len(ids); start += size {
+		end := start + size
+		if end > len(ids) {
+			end = len(ids)
+		}
+		chunks = append(chunks, ids[start:end])
+	}
+	return chunks
+}
+
+func chunkUpserts(inputs []repository.RecommendationUpsert,
+	size int) [][]repository.RecommendationUpsert {
+	if size <= 0 {
+		size = len(inputs)
+	}
+	chunks := make([][]repository.RecommendationUpsert, 0, (len(inputs)+size-1)/size)
+	for start := 0; start < len(inputs); start += size {
+		end := start + size
+		if end > len(inputs) {
+			end = len(inputs)
+		}
+		chunks = append(chunks, inputs[start:end])
+	}
+	return chunks
+}
+
 func (s *RecommendationImportService) readEnvelope() recommendationEnvelope {
 	var env recommendationEnvelope
 	data, err := os.ReadFile(envelopePath(s.filePath))
@@ -103,7 +158,7 @@ func (s *RecommendationImportService) Import() (*ImportResult, error) {
 
 	envelope := s.readEnvelope()
 
-	// 收集全部用户与资源 ID，用于一次性查询存在性
+	// 收集全部用户与资源 ID，用于分批查询存在性
 	userIDs := make([]uint, 0, len(raw))
 	resourceIDs := make([]uint, 0)
 	for uidStr, rids := range raw {
@@ -115,26 +170,18 @@ func (s *RecommendationImportService) Import() (*ImportResult, error) {
 		resourceIDs = append(resourceIDs, rids...)
 	}
 
-	existingUsers, err := s.users.FindByIDs(userIDs)
+	userSet, err := s.existingUserIDs(userIDs)
 	if err != nil {
 		return nil, apperror.Internal(err)
 	}
-	userSet := make(map[uint]struct{}, len(existingUsers))
-	for i := range existingUsers {
-		userSet[existingUsers[i].ID] = struct{}{}
-	}
-
-	existingResources, err := s.resources.FindByIDs(resourceIDs)
+	resourceSet, err := s.existingResourceIDs(resourceIDs)
 	if err != nil {
 		return nil, apperror.Internal(err)
-	}
-	resourceSet := make(map[uint]struct{}, len(existingResources))
-	for i := range existingResources {
-		resourceSet[existingResources[i].ID] = struct{}{}
 	}
 
 	now := time.Now().Unix()
 	result := &ImportResult{}
+	pending := make([]repository.RecommendationUpsert, 0, len(raw))
 
 	for uidStr, rids := range raw {
 		id, err := strconv.ParseUint(uidStr, 10, 64)
@@ -176,21 +223,56 @@ func (s *RecommendationImportService) Import() (*ImportResult, error) {
 		if err != nil {
 			return nil, apperror.Internal(err)
 		}
-		if _, err := s.recommendations.Replace(repository.RecommendationUpsert{
+		pending = append(pending, repository.RecommendationUpsert{
 			UserID:      uid,
 			ResourceIDs: string(idsJSON),
 			RunID:       envelope.RunID,
 			Reasons:     string(reasonsJSON),
 			Now:         now,
-		}); err != nil {
-			return nil, apperror.Internal(err)
-		}
+		})
 		result.ImportedUsers++
 		result.ImportedResources += len(valid)
 	}
 
+	// 分批事务写入：每一批内部原子，避免中途失败留下半批新、半批旧的状态。
+	for _, batch := range chunkUpserts(pending, ImportWriteChunk) {
+		if err := s.recommendations.ReplaceMany(batch); err != nil {
+			return nil, apperror.Internal(err)
+		}
+	}
+
 	s.recordRun(envelope, result, now)
 	return result, nil
+}
+
+// existingUserIDs 分批查询哪些用户真实存在，返回集合。
+func (s *RecommendationImportService) existingUserIDs(ids []uint) (map[uint]struct{}, error) {
+	set := make(map[uint]struct{}, len(ids))
+	for _, chunk := range chunkUint(uniqueUint(ids), IDLookupChunk) {
+		users, err := s.users.FindByIDs(chunk)
+		if err != nil {
+			return nil, err
+		}
+		for i := range users {
+			set[users[i].ID] = struct{}{}
+		}
+	}
+	return set, nil
+}
+
+// existingResourceIDs 分批查询哪些资源真实存在，返回集合。
+func (s *RecommendationImportService) existingResourceIDs(ids []uint) (map[uint]struct{}, error) {
+	set := make(map[uint]struct{}, len(ids))
+	for _, chunk := range chunkUint(uniqueUint(ids), IDLookupChunk) {
+		resources, err := s.resources.FindByIDs(chunk)
+		if err != nil {
+			return nil, err
+		}
+		for i := range resources {
+			set[resources[i].ID] = struct{}{}
+		}
+	}
+	return set, nil
 }
 
 // recordRun 落一条运行记录。写失败只告警不报错：推荐已导入，不能让审计记录失败回滚结果。

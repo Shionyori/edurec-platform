@@ -67,6 +67,9 @@ func New(cfg *config.Config, db *gorm.DB, rdb *redis.Client) *gin.Engine {
 	recommendationImportService := service.NewRecommendationImportService(
 		recommendationRepo, recommendationRunRepo, userRepo, resourceRepo, cfg.Engine.RecommendationsFile,
 	)
+	recommendationAdminService := service.NewRecommendationAdminService(
+		recommendationRunRepo, statsRepo,
+	)
 	adminService := service.NewAdminService(adminRepo)
 	authHandler := handler.NewAuthHandler(authService, userService)
 	userHandler := handler.NewUserHandler(userService)
@@ -76,7 +79,9 @@ func New(cfg *config.Config, db *gorm.DB, rdb *redis.Client) *gin.Engine {
 	impressionHandler := handler.NewResourceImpressionHandler(impressionService)
 	ratingHandler := handler.NewRatingHandler(ratingService)
 	commentHandler := handler.NewCommentHandler(resourceService, commentService)
-	recommendationHandler := handler.NewRecommendationHandler(recommendationService, recommendationImportService, recommendationRunRepo, statsRepo)
+	recommendationHandler := handler.NewRecommendationHandler(
+		recommendationService, recommendationImportService, recommendationAdminService,
+	)
 	knowledgeHandler := handler.NewKnowledgeHandler(knowledgeService)
 	learningHandler := handler.NewLearningHandler(learningService)
 	generationHandler := handler.NewGenerationHandler(conceptGenerator, knowledgeService)

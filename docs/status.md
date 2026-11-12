@@ -43,6 +43,8 @@ engine 已从“纯离线”演进为“离线主链路 + 可选在线 KG”；
 
 ## 5. 路线图
 
+完整待办、Owner、验收标准与建议顺序见 [`backlog.md`](backlog.md)。摘要：
+
 | 阶段 | 目标 | 验收 |
 |---|---|---|
 | P1（当前） | 在线 KG 边界硬化、架构约束、文档分层 | `verify-all.sh --with-frontend` 全绿 |

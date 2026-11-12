@@ -163,6 +163,7 @@ cd frontend && pnpm test && pnpm type-check && pnpm lint
 - [docs/README.md](docs/README.md) —— **文档地图（从这里开始）**
 - [docs/architecture.md](docs/architecture.md) —— 双仓目标架构与部署形态
 - [docs/status.md](docs/status.md) —— 当前设计状态与路线图
+- [docs/backlog.md](docs/backlog.md) —— 待实现清单与建议顺序
 - [docs/constraints.md](docs/constraints.md) —— 可执行的架构约束
 - [docs/contracts/README.md](docs/contracts/README.md) —— 跨仓契约（C1 / C2）
 

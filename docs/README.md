@@ -9,6 +9,7 @@
 |---|---|
 | [`architecture.md`](architecture.md) | 系统的工程最终形态：platform / engine 的角色、部署单元、交互契约 |
 | [`status.md`](status.md) | 现在能做什么、不能做什么、已知约束与路线图 |
+| [`backlog.md`](backlog.md) | 待实现清单（跨仓）、优先级与建议执行顺序 |
 | [`constraints.md`](constraints.md) | MUST / MUST NOT 约束与 PR 检查清单 |
 | [`contracts/README.md`](contracts/README.md) | 与 engine 的两条契约（C1 离线工件 / C2 在线 KG） |
 

@@ -8,7 +8,7 @@ export interface BehaviorQuery {
 }
 
 export function recordBehavior(resourceId: number, action: BehaviorAction) {
-  return post<null>(`/resources/${resourceId}/behaviors`, { action })
+  return post<null>(`/resources/${resourceId}/behaviors`, { action }, { skipPageLoading: true })
 }
 
 export function listMyBehaviors(params: BehaviorQuery = {}) {
@@ -18,8 +18,8 @@ export function listMyBehaviors(params: BehaviorQuery = {}) {
 // 收藏 / 取消收藏（幂等）。后端以 favorite 行为为收藏的依据。
 export function setFavorite(resourceId: number, favorite: boolean) {
   return favorite
-    ? post<{ favorited: boolean }>(`/resources/${resourceId}/favorite`)
-    : del<{ favorited: boolean }>(`/resources/${resourceId}/favorite`)
+    ? post<{ favorited: boolean }>(`/resources/${resourceId}/favorite`, undefined, { skipPageLoading: true })
+    : del<{ favorited: boolean }>(`/resources/${resourceId}/favorite`, { skipPageLoading: true })
 }
 
 // 我的收藏：分页返回收藏的资源（按最近收藏倒序）

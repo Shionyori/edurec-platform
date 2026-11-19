@@ -1,6 +1,8 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { pageLoading } from '@/composables/pageLoading'
+import { prefetchRoute } from './prefetch'
+import { clearPrefetchCache } from '@/api/client'
 import { resolveGuard } from './guards'
 import FrontLayout from '@/components/layout/FrontLayout.vue'
 import AdminLayout from '@/components/layout/AdminLayout.vue'
@@ -127,10 +129,22 @@ const router = createRouter({
 // failed navigation's afterEach cannot end the redirect that replaced it.
 const navigationTokens = new WeakMap<object, number>()
 
-router.beforeEach(async (to) => {
+router.beforeEach(async (to, from) => {
+  // Never let data prefetched for an abandoned navigation (or a previous
+  // account) be consumed by this one.
+  clearPrefetchCache()
   navigationTokens.set(to, pageLoading.startNavigation())
   const auth = useAuthStore()
-  return resolveGuard(to, auth)
+  const guard = await resolveGuard(to, auth)
+  if (guard !== true) return guard
+
+  // Load the destination's primary data while the current page is still on
+  // screen. The router commits only after the prefetch settles; the page then
+  // reads the one-shot cache and paints complete content on its first frame.
+  if (from.name) {
+    await prefetchRoute(to)
+  }
+  return true
 })
 
 router.afterEach((to) => {

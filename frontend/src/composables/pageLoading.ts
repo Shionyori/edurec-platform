@@ -3,9 +3,10 @@ import { readonly, ref } from 'vue'
 /**
  * A tiny global page-loading coordinator.
  *
- * Route changes and the initial API requests of the new page usually race:
- * the skeleton is painted first, then data arrives and the layout changes.
- * The loading screen covers that window so the user never sees the swap.
+ * The router prefetches the destination page's primary data before it commits
+ * the navigation, so the old page normally stays still under this mask while
+ * the next page is being prepared. The mask also covers the fallback window
+ * when prefetch fails or a page has secondary requests of its own.
  *
  * Rules:
  *  - show immediately on navigation;

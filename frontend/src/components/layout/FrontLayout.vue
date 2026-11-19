@@ -183,8 +183,8 @@ function submitSearch() {
       </div>
     </header>
 
-    <div class="flex-1 pb-[calc(76px+env(safe-area-inset-bottom))] md:pb-0">
-      <main id="main-content">
+    <div class="flex flex-1 flex-col pb-[calc(72px+env(safe-area-inset-bottom))] md:pb-0">
+      <main id="main-content" class="flex-1">
         <RouterView v-slot="{ Component }">
           <Transition name="route" mode="out-in">
             <component :is="Component" />

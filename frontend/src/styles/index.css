@@ -698,7 +698,16 @@
     z-index: 100;
     display: grid;
     place-items: center;
-    background: var(--color-bg);
+    background: color-mix(in srgb, var(--color-bg) 80%, transparent);
+    -webkit-backdrop-filter: blur(8px) saturate(115%);
+    backdrop-filter: blur(8px) saturate(115%);
+  }
+
+  /* Browsers without backdrop-filter get a quieter, nearly opaque veil. */
+  @supports not (backdrop-filter: blur(8px)) {
+    .page-loader {
+      background: color-mix(in srgb, var(--color-bg) 94%, transparent);
+    }
   }
 
   .page-loader__inner {

@@ -280,7 +280,7 @@ White rounded node cards (10px), level-colored 4px dots, 12.5px bold labels, 10.
 A 1px hairline rail with 32px state nodes: green check for done, jade play with a 4px soft ring for current, muted lock for locked. Step cards use a soft jade tint for the current step, quiet surface for done, white for locked. Progress is a 6px track with a jade fill; the header also shows the percent and `已完成 n / m 节`.
 
 ### Page loading screen
-A full-viewport mint screen (`--color-bg`, z-index 100) with a 46px ink spark mark, a 12.5px "正在打开…" label, and a 112 × 2px jade indeterminate bar. It appears on every route change, stays visible while the new page's initial API requests are in flight, keeps a ~300ms minimum (160ms visible + 40ms settle + 120ms fade), and force-hides after 8s so a stalled request cannot trap the user. Document scrolling is locked while it is visible, and router `scrollBehavior` resets new pages to the top; back/forward restores the saved position.
+A full-viewport frosted mask (80% mint + 8px blur, z-index 100) with a 46px ink spark mark, a 12.5px "正在打开…" label, and a 112 × 2px jade indeterminate bar. Browsers without `backdrop-filter` get a 94% mint veil. It appears on every route change, stays visible while the new page's initial API requests are in flight, keeps a ~300ms minimum (160ms visible + 40ms settle + 120ms fade), and force-hides after 8s so a stalled request cannot trap the user. Document scrolling is locked while it is visible, and router `scrollBehavior` resets new pages to the top; back/forward restores the saved position.
 
 ## Motion
 

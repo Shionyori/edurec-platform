@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { onScopeDispose, watch } from 'vue'
 import { pageLoading } from '@/composables/pageLoading'
-import AppIcon from './AppIcon.vue'
+import BrandMark from './BrandMark.vue'
 
 const { visible } = pageLoading
 
@@ -31,9 +31,7 @@ onScopeDispose(() => {
       aria-label="页面加载中"
     >
       <div class="page-loader__inner">
-        <span class="page-loader__mark" aria-hidden="true">
-          <AppIcon name="spark-filled" :size="21" />
-        </span>
+        <BrandMark :size="46" class="page-loader__mark" />
         <p class="page-loader__label">正在打开…</p>
         <span class="page-loader__bar" aria-hidden="true"><span></span></span>
       </div>

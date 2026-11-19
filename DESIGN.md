@@ -143,7 +143,7 @@ edurec is a Chinese educational-resource recommender. Its interface is a fresh, 
 
 The previous worlds (transit signage, then warm cream + burnt vermilion) are both retired. The replacement is deliberately lighter: mint-tinted paper instead of cream, jade instead of terracotta, light tinted mastheads instead of dark ink bands, and a softer editorial scale. It is still **Operate** mode: familiar controls, scanable tables, and predictable navigation outrank decoration.
 
-Manrope is self-hosted for Latin letters and numerals; Chinese falls back to PingFang / Microsoft YaHei. A small four-point spark is the only brand mark. A live "下一步" card on the home hero — real recommendation data, not an illustration — is the signature move.
+Manrope is self-hosted for Latin letters and numerals; Chinese falls back to PingFang / Microsoft YaHei. A jade squircle holding a white four-point spark and a small mint dot is the only brand mark (`BrandMark.vue`, mirrored by `favicon.svg`). A live "下一步" card on the home hero — real recommendation data, not an illustration — is the signature move.
 
 **Key Characteristics:**
 - Cool mint paper ground, white cards, deep forest-green ink.
@@ -219,7 +219,7 @@ A fresh jade-on-mint palette: one signal color, a family of cool paper neutrals,
 
 Content lives in a 1200px shell (`frontend/src/styles/index.css`, `.shell`) with 20px side padding on mobile and 32px from `sm`. Focused flows narrow: auth 420px, questionnaire 920px, profile 920px, learning path 1040px, upload 760px. Page rhythm is 36px / 64px on mobile and 52px / 88px on desktop.
 
-The front shell is a 64px / 72px sticky white header with a 1px hairline, the spark wordmark, three nav items (首页 / 发现 / 知识点), a search field from `lg`, and an account menu. Active nav is a soft jade pill, not an underline. Below `md` the header keeps the wordmark, a search toggle, and the account action; the four primary destinations become a fixed bottom tab bar (首页 / 发现 / 知识点 / 我的) with a soft jade active capsule. Content reserves 76px at the bottom so the tab bar never covers the footer.
+The front shell is a 64px / 72px sticky white header with a 1px hairline, the brand mark and wordmark, three nav items (首页 / 发现 / 知识点), a search field from `lg`, and an account menu. Active nav is a soft jade pill, not an underline. Below `md` the header keeps the wordmark, a search toggle, and the account action; the four primary destinations become a fixed bottom tab bar (首页 / 发现 / 知识点 / 我的) with a soft jade active capsule. Content reserves 76px at the bottom so the tab bar never covers the footer.
 
 The admin shell uses a 248px light sidebar with the same wordmark, icon-led nav, a soft jade active pill, and an account block pinned to the bottom. The content header is a 64px white bar with a breadcrumb-like title; on mobile the sidebar becomes a horizontal chip row.
 
@@ -280,7 +280,7 @@ White rounded node cards (10px), level-colored 4px dots, 12.5px bold labels, 10.
 A 1px hairline rail with 32px state nodes: green check for done, jade play with a 4px soft ring for current, muted lock for locked. Step cards use a soft jade tint for the current step, quiet surface for done, white for locked. Progress is a 6px track with a jade fill; the header also shows the percent and `已完成 n / m 节`.
 
 ### Page loading screen
-A full-viewport frosted mask (68% mint + 10px blur, z-index 100) with a 46px ink spark mark, a 12.5px "正在打开…" label, and a 112 × 2px jade indeterminate bar. Browsers without `backdrop-filter` get a 92% mint veil. It appears on every route change, stays visible while the new page's initial API requests are in flight, keeps a ~300ms minimum (160ms visible + 40ms settle + 120ms fade), and force-hides after 8s so a stalled request cannot trap the user. The router prefetches the destination page's primary GETs before it commits the navigation (2.6s cap), so the previous page stays visible behind the mask; the new page reads a one-shot cache and paints complete content on its first frame. Prefetch failures fall back to the normal skeletons. Document scrolling is locked while the mask is visible, and router `scrollBehavior` resets new pages to the top; back/forward restores the saved position.
+A full-viewport frosted mask (68% mint + 10px blur, z-index 100) with a 46px jade brand mark, a 12.5px "正在打开…" label, and a 112 × 2px jade indeterminate bar. Browsers without `backdrop-filter` get a 92% mint veil. It appears on every route change, stays visible while the new page's initial API requests are in flight, keeps a ~300ms minimum (160ms visible + 40ms settle + 120ms fade), and force-hides after 8s so a stalled request cannot trap the user. The router prefetches the destination page's primary GETs before it commits the navigation (2.6s cap), so the previous page stays visible behind the mask; the new page reads a one-shot cache and paints complete content on its first frame. Prefetch failures fall back to the normal skeletons. Document scrolling is locked while the mask is visible, and router `scrollBehavior` resets new pages to the top; back/forward restores the saved position.
 
 ## Motion
 
@@ -305,7 +305,7 @@ Motion is state, not theater. Most transitions are 150–220ms with `cubic-bezie
 - Do write one line of context under a section heading and leave generous space above it.
 - Do provide a clear next action in every empty and error state.
 - Do keep the mobile bottom tab bar, the sticky rating rail, and keyboard focus rings.
-- Do use the spark mark, the live "下一步" card, and the orbit geometry as the only recurring brand devices.
+- Do use the brand mark, the live "下一步" card, and the orbit geometry as the only recurring brand devices.
 
 ### Don't
 - Don't reintroduce transit signage: navy rail bands, 2px route strokes, station dots, uppercase micro-labels, 4px corners.

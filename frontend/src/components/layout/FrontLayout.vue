@@ -3,6 +3,7 @@ import { computed, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import AppIcon from '@/components/ui/AppIcon.vue'
+import BrandMark from '@/components/ui/BrandMark.vue'
 
 const router = useRouter()
 const route = useRoute()
@@ -73,12 +74,7 @@ function submitSearch() {
     <header class="sticky top-0 z-40 border-b border-border bg-surface">
       <div class="shell flex h-16 items-center gap-4 md:h-[72px]">
         <RouterLink to="/" class="flex shrink-0 items-center gap-2.5" aria-label="edurec 首页">
-          <span
-            class="flex h-9 w-9 items-center justify-center rounded-[10px] bg-ink text-primary"
-            aria-hidden="true"
-          >
-            <AppIcon name="spark-filled" :size="19" />
-          </span>
+          <BrandMark :size="36" />
           <span class="text-[19px] font-extrabold leading-none tracking-[-0.045em] text-ink">
             edurec
           </span>
@@ -197,9 +193,7 @@ function submitSearch() {
           <div class="flex flex-col gap-8 md:flex-row md:items-start md:justify-between">
             <div class="max-w-sm">
               <RouterLink to="/" class="flex items-center gap-2.5" aria-label="edurec 首页">
-                <span class="flex h-8 w-8 items-center justify-center rounded-[9px] bg-ink text-primary" aria-hidden="true">
-                  <AppIcon name="spark-filled" :size="17" />
-                </span>
+                <BrandMark :size="32" />
                 <span class="text-[17px] font-extrabold tracking-[-0.04em] text-ink">edurec</span>
               </RouterLink>
               <p class="mt-3 text-[13px] leading-relaxed text-ink-muted">

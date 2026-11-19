@@ -1,14 +1,13 @@
 <script setup lang="ts">
 import AppIcon from '@/components/ui/AppIcon.vue'
+import BrandMark from '@/components/ui/BrandMark.vue'
 </script>
 
 <template>
   <main class="page shell">
     <div class="mx-auto flex max-w-xl flex-col items-center py-16 text-center sm:py-24">
       <RouterLink to="/" class="mb-12 inline-flex items-center gap-2.5" aria-label="edurec 首页">
-        <span class="flex h-9 w-9 items-center justify-center rounded-[10px] bg-ink text-primary" aria-hidden="true">
-          <AppIcon name="spark-filled" :size="19" />
-        </span>
+        <BrandMark :size="36" />
         <span class="text-[19px] font-extrabold tracking-[-0.045em] text-ink">edurec</span>
       </RouterLink>
       <div class="relative">

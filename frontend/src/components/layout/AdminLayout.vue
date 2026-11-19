@@ -3,6 +3,7 @@ import { computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import AppIcon from '@/components/ui/AppIcon.vue'
+import BrandMark from '@/components/ui/BrandMark.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -44,9 +45,7 @@ function logout() {
         class="flex h-[72px] items-center gap-2.5 border-b border-border px-5"
         aria-label="edurec 管理后台"
       >
-        <span class="flex h-9 w-9 items-center justify-center rounded-[10px] bg-ink text-primary" aria-hidden="true">
-          <AppIcon name="spark-filled" :size="19" />
-        </span>
+        <BrandMark :size="36" />
         <span class="flex items-center gap-2">
           <span class="text-[18px] font-extrabold leading-none tracking-[-0.045em] text-ink">edurec</span>
           <span class="rounded-md bg-sunken px-1.5 py-0.5 text-[10.5px] font-bold text-ink-muted">管理</span>
@@ -99,9 +98,7 @@ function logout() {
       <header class="sticky top-0 z-30 border-b border-border bg-surface">
         <div class="flex h-16 items-center justify-between gap-3 px-4 sm:px-6 lg:px-8">
           <div class="flex min-w-0 items-center gap-3">
-            <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-[9px] bg-ink text-primary md:hidden" aria-hidden="true">
-              <AppIcon name="spark-filled" :size="17" />
-            </span>
+            <BrandMark :size="32" class="md:hidden" />
             <div class="min-w-0">
               <p class="hidden text-[11.5px] font-semibold text-ink-muted md:block">管理后台</p>
               <p class="truncate text-[16px] font-bold text-ink md:text-[18px]">{{ pageTitle }}</p>

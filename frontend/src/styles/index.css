@@ -718,14 +718,6 @@
   }
 
   .page-loader__mark {
-    display: flex;
-    width: 46px;
-    height: 46px;
-    align-items: center;
-    justify-content: center;
-    border-radius: 14px;
-    background: var(--color-ink);
-    color: var(--color-primary);
     animation: loader-breathe 1.6s ease-in-out infinite;
   }
 

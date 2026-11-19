@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import AppIcon from '@/components/ui/AppIcon.vue'
+import BrandMark from '@/components/ui/BrandMark.vue'
 
 const features = [
   { icon: 'route', title: '先修关系排序', copy: '每一步都建立在已掌握的知识之上。' },
@@ -27,9 +28,7 @@ const features = [
 
       <div class="relative z-10 flex flex-1 flex-col">
         <RouterLink to="/" class="flex items-center gap-2.5" aria-label="edurec 首页">
-          <span class="flex h-9 w-9 items-center justify-center rounded-[10px] bg-ink text-primary" aria-hidden="true">
-            <AppIcon name="spark-filled" :size="19" />
-          </span>
+          <BrandMark :size="36" />
           <span class="text-[19px] font-extrabold tracking-[-0.045em] text-ink">edurec</span>
         </RouterLink>
 
@@ -63,9 +62,7 @@ const features = [
     <main class="flex min-h-screen flex-col items-center justify-center px-5 py-10 sm:px-8">
       <div class="w-full max-w-[420px]">
         <RouterLink to="/" class="mb-8 inline-flex items-center gap-2.5 lg:hidden" aria-label="edurec 首页">
-          <span class="flex h-9 w-9 items-center justify-center rounded-[10px] bg-ink text-primary" aria-hidden="true">
-            <AppIcon name="spark-filled" :size="19" />
-          </span>
+          <BrandMark :size="36" />
           <span class="text-[19px] font-extrabold tracking-[-0.045em] text-ink">edurec</span>
         </RouterLink>
 

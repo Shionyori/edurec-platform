@@ -13,9 +13,9 @@ withDefaults(defineProps<{ size?: number | string }>(), { size: 36 })
   >
     <rect width="32" height="32" rx="9" fill="currentColor" />
     <path
-      d="M16 5.2l2.1 6.7 6.7 2.1-6.7 2.1L16 22.8l-2.1-6.7-6.7-2.1 6.7-2.1L16 5.2Z"
+      d="M16 4l2.8 9.2L28 16l-9.2 2.8L16 28l-2.8-9.2L4 16l9.2-2.8L16 4Z"
       fill="#FFFFFF"
     />
-    <circle cx="24.2" cy="7.8" r="2.1" fill="#B7E4D8" />
+    <circle cx="24.6" cy="7.4" r="1.7" fill="#B7E4D8" />
   </svg>
 </template>

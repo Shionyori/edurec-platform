@@ -14,3 +14,13 @@ type User struct {
 	// 新用户无行为历史时，平台兜底推荐优先取这些分类下的资源。
 	Interests string `gorm:"type:json" json:"interests"`
 }
+
+// BeforeCreate keeps MySQL's JSON column valid for new users. GORM would
+// otherwise insert the zero value "" into a JSON column, which MySQL rejects
+// with "Invalid JSON text: The document is empty".
+func (u *User) BeforeCreate(_ *gorm.DB) error {
+	if u.Interests == "" {
+		u.Interests = "[]"
+	}
+	return nil
+}

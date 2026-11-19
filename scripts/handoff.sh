@@ -32,6 +32,9 @@ BACKEND_DIR="$PLATFORM_ROOT/backend"
 
 ENGINE_ROOT="${ENGINE_ROOT:-$PLATFORM_ROOT/../edurec-engine}"
 ENGINE_PYTHON="$ENGINE_ROOT/.venv/bin/python"
+# engine 仓库搬动后，editable install 的 .pth 可能仍指向旧路径。直接注入
+# src 目录，既不依赖旧 venv 的安装路径，也不会影响正常安装的环境。
+export PYTHONPATH="$ENGINE_ROOT/src${PYTHONPATH:+:$PYTHONPATH}"
 CONFIG_PATH="${CONFIG_PATH:-configs/config.yaml}"
 SNAPSHOT_DIR="${SNAPSHOT_DIR:-data/snapshots}"
 BASE_URL="${BASE_URL:-http://localhost:8080}"
@@ -54,6 +57,7 @@ die() { echo "[handoff] 错误: $*" >&2; exit 1; }
 # ---- 前置检查 ---------------------------------------------------------------
 [ -d "$ENGINE_ROOT" ] || die "engine 目录不存在: $ENGINE_ROOT（可用 ENGINE_ROOT 覆盖）"
 [ -x "$ENGINE_PYTHON" ] || die "engine 依赖未安装: $ENGINE_ROOT/.venv/bin/python（先 cd $ENGINE_ROOT && pip install -e .[dev]）"
+"$ENGINE_PYTHON" -c "import engine" >/dev/null 2>&1 || die "engine 包不可导入；请运行：cd $ENGINE_ROOT && .venv/bin/python -m pip install -e . --no-deps"
 [ -f "$ENGINE_ROOT/contracts/v1/validate.py" ] || die "engine 缺少契约校验器: $ENGINE_ROOT/contracts/v1/validate.py"
 [ -d "$BACKEND_DIR" ] || die "backend 目录不存在: $BACKEND_DIR"
 

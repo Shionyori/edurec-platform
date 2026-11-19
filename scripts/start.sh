@@ -57,6 +57,7 @@ port_listening() { ss -tln 2>/dev/null | grep -qE ":${1}([[:space:]]|\$)"; }
 # ---- 前置检查 ---------------------------------------------------------------
 command -v docker >/dev/null || die "未找到 docker"
 command -v go >/dev/null || die "未找到 go"
+command -v curl >/dev/null || die "未找到 curl（后端就绪探测需要）"
 # 前端需要 node/pnpm（nvm 通常挂在 .zshrc，bash 里手动加载一次）
 export NVM_DIR="$HOME/.nvm"
 [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" || true
@@ -82,14 +83,22 @@ fi
 
 # ---- [2] 等 MySQL --------------------------------------------------------------
 log "[2] 等待 MySQL 就绪"
-for i in $(seq 1 30); do
+# MySQL 首次初始化时会先起一个临时 server，mysqladmin ping 会提前返回成功，
+# 随后临时 server 关闭、正式 server 启动。只 ping 一次会让后端在两者之间连接，
+# 报 "unexpected EOF / driver: bad connection"。这里要求 3 秒后仍能真正查询。
+ready=0
+for i in $(seq 1 40); do
   if docker exec edurec-mysql mysqladmin ping -uroot -p"$MYSQL_PASSWORD" --silent >/dev/null 2>&1; then
-    echo "  MySQL 就绪（第 ${i} 次探测）"
-    break
+    sleep 3
+    if docker exec edurec-mysql mysql -uroot -p"$MYSQL_PASSWORD" -N -e "SELECT 1" >/dev/null 2>&1; then
+      echo "  MySQL 就绪（第 ${i} 次探测）"
+      ready=1
+      break
+    fi
   fi
-  [ "$i" = 30 ] && die "MySQL 迟迟未就绪，查看日志：docker logs edurec-mysql"
   sleep 2
 done
+[ "$ready" = 1 ] || die "MySQL 迟迟未就绪，查看日志：docker logs edurec-mysql"
 
 # ---- [3] 后端 ------------------------------------------------------------------
 log "[3] 启动后端 (port=${BACKEND_PORT})"
@@ -101,6 +110,19 @@ else
     KNOWLEDGE_GENERATOR_TOKEN="${KNOWLEDGE_GENERATOR_TOKEN:-}" \
     nohup go run ./cmd/server > "$RUN_DIR/backend.log" 2>&1 & \
     echo $! > "$RUN_DIR/backend.pid" )
+  # 等后端真正能响应，而不是只等到进程被创建
+  backend_ready=0
+  for i in $(seq 1 45); do
+    if curl -sf "http://localhost:${BACKEND_PORT}/api/v1/health" >/dev/null 2>&1; then
+      backend_ready=1
+      echo "  后端就绪（第 ${i} 次探测）"
+      break
+    fi
+    sleep 1
+  done
+  if [ "$backend_ready" != 1 ]; then
+    die "后端未就绪，查看日志：scripts/.run/backend.log"
+  fi
   echo "  后端已启动，日志: scripts/.run/backend.log"
 fi
 

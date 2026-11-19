@@ -4,6 +4,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { useAuthStore } from '@/stores/auth'
 import AuthShell from '@/components/auth/AuthShell.vue'
+import AppIcon from '@/components/ui/AppIcon.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -46,17 +47,21 @@ async function onSubmit() {
 
 <template>
   <AuthShell>
-    <h1 class="text-xl font-bold text-ink">欢迎回来</h1>
-    <p class="mt-1 text-sm text-ink-secondary">登录 edurec，继续你的学习之旅</p>
+    <h1 class="text-[24px] font-bold tracking-[-0.025em] text-ink">欢迎回来</h1>
+    <p class="mt-1.5 text-[13.5px] text-ink-secondary">登录 edurec，继续你的学习之旅</p>
 
-    <el-form ref="formRef" :model="form" :rules="rules" label-position="top" class="mt-6">
+    <el-form ref="formRef" :model="form" :rules="rules" label-position="top" class="mt-7">
       <el-form-item label="用户名 / 邮箱" prop="username">
         <el-input
           v-model="form.username"
           placeholder="用户名或邮箱"
           size="large"
           autocomplete="username"
-        />
+        >
+          <template #prefix>
+            <AppIcon name="user" :size="16" />
+          </template>
+        </el-input>
       </el-form-item>
       <el-form-item label="密码" prop="password">
         <el-input
@@ -67,16 +72,20 @@ async function onSubmit() {
           show-password
           autocomplete="current-password"
           @keyup.enter="onSubmit"
-        />
+        >
+          <template #prefix>
+            <AppIcon name="lock" :size="16" />
+          </template>
+        </el-input>
       </el-form-item>
       <el-button type="primary" size="large" class="mt-2 w-full" :loading="loading" @click="onSubmit">
         登 录
       </el-button>
     </el-form>
 
-    <p class="mt-6 text-center text-sm text-ink-secondary">
+    <p class="mt-6 text-center text-[13px] text-ink-secondary">
       还没有账号？
-      <RouterLink :to="{ name: 'register' }" class="text-primary hover:underline">去注册</RouterLink>
+      <RouterLink :to="{ name: 'register' }" class="font-semibold text-primary-active hover:underline">去注册</RouterLink>
     </p>
   </AuthShell>
 </template>

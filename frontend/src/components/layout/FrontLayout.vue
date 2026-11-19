@@ -2,19 +2,41 @@
 import { computed, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
+import AppIcon from '@/components/ui/AppIcon.vue'
+import BrandMark from '@/components/ui/BrandMark.vue'
 
 const router = useRouter()
 const route = useRoute()
 const auth = useAuthStore()
 
-// 当前搜索页的类型筛选，用于顶栏导航高亮（路由的 active 只看路径，无法区分 query）
-const activeType = computed(() => {
-  const raw = route.query.type
-  const value = Array.isArray(raw) ? raw[0] : raw
-  return typeof value === 'string' ? value : ''
-})
-
 const headerKeyword = ref('')
+const mobileSearchOpen = ref(false)
+
+const navItems = [
+  { key: 'home', label: '首页', to: { name: 'home' }, icon: 'home' },
+  { key: 'discover', label: '发现', to: { name: 'search' }, icon: 'compass' },
+  { key: 'knowledge', label: '知识点', to: { name: 'knowledge' }, icon: 'layers' },
+]
+
+const mobileNav = computed(() => [
+  { key: 'home', label: '首页', icon: 'home', to: { name: 'home' } },
+  { key: 'discover', label: '发现', icon: 'compass', to: { name: 'search' } },
+  { key: 'knowledge', label: '知识点', icon: 'layers', to: { name: 'knowledge' } },
+  {
+    key: 'me',
+    label: auth.isLoggedIn ? '我的' : '登录',
+    icon: 'user',
+    to: auth.isLoggedIn ? { name: 'user-me' } : { name: 'login' },
+  },
+])
+
+function isActive(key: string): boolean {
+  const name = String(route.name ?? '')
+  if (key === 'home') return route.name === 'home'
+  if (key === 'discover') return route.name === 'search'
+  if (key === 'knowledge') return name.startsWith('knowledge') || name.startsWith('discipline')
+  return false
+}
 
 function handleCommand(command: string) {
   if (command === 'logout') {
@@ -24,6 +46,8 @@ function handleCommand(command: string) {
     router.push({ name: 'user-me' })
   } else if (command === 'questionnaire') {
     router.push({ name: 'questionnaire' })
+  } else if (command === 'admin') {
+    router.push({ name: 'admin-dashboard' })
   }
 }
 
@@ -31,25 +55,12 @@ function submitSearch() {
   const kw = headerKeyword.value.trim()
   if (!kw) return
   const current = typeof route.query.keyword === 'string' ? route.query.keyword : ''
-  // 已在搜索页且关键词未变：不重复导航（输入框里的文字保留，方便继续改）
-  if (route.name === 'search' && current === kw) return
+  if (route.name === 'search' && current === kw) {
+    mobileSearchOpen.value = false
+    return
+  }
+  mobileSearchOpen.value = false
   router.push({ name: 'search', query: { keyword: kw } })
-}
-
-const navItems = [
-  { key: 'home', label: '首页', to: { name: 'home' } },
-  { key: 'knowledge', label: '知识点', to: { name: 'knowledge' } },
-  { key: 'all', label: '全部', to: { name: 'search' } },
-  { key: 'course', label: '课程', to: { name: 'search', query: { type: 'course' } } },
-  { key: 'video', label: '视频', to: { name: 'search', query: { type: 'video' } } },
-  { key: 'article', label: '文章', to: { name: 'search', query: { type: 'article' } } },
-]
-
-function isActive(key: string): boolean {
-  if (key === 'home') return route.name === 'home'
-  if (key === 'knowledge') return String(route.name ?? '').startsWith('knowledge') || String(route.name ?? '').startsWith('discipline')
-  if (key === 'all') return route.name === 'search' && !activeType.value
-  return route.name === 'search' && activeType.value === key
 }
 </script>
 
@@ -57,116 +68,180 @@ function isActive(key: string): boolean {
   <div class="flex min-h-screen flex-col">
     <a
       href="#main-content"
-      class="sr-only z-50 bg-primary px-4 py-2 text-sm font-semibold text-white focus:not-sr-only focus:absolute focus:left-4 focus:top-4"
+      class="sr-only z-50 bg-primary px-4 py-2 text-sm font-semibold text-white focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:rounded-lg"
     >跳到主要内容</a>
 
-    <header class="sticky top-0 z-40 border-b border-white/10 bg-rail-soft text-white">
-      <div class="mx-auto flex h-16 max-w-7xl items-center gap-5 px-4 sm:px-6">
+    <header class="sticky top-0 z-40 border-b border-border bg-surface">
+      <div class="shell flex h-16 items-center gap-4 md:h-[72px]">
         <RouterLink to="/" class="flex shrink-0 items-center gap-2.5" aria-label="edurec 首页">
-          <span class="flex h-8 w-8 items-center justify-center rounded-[3px] bg-white" aria-hidden="true">
-            <svg viewBox="0 0 24 24" class="h-5 w-5" fill="none">
-              <path d="M8 5v6.5a3 3 0 0 0 3 3h5" stroke="#0B1B2B" stroke-width="2" stroke-linecap="square" />
-              <circle cx="8" cy="4" r="2" fill="#C9451F" />
-              <circle cx="17" cy="14.5" r="2" fill="#0E7C7B" />
-            </svg>
-          </span>
-          <span class="flex flex-col leading-none">
-            <span class="text-[17px] font-bold tracking-tight">edurec</span>
-            <span class="mt-1 text-[10px] font-semibold tracking-[0.18em] text-white/60">学习线路</span>
+          <BrandMark :size="36" />
+          <span class="text-[19px] font-extrabold leading-none tracking-[-0.045em] text-ink">
+            edurec
           </span>
         </RouterLink>
 
-        <div class="rail-control hidden w-64 lg:block">
-          <el-input
-            v-model="headerKeyword"
-            placeholder="搜索课程、文章、视频…"
-            clearable
-            @keyup.enter="submitSearch"
-          />
-        </div>
-
-        <nav class="hidden items-center gap-1 md:flex" aria-label="主导航">
+        <nav class="ml-2 hidden items-center gap-1 md:flex" aria-label="主导航">
           <RouterLink
             v-for="item in navItems"
             :key="item.key"
             :to="item.to"
             :aria-current="isActive(item.key) ? 'page' : undefined"
-            class="border-b-2 px-3 py-5 text-sm transition-colors duration-150"
+            class="rounded-[9px] px-3.5 py-2 text-[13.5px] font-semibold transition-colors duration-150"
             :class="isActive(item.key)
-              ? 'border-primary font-semibold text-white'
-              : 'border-transparent text-white/65 hover:text-white'"
+              ? 'bg-primary-soft text-primary-active'
+              : 'text-ink-secondary hover:bg-sunken hover:text-ink'"
           >{{ item.label }}</RouterLink>
         </nav>
 
-        <div class="ml-auto flex items-center gap-3">
+        <div class="ml-auto hidden w-56 lg:block">
+          <el-input
+            v-model="headerKeyword"
+            placeholder="搜索课程、文章、视频…"
+            clearable
+            @keyup.enter="submitSearch"
+          >
+            <template #prefix>
+              <AppIcon name="search" :size="16" />
+            </template>
+          </el-input>
+        </div>
+
+        <div class="ml-auto flex items-center gap-2 lg:ml-0">
+          <button
+            type="button"
+            class="icon-btn lg:hidden"
+            :aria-label="mobileSearchOpen ? '收起搜索' : '展开搜索'"
+            :aria-expanded="mobileSearchOpen"
+            @click="mobileSearchOpen = !mobileSearchOpen"
+          >
+            <AppIcon :name="mobileSearchOpen ? 'close' : 'search'" :size="19" />
+          </button>
+
           <template v-if="auth.isLoggedIn">
-            <el-dropdown @command="handleCommand">
-              <span class="flex cursor-pointer items-center gap-2 text-sm text-white/85 hover:text-white">
-                <el-avatar :size="28" :src="auth.user?.avatar_url ?? undefined" class="ring-1 ring-white/25">
+            <el-dropdown trigger="click" @command="handleCommand">
+              <button
+                type="button"
+                class="flex items-center gap-2 rounded-full border border-border bg-surface p-1 pr-2.5 transition-colors hover:border-border-strong hover:bg-surface-2"
+              >
+                <el-avatar
+                  :size="30"
+                  :src="auth.user?.avatar_url ?? undefined"
+                  class="!bg-ink"
+                >
                   {{ (auth.user?.display_name ?? auth.user?.username ?? 'U').charAt(0) }}
                 </el-avatar>
-                <span class="hidden max-w-28 truncate sm:block">
+                <span class="hidden max-w-24 truncate text-[13px] font-semibold text-ink sm:block">
                   {{ auth.user?.display_name ?? auth.user?.username }}
                 </span>
-              </span>
+                <AppIcon name="chevron-down" :size="14" class="text-ink-muted" />
+              </button>
               <template #dropdown>
                 <el-dropdown-menu>
-                  <el-dropdown-item command="me">个人中心</el-dropdown-item>
-                  <el-dropdown-item command="questionnaire">学习问卷</el-dropdown-item>
-                  <el-dropdown-item divided command="logout">退出登录</el-dropdown-item>
+                  <el-dropdown-item command="me">
+                    <span class="flex items-center gap-2"><AppIcon name="user" :size="15" />个人中心</span>
+                  </el-dropdown-item>
+                  <el-dropdown-item command="questionnaire">
+                    <span class="flex items-center gap-2"><AppIcon name="target" :size="15" />学习问卷</span>
+                  </el-dropdown-item>
+                  <el-dropdown-item v-if="auth.isAdmin" command="admin">
+                    <span class="flex items-center gap-2"><AppIcon name="dashboard" :size="15" />管理后台</span>
+                  </el-dropdown-item>
+                  <el-dropdown-item divided command="logout">
+                    <span class="flex items-center gap-2"><AppIcon name="logout" :size="15" />退出登录</span>
+                  </el-dropdown-item>
                 </el-dropdown-menu>
               </template>
             </el-dropdown>
           </template>
           <template v-else>
-            <RouterLink :to="{ name: 'login' }">
-              <el-button type="primary">登录 / 注册</el-button>
+            <RouterLink :to="{ name: 'login' }" class="btn btn-primary btn-sm sm:hidden">
+              登录
+            </RouterLink>
+            <RouterLink :to="{ name: 'login' }" class="btn btn-primary hidden sm:inline-flex">
+              登录
             </RouterLink>
           </template>
         </div>
       </div>
 
-      <!-- 移动端：横向滚动的线路导航，避免窄屏完全失去导航 -->
-      <nav
-        class="flex gap-1 overflow-x-auto border-t border-white/10 px-4 py-2 md:hidden"
-        aria-label="移动端导航"
-      >
-        <RouterLink
-          v-for="item in navItems"
-          :key="item.key"
-          :to="item.to"
-          :aria-current="isActive(item.key) ? 'page' : undefined"
-          class="shrink-0 rounded-[3px] px-3 py-1.5 text-sm"
-          :class="isActive(item.key)
-            ? 'bg-white/12 font-semibold text-white'
-            : 'text-white/60'"
-        >{{ item.label }}</RouterLink>
-      </nav>
+      <!-- Mobile search: the same field, revealed on demand instead of a cramped rail -->
+      <div v-if="mobileSearchOpen" class="shell border-t border-border py-3 lg:hidden">
+        <el-input
+          v-model="headerKeyword"
+          placeholder="搜索课程、文章、视频…"
+          clearable
+          @keyup.enter="submitSearch"
+        >
+          <template #prefix>
+            <AppIcon name="search" :size="16" />
+          </template>
+        </el-input>
+      </div>
     </header>
 
-    <main id="main-content" class="flex-1">
-      <RouterView v-slot="{ Component }">
-        <Transition name="route" mode="out-in">
-          <component :is="Component" />
-        </Transition>
-      </RouterView>
-    </main>
+    <div class="flex flex-1 flex-col pb-[calc(72px+env(safe-area-inset-bottom))] md:pb-0">
+      <main id="main-content" class="flex-1">
+        <RouterView v-slot="{ Component }">
+          <Transition name="route" mode="out-in">
+            <component :is="Component" />
+          </Transition>
+        </RouterView>
+      </main>
 
-    <footer class="bg-surface">
-      <div class="flex h-[2px] w-full" aria-hidden="true">
-        <span class="flex-1 bg-line-teal"></span>
-        <span class="flex-1 bg-line-blue"></span>
-        <span class="flex-1 bg-line-amber"></span>
-        <span class="flex-1 bg-line-rose"></span>
-        <span class="w-16 bg-primary"></span>
+      <footer class="mt-auto border-t border-border bg-surface">
+        <div class="shell py-10 md:py-12">
+          <div class="flex flex-col gap-8 md:flex-row md:items-start md:justify-between">
+            <div class="max-w-sm">
+              <RouterLink to="/" class="flex items-center gap-2.5" aria-label="edurec 首页">
+                <BrandMark :size="32" />
+                <span class="text-[17px] font-extrabold tracking-[-0.04em] text-ink">edurec</span>
+              </RouterLink>
+              <p class="mt-3 text-[13px] leading-relaxed text-ink-muted">
+                用知识点与先修关系组织学习，跳过已掌握的内容，只推荐你当前该学的一节。
+              </p>
+            </div>
+            <nav class="flex flex-wrap gap-x-8 gap-y-3 text-[13px] font-semibold text-ink-secondary" aria-label="页脚导航">
+              <RouterLink :to="{ name: 'search' }" class="link-quiet">发现资源</RouterLink>
+              <RouterLink :to="{ name: 'knowledge' }" class="link-quiet">知识点</RouterLink>
+              <RouterLink :to="{ name: 'user-me' }" class="link-quiet">个人中心</RouterLink>
+            </nav>
+          </div>
+          <div class="mt-8 flex flex-wrap items-center justify-between gap-3 border-t border-border pt-5 text-[12px] text-ink-muted">
+            <span>© 2026 edurec · 教育资源推荐平台</span>
+            <span class="flex items-center gap-1.5">
+              <AppIcon name="spark" :size="13" class="text-primary" />
+              先修关系驱动，推荐理由可读
+            </span>
+          </div>
+        </div>
+      </footer>
+    </div>
+
+    <!-- Mobile tab bar: the primary four destinations, always one thumb away -->
+    <nav
+      class="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-surface pb-[env(safe-area-inset-bottom)] md:hidden"
+      aria-label="移动端主导航"
+    >
+      <div class="grid grid-cols-4">
+        <RouterLink
+          v-for="item in mobileNav"
+          :key="item.key"
+          :to="item.to"
+          :aria-current="isActive(item.key) || (item.key === 'me' && route.name === 'user-me') ? 'page' : undefined"
+          class="flex flex-col items-center gap-1 py-2.5 text-[11px] font-semibold transition-colors"
+          :class="isActive(item.key) || (item.key === 'me' && route.name === 'user-me')
+            ? 'text-primary'
+            : 'text-ink-muted'"
+        >
+          <span
+            class="flex h-7 w-12 items-center justify-center rounded-full transition-colors"
+            :class="isActive(item.key) || (item.key === 'me' && route.name === 'user-me') ? 'bg-primary-soft' : ''"
+          >
+            <AppIcon :name="item.icon" :size="19" />
+          </span>
+          {{ item.label }}
+        </RouterLink>
       </div>
-      <div class="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3 px-6 py-5 text-xs text-ink-muted">
-        <span class="flex items-center gap-2">
-          <span class="route-node" style="--node: var(--color-line-teal)" aria-hidden="true"></span>
-          edurec · 教育资源推荐平台
-        </span>
-        <span class="data-num">以知识点与先修关系组织学习</span>
-      </div>
-    </footer>
+    </nav>
   </div>
 </template>

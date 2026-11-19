@@ -35,7 +35,7 @@ function onSubmit() {
 <template>
   <div class="space-y-4">
     <div>
-      <div class="mb-1 text-sm text-ink-secondary">你的评分</div>
+      <div class="mb-1.5 text-[12.5px] font-semibold text-ink-secondary">你的评分</div>
       <el-rate v-model="score" :max="5" />
     </div>
     <el-input

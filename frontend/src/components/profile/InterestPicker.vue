@@ -4,6 +4,7 @@ import { ElMessage } from 'element-plus'
 import { listCategories } from '@/api/category'
 import { listDisciplines } from '@/api/discipline'
 import { useAuthStore } from '@/stores/auth'
+import AppIcon from '@/components/ui/AppIcon.vue'
 import type { Category, Discipline } from '@/types'
 
 const emit = defineEmits<{ saved: [] }>()
@@ -45,44 +46,50 @@ async function save() {
 </script>
 
 <template>
-  <div class="mt-6 overflow-hidden rounded-[4px] border border-border bg-surface">
-    <div class="flex flex-wrap items-start justify-between gap-3 border-b border-border bg-bg/60 px-5 py-4">
-      <div>
-        <h2 class="text-base font-semibold text-ink">选择你感兴趣的方向</h2>
-        <p class="mt-1 text-sm text-ink-secondary">
-          新用户还没有学习记录，先告诉我们你的兴趣，推荐会更贴近你的需求
-        </p>
+  <div class="card overflow-hidden">
+    <div class="flex flex-wrap items-start justify-between gap-3 border-b border-border bg-surface-2 px-5 py-4 sm:px-6">
+      <div class="flex items-start gap-3">
+        <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-[10px] bg-primary-soft text-primary">
+          <AppIcon name="spark" :size="17" />
+        </span>
+        <div>
+          <h2 class="text-[16px] font-bold text-ink">选择你感兴趣的方向</h2>
+          <p class="mt-1 text-[12.5px] leading-relaxed text-ink-secondary">
+            新用户还没有学习记录，先告诉我们你的兴趣，推荐会更贴近你的需求
+          </p>
+        </div>
       </div>
-      <span class="line-chip" style="--chip: var(--color-line-amber)">冷启动</span>
+      <span class="chip chip-primary !text-[11px]">新用户推荐</span>
     </div>
-    <div class="grid gap-5 px-5 py-4 sm:grid-cols-2">
-      <section class="order-2 border-t border-border pt-4 sm:order-1 sm:border-t-0 sm:pt-0">
-        <h3 class="text-sm font-semibold text-ink">按方向订阅推荐</h3>
-        <p class="mt-1 text-xs text-ink-muted">保存后用于冷启动推荐</p>
-        <div v-if="loading" class="mt-3 text-sm text-ink-muted">加载中…</div>
+
+    <div class="grid gap-6 p-5 sm:p-6 md:grid-cols-2">
+      <section>
+        <h3 class="text-[13px] font-bold text-ink">按方向订阅推荐</h3>
+        <p class="mt-1 text-[11.5px] text-ink-muted">保存后用于冷启动推荐</p>
+        <div v-if="loading" class="mt-3 flex items-center gap-2 text-[12.5px] text-ink-muted">
+          <span class="spinner-dots" aria-hidden="true"><span></span><span></span><span></span></span>
+          加载中…
+        </div>
         <el-checkbox-group v-else v-model="selected" class="mt-3 flex flex-wrap gap-2">
           <el-checkbox-button v-for="c in categories" :key="c.id" :value="c.id">
             {{ c.name }}
           </el-checkbox-button>
         </el-checkbox-group>
-        <div class="mt-3 flex flex-wrap items-center gap-3">
+        <div class="mt-4 flex flex-wrap items-center gap-3">
           <el-button type="primary" :loading="saving" @click="save">保存并刷新推荐</el-button>
-          <span class="text-xs text-ink-muted">至少选择一个方向</span>
+          <span class="text-[11.5px] text-ink-muted">至少选择一个方向</span>
         </div>
       </section>
 
-      <section
-        v-if="disciplines.length > 0"
-        class="order-1 sm:order-2 sm:border-l sm:border-border sm:pl-5"
-      >
-        <h3 class="text-sm font-semibold text-ink">或按学科直接开始</h3>
-        <p class="mt-1 text-xs text-ink-muted">不确定兴趣时，先从一个学科进入</p>
+      <section v-if="disciplines.length > 0" class="md:border-l md:border-border md:pl-6">
+        <h3 class="text-[13px] font-bold text-ink">或按学科直接开始</h3>
+        <p class="mt-1 text-[11.5px] text-ink-muted">不确定兴趣时，先从一个学科进入</p>
         <div class="mt-3 flex flex-wrap gap-1.5">
           <RouterLink
             v-for="discipline in disciplines"
             :key="discipline.code"
             :to="{ name: 'discipline', params: { code: discipline.code } }"
-            class="rounded-[3px] border border-border px-2 py-1 text-xs text-ink-secondary transition-colors hover:border-ink/30 hover:text-primary"
+            class="inline-flex items-center gap-1.5 rounded-full border border-border bg-surface px-2.5 py-1 text-[11.5px] font-medium text-ink-secondary transition-colors hover:border-primary/40 hover:bg-primary-softer hover:text-primary-active"
           >{{ discipline.name }}</RouterLink>
         </div>
       </section>

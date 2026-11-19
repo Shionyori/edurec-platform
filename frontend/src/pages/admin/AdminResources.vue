@@ -3,6 +3,7 @@ import { onMounted, ref } from 'vue'
 import { adminListResources } from '@/api/admin'
 import { deleteResource } from '@/api/resource'
 import { formatDate } from '@/utils/format'
+import AppIcon from '@/components/ui/AppIcon.vue'
 import type { Resource } from '@/types'
 
 const items = ref<Resource[]>([])
@@ -56,30 +57,48 @@ onMounted(fetchList)
 </script>
 
 <template>
-  <div>
-    <div class="flex flex-wrap items-center justify-between gap-3">
+  <div class="mx-auto max-w-[1200px]">
+    <div class="flex flex-wrap items-end justify-between gap-4">
       <div>
-        <h1 class="text-xl font-bold">资源管理</h1>
-        <p class="mt-1 text-sm text-ink-secondary">维护平台教育资源</p>
+        <h1 class="headline">资源管理</h1>
+        <p class="mt-2 text-[13px] text-ink-secondary">维护平台教育资源</p>
       </div>
-      <div class="flex flex-wrap items-center gap-3">
-        <div class="w-52"><el-input v-model="keyword" placeholder="按标题搜索" clearable @keyup.enter="handleSearch" /></div>
+      <div class="flex flex-wrap items-center gap-2.5">
+        <div class="w-52">
+          <el-input v-model="keyword" aria-label="按标题搜索" placeholder="按标题搜索" clearable @keyup.enter="handleSearch">
+            <template #prefix>
+              <AppIcon name="search" :size="15" />
+            </template>
+          </el-input>
+        </div>
         <div class="w-32">
-          <el-select v-model="type" placeholder="全部类型" clearable @change="handleSearch">
+          <el-select v-model="type" aria-label="按类型筛选" placeholder="全部类型" clearable @change="handleSearch">
             <el-option label="课程" value="course" />
             <el-option label="文章" value="article" />
             <el-option label="视频" value="video" />
           </el-select>
         </div>
-        <RouterLink :to="{ name: 'resource-upload' }">
-          <el-button type="primary">新增资源</el-button>
+        <RouterLink :to="{ name: 'resource-upload' }" class="btn btn-primary">
+          <AppIcon name="plus" :size="15" />
+          新增资源
         </RouterLink>
       </div>
     </div>
 
-    <div v-if="loading" class="py-16 text-center text-sm text-ink-muted">加载中…</div>
-    <div v-else-if="error" class="py-16 text-center text-sm text-danger">{{ error }}</div>
-    <div v-else class="mt-4 rounded-[4px] border border-border bg-surface">
+    <div v-if="loading" class="card mt-6 overflow-hidden p-5">
+      <div class="space-y-3">
+        <div v-for="i in 6" :key="i" class="skeleton h-10 w-full"></div>
+      </div>
+    </div>
+    <div v-else-if="error" class="state-box mt-6">
+      <span class="state-icon !bg-danger-soft !text-danger">
+        <AppIcon name="alert" :size="22" />
+      </span>
+      <p class="state-title">资源加载失败</p>
+      <p class="state-copy">{{ error }}</p>
+      <button type="button" class="btn btn-secondary btn-sm mt-2" @click="fetchList">重新加载</button>
+    </div>
+    <div v-else class="card mt-6 overflow-hidden">
       <el-table :data="items">
         <el-table-column prop="id" label="ID" width="70" />
         <el-table-column prop="title" label="标题" min-width="200" show-overflow-tooltip />
@@ -116,7 +135,7 @@ onMounted(fetchList)
           </template>
         </el-table-column>
       </el-table>
-      <div v-if="total > pageSize" class="flex justify-center p-4">
+      <div v-if="total > pageSize" class="flex justify-center border-t border-border p-4">
         <el-pagination
           background
           layout="prev, pager, next"

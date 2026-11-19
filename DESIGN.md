@@ -1,73 +1,77 @@
 ---
 name: edurec
-description: 学习线路牌 — a transit route-map design system for finding the next thing to learn.
+description: 清晓书桌 — a fresh mint-and-jade design system for a personalized learning recommender.
 colors:
-  primary: "#C9451F"
-  primary-hover: "#B93C18"
-  primary-active: "#A32F10"
+  primary: "#0F7A66"
+  primary-hover: "#0B6857"
+  primary-active: "#085545"
+  primary-soft: "#E8F4F0"
+  primary-softer: "#F2F9F7"
   surface: "#FFFFFF"
-  paper-bg: "#F5F4EF"
-  border: "#DCD9CF"
-  control-border: "#8C8777"
-  ink: "#0B1B2B"
-  ink-secondary: "#4A5763"
-  ink-muted: "#6B7681"
-  rail: "#0B1B2B"
-  rail-soft: "#14293D"
-  line-teal: "#0E7C7B"
-  line-blue: "#1D4ED8"
-  line-amber: "#B45309"
-  line-rose: "#BE123C"
-  success: "#15803D"
-  warning: "#B45309"
-  danger: "#B91C1C"
+  surface-2: "#FAFCFB"
+  paper-bg: "#F4F7F5"
+  sunken: "#EDF2EF"
+  border: "#E0E8E4"
+  border-strong: "#C7D5CF"
+  control: "#7C8F87"
+  ink: "#17231F"
+  ink-secondary: "#4C5D57"
+  ink-muted: "#5F6F69"
+  line-teal: "#0F7A66"
+  line-blue: "#2F62C4"
+  line-amber: "#A26800"
+  line-rose: "#B84A62"
+  success: "#0F7A66"
+  warning: "#8A5700"
+  danger: "#B33A32"
+  info: "#2F62C4"
 typography:
   display:
-    fontFamily: 'system-ui, -apple-system, "Segoe UI", Roboto, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif'
-    fontSize: "48px"
-    fontWeight: 700
+    fontFamily: 'Manrope, system-ui, -apple-system, "Segoe UI", Roboto, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif'
+    fontSize: "46px"
+    fontWeight: 750
     lineHeight: 1.1
-    letterSpacing: "-0.025em"
+    letterSpacing: "-0.03em"
   headline:
-    fontFamily: 'system-ui, -apple-system, "Segoe UI", Roboto, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif'
-    fontSize: "30px"
+    fontFamily: 'Manrope, system-ui, -apple-system, "Segoe UI", Roboto, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif'
+    fontSize: "28px"
     fontWeight: 700
-    lineHeight: 1.2
+    lineHeight: 1.25
     letterSpacing: "-0.025em"
-  title:
-    fontFamily: 'system-ui, -apple-system, "Segoe UI", Roboto, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif'
-    fontSize: "20px"
+  section:
+    fontFamily: 'Manrope, system-ui, -apple-system, "Segoe UI", Roboto, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif'
+    fontSize: "22px"
     fontWeight: 700
-    lineHeight: 1.4
-    letterSpacing: "0em"
+    lineHeight: 1.35
+    letterSpacing: "-0.02em"
+  title:
+    fontFamily: 'Manrope, system-ui, -apple-system, "Segoe UI", Roboto, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif'
+    fontSize: "16px"
+    fontWeight: 700
+    lineHeight: 1.45
+    letterSpacing: "-0.015em"
   body:
-    fontFamily: 'system-ui, -apple-system, "Segoe UI", Roboto, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif'
+    fontFamily: 'Manrope, system-ui, -apple-system, "Segoe UI", Roboto, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif'
     fontSize: "14px"
     fontWeight: 400
-    lineHeight: 1.625
+    lineHeight: 1.65
     letterSpacing: "0em"
-  label:
-    fontFamily: 'system-ui, -apple-system, "Segoe UI", Roboto, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif'
-    fontSize: "11px"
-    fontWeight: 700
-    lineHeight: 1
-    letterSpacing: "0.14em"
-    fontFeature: "tnum"
-  brand-label:
-    fontFamily: 'system-ui, -apple-system, "Segoe UI", Roboto, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif'
-    fontSize: "10px"
-    fontWeight: 600
-    lineHeight: 1
-    letterSpacing: "0.18em"
-  control:
-    fontFamily: 'system-ui, -apple-system, "Segoe UI", Roboto, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif'
-    fontSize: "14px"
-    fontWeight: 600
-    lineHeight: 1
+  small:
+    fontFamily: 'Manrope, system-ui, -apple-system, "Segoe UI", Roboto, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif'
+    fontSize: "13px"
+    fontWeight: 400
+    lineHeight: 1.7
+    letterSpacing: "0em"
+  micro:
+    fontFamily: 'Manrope, system-ui, -apple-system, "Segoe UI", Roboto, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif'
+    fontSize: "12px"
+    fontWeight: 650
+    lineHeight: 1.5
     letterSpacing: "0em"
 rounded:
-  sm: "3px"
-  md: "4px"
+  field: "10px"
+  card: "14px"
+  panel: "16px"
   pill: "999px"
 spacing:
   "1": "4px"
@@ -78,220 +82,250 @@ spacing:
   "6": "24px"
   "8": "32px"
   "10": "40px"
+  "12": "48px"
+  "14": "56px"
+  "20": "80px"
 components:
   button-primary:
     backgroundColor: "{colors.primary}"
     textColor: "{colors.surface}"
-    typography: "{typography.control}"
-    rounded: "{rounded.md}"
-    padding: "8px 15px"
-    height: "32px"
+    typography: "{typography.micro}"
+    rounded: "{rounded.field}"
+    padding: "0 18px"
+    height: "40px"
   button-primary-hover:
     backgroundColor: "{colors.primary-hover}"
-  button-primary-active:
-    backgroundColor: "{colors.primary-active}"
+  button-secondary:
+    backgroundColor: "{colors.surface}"
+    textColor: "{colors.ink}"
+    typography: "{typography.micro}"
+    rounded: "{rounded.field}"
+    padding: "0 18px"
+    height: "40px"
   input:
     backgroundColor: "{colors.surface}"
     textColor: "{colors.ink}"
-    typography: "{typography.control}"
-    rounded: "{rounded.md}"
-    padding: "1px 11px"
-    height: "32px"
-  nav-link:
-    backgroundColor: "{colors.rail-soft}"
-    textColor: "{colors.surface}"
-    typography: "{typography.control}"
-    padding: "20px 12px"
-  line-chip:
-    backgroundColor: "{colors.rail}"
-    textColor: "{colors.surface}"
-    typography: "{typography.label}"
-    rounded: "{rounded.sm}"
-    padding: "3px 7px"
-  resource-card:
-    backgroundColor: "{colors.surface}"
-    textColor: "{colors.ink}"
-    rounded: "{rounded.md}"
-    padding: "20px"
-  route-strip:
+    typography: "{typography.body}"
+    rounded: "{rounded.field}"
+    padding: "10px 12px"
+    height: "42px"
+  card:
     backgroundColor: "{colors.surface}"
     textColor: "{colors.ink}"
     typography: "{typography.body}"
-    padding: "14px 0 0"
-  sticky-action-bar:
-    backgroundColor: "{colors.surface}"
+    rounded: "{rounded.card}"
+    padding: "20px"
+  chip:
+    backgroundColor: "{colors.sunken}"
+    textColor: "{colors.ink-secondary}"
+    typography: "{typography.micro}"
+    rounded: "{rounded.pill}"
+    padding: "3px 10px"
+  tinted-panel:
+    backgroundColor: "{colors.primary-softer}"
     textColor: "{colors.ink}"
-    rounded: "{rounded.md}"
-    padding: "12px 20px"
+    rounded: "{rounded.panel}"
+    padding: "28px"
+  mobile-tabbar:
+    backgroundColor: "{colors.surface}"
+    textColor: "{colors.ink-muted}"
+    typography: "{typography.micro}"
+    height: "68px"
 ---
 
 # Design System: edurec
 
 ## Overview
 
-**Creative North Star: "学习线路牌 / The Study Line"**
+**Creative North Star: "清晓书桌 / Daylight Study"**
 
-edurec is a Chinese educational-resource recommender, and its visual world is the transit route map: knowledge points are stations on a prerequisite line, the current goal is "你在这里," and a learning path is a printed itinerary. The system operates in **Operate** mode — the route metaphor contributes palette, type, density, and one signature move (the route strip and station line); layout, controls, and form semantics stay conventional so the user can act quickly. The result reads as a rail system on paper, not as a generic white SaaS dashboard.
+edurec is a Chinese educational-resource recommender. Its interface is a fresh, quiet study desk: cool mint paper, deep forest ink, one jade pen. The product's job is to answer "下一站，学什么？" and the design makes that answer feel easy to pick up — a real recommendation card, a readable reason, a path that unlocks one step at a time.
 
-The ground is a cool off-white paper, the orientation surfaces are deep depot navy, and one signal vermilion marks the current stop or the action. Line colors are semantic, not decorative: they encode level and resource type wherever a line, chip, or station appears. Density is deliberately tight: pages are organized by section rules and 20px card gaps rather than by generous whitespace or oversized type.
+The previous worlds (transit signage, then warm cream + burnt vermilion) are both retired. The replacement is deliberately lighter: mint-tinted paper instead of cream, jade instead of terracotta, light tinted mastheads instead of dark ink bands, and a softer editorial scale. It is still **Operate** mode: familiar controls, scanable tables, and predictable navigation outrank decoration.
 
-Chinese is set in the system sans stack — no webfont is loaded — and codes, counts, levels, percentages, and ratings use tabular numerals. The shape language is small and exact: 4px cards, 3px chips and controls, 2px route strokes, and round station dots as the only recurring circles.
+Manrope is self-hosted for Latin letters and numerals; Chinese falls back to PingFang / Microsoft YaHei. A jade squircle holding a white four-point spark and a small mint dot is the only brand mark (`BrandMark.vue`, mirrored by `favicon.svg`). A live "下一步" card on the home hero — real recommendation data, not an illustration — is the signature move.
 
 **Key Characteristics:**
-- Deep navy rail surfaces for orientation and mastheads; cool paper for reading.
-- Signal vermilion reserved for the primary action and the current station.
-- Four semantic line colors (teal, blue, amber, rose) mapped to levels and resource types.
-- System Chinese sans with tabular numerals and 11px uppercase micro-labels.
-- 4px / 3px / 2px geometry, flat by default, one ink-tinted hover lift.
-- The route strip and station line as the one recurring custom component.
+- Cool mint paper ground, white cards, deep forest-green ink.
+- One jade signal for action and current state; semantic level colors only inside level/type badges and graphs.
+- A softer editorial scale: 46px display, 28px headline, 22px section, 16px card title, 14px body.
+- Small exact geometry: 10px fields, 14px cards, 16px panels; pills only for chips and compact controls.
+- Borders at rest, one green-tinted hover lift; no ambient card shadows.
+- Light tinted mastheads for orientation: pale jade panels, not dark bands.
+- Mobile gets a real bottom tab bar instead of a squeezed desktop nav.
+- Auth is an asymmetric light split (44/56), not a 1:1 dark poster.
 
 ## Colors
 
-A rail-signage palette: one warm signal color against a cool paper neutral field, with four line colors carrying all structural meaning.
+A fresh jade-on-mint palette: one signal color, a family of cool paper neutrals, and a small semantic set that only appears when it carries meaning.
 
 ### Primary
-- **Signal Vermilion** (#C9451F): the action and current-state signal — primary buttons, the active nav underline, the current learning station, path progress fill, and the "已修改" change markers. White text on it passes AA.
-- **Signal Vermilion Deep** (#B93C18): hover fill for primary buttons.
-- **Signal Vermilion Pressed** (#A32F10): pressed fill, and the text color for primary-tinted status chips on white.
+- **Jade Signal** `#0F7A66`: primary buttons, links that must stand out, the current step, the "为你推荐" mark, progress fill. White text on it passes AA (5.26:1).
+- **Jade Deep** `#0B6857`: hover fill.
+- **Jade Pressed** `#085545`: active fill and small text on soft jade.
+- **Jade Soft** `#E8F4F0` / **Jade Softer** `#F2F9F7`: recommendation-reason blocks, selected states, icon tiles, tinted mastheads.
 
-### Secondary
-- **Teal Line** (#0E7C7B): Level 1 stations, course-type chips, recommendation-reason text, and the global focus ring.
-- **Cobalt Line** (#1D4ED8): Level 2 stations and video-type chips.
-- **Amber Line** (#B45309): Level 3 stations, article-type chips, cold-start chips, and in-progress crawler notices.
-- **Rose Line** (#BE123C): Level 4 stations and the admin "分类管理" rail marker.
+### Paper neutrals
+- **Mint Paper** `#F4F7F5`: page background.
+- **Ticket White** `#FFFFFF`: cards, fields, header, tab bar.
+- **Quiet White** `#FAFCFB`: inset groups and quiet cards.
+- **Mist** `#EDF2EF`: segmented control tracks, skeletons, quiet icon tiles.
+- **Mint Hairline** `#E0E8E4`: card and section borders.
+- **Hairline Strong** `#C7D5CF`: field borders and hover borders.
+- **Control Bar** `#7C8F87`: 1px inset control stroke; meets 3:1 on paper.
 
-### Tertiary
-- **Go Green** (#15803D): completed path stations, completed progress, and success notices.
-- **Caution Amber** (#B45309): warning states; shares the amber hue with the line family because level 3 and caution are both "attention" in this world.
-- **Halt Red** (#B91C1C): errors and destructive admin actions.
+### Ink
+- **Forest Ink** `#17231F`: headings, primary text, brand mark.
+- **Slate Ink** `#4C5D57`: body copy and secondary metadata.
+- **Warm Muted** `#5F6F69`: timestamps, counts, placeholders, helper text. It clears 4.5:1 on both paper and white.
 
-### Neutral
-- **Station Navy** (#0B1B2B): primary ink, brand marks, and neutral chip fills.
-- **Depot Navy** (#14293D): every rail surface — top navigation, page mastheads, the learning-path header, and the admin sidebar — plus raised rail panels. One step lighter than the ink, so large navy fields read as navy rather than a black band against paper.
-- **Paper Ground** (#F5F4EF): page background behind every content section.
-- **Ticket White** (#FFFFFF): cards, inputs, sticky bars, and the content surface.
-- **Slate Ink** (#4A5763): secondary copy, descriptions, metadata, and muted nav links.
-- **Muted Slate** (#6B7681): timestamps, counts, placeholders, and micro-labels. It is darker than a typical muted gray so 11px text still clears 4.5:1.
-- **Paper Hairline** (#DCD9CF): default card and section borders, dividers, and route tracks at rest.
-- **Control Bar** (#8C8777): 1px inset stroke around inputs, selects, and segmented controls; below 3:1 would make controls disappear on paper.
+### Semantic
+- **Go Green** `#0F7A66`: completed steps, success.
+- **Caution Amber** `#8A5700`: warnings; the non-text dot variant is `#A26800`.
+- **Halt Red** `#B33A32`: destructive actions and errors.
+- **Info Blue** `#2F62C4`: informational badges.
+- **Level colors** `#0F7A66` (1), `#2F62C4` (2), `#A26800` (3), `#B84A62` (4): only for knowledge levels and resource type/level marks. They are never used as page decoration.
 
-### Named Rules
-**The One Signal Rule.** Vermilion is the "you are here / act now" signal. It may fill a primary action, mark the current station, underline the active nav item, or tint a current-state chip at 10%; it never becomes a section wash, a gradient, or decorative chrome.
+### Named rules
+**The One Signal Rule.** Jade means "act here" or "you are here." It may fill a button, mark the current step, tint a selected row, or color a recommendation reason. It never becomes a page wash or a gradient.
 
-**The Semantic Line Rule.** Every line color must encode a real level (1–4) or resource type (course/video/article). The four-color palette is never used as decorative variety or assigned at random.
+**The Meaningful Color Rule.** If a color does not encode level, type, or state, it is not in the palette. Use a neutral.
+
+**The Tinted Masthead Rule.** Orientation panels are pale jade with ink type and a low-opacity orbit line. Deep ink is reserved for text and the brand mark; it is not a full-width band.
 
 ## Typography
 
-**Display Font:** system-ui with -apple-system, "Segoe UI", Roboto, and the Chinese stack "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei" (no webfont)
-**Body Font:** the same system stack
-**Label/Mono Font:** the same stack; data uses tabular numerals rather than a separate monospace face
-
-**Character:** Neutral, legible Chinese at small sizes, with the personality coming from weight and tracking rather than from a display face. Headlines are bold and tightly tracked; data is compact and aligned; micro-labels read like signage.
+**Latin & numerals:** self-hosted Manrope variable (`frontend/src/assets/fonts/manrope-latin-variable.woff2`).
+**Chinese:** system stack — PingFang SC, Hiragino Sans GB, Microsoft YaHei; no Chinese webfont is loaded.
+**Numbers:** tabular numerals (`.tnum`) for counts, ratings, percentages, dates, and levels.
 
 ### Hierarchy
-- **Display** (700, 30px mobile → 48px desktop, 1.1, -0.025em): the home hero only — "下一站，学什么？"
-- **Headline** (700, 24px mobile → 30px desktop, 1.2, -0.025em): page titles and navy masthead titles.
-- **Title** (700, 20px, 1.4, 0em): section headers such as "本站推荐" and "知识点线路"; card titles step down to 16px semibold.
-- **Body** (400, 14px, 1.625): descriptions, card copy, and form labels; hero lead copy rises to 16px. Long prose is constrained to max-w-2xl / max-w-3xl rather than spanning the full grid.
-- **Label** (700, 11px, line-height 1, 0.14em, uppercase, tabular): chip text, level badges, and compact data labels.
-- **Brand label** (600, 10px, 0.18em, uppercase): the "学习线路" / "管理后台" lockup under the wordmark.
-- **Control** (600, 14px, line-height 1): buttons, nav links, and form controls.
+- **Display** (750, 32px mobile → 46px desktop, 1.1, -0.03em): the home hero only. One line of voice, no kicker above it.
+- **Headline** (700, 23px mobile → 28px desktop, 1.25, -0.025em): page titles.
+- **Section** (700, 20px mobile → 22px desktop, 1.35, -0.02em): section headings.
+- **Title** (700, 16px, 1.45): card titles.
+- **Body** (400, 14px, 1.65): UI copy; lead paragraphs rise to 15–16px.
+- **Small** (400, 13px): metadata and helper copy.
+- **Micro** (650, 12px): chips, field labels, compact status text. No uppercase tracking as a default.
 
-### Named Rules
-**The Tabular Data Rule.** Every number that can be compared — counts, percentages, ratings, levels, dates, codes — uses `font-variant-numeric: tabular-nums`. Columns of stats must align without a monospace font.
+### Named rules
+**The No-Eyebrow Rule.** Headings carry their own weight. Do not put a decorative kicker, uppercase label, or floating eyebrow above a heading. A code, level, or status chip is metadata and may sit beside a title, but not as a generic kicker.
 
-**The Micro-Label Rule.** The 11px uppercase 0.14em label is a data/signage device: it belongs inside a chip or a metric row. It is never a decorative kicker or eyebrow floating above a heading, and never body copy.
+**The Measure Rule.** Prose is constrained to 34–38rem; data tables may run wider. Card copy uses line clamping, never a tiny font.
+
+**The Soft Weight Rule.** Display and page titles stop at 750/700. Heavier weights read as shouting in a product surface; the freshness comes from space and color, not from larger type.
 
 ## Layout
 
-Content lives in a centered container capped at 1280px (`max-w-7xl`) with 16px side padding on mobile and 24px from the `sm` breakpoint, and 32px / 40px vertical rhythm on mobile / desktop. Focused flows narrow further: profile and learning-path pages cap at 1024px, the questionnaire at 896px, and auth at 448px.
+Content lives in a 1200px shell (`frontend/src/styles/index.css`, `.shell`) with 20px side padding on mobile and 32px from `sm`. Focused flows narrow: auth 420px, questionnaire 920px, profile 920px, learning path 1040px, upload 760px. Page rhythm is 36px / 64px on mobile and 52px / 88px on desktop.
 
-The front shell is a 64px sticky navy rail containing the brand lockup, a search field, six primary nav links, and the account menu. Below `md` (768px) the main nav collapses into a horizontally scrollable row of 3px-radius chips beneath the rail, so navigation is never simply removed. The admin shell swaps the top rail for a 240px navy sidebar on desktop, with each section marked by a colored station dot and the same horizontal chip row on mobile.
+The front shell is a 64px / 72px sticky white header with a 1px hairline, the brand mark and wordmark, three nav items (首页 / 发现 / 知识点), a search field from `lg`, and an account menu. Active nav is a soft jade pill, not an underline. Below `md` the header keeps the wordmark, a search toggle, and the account action; the four primary destinations become a fixed bottom tab bar (首页 / 发现 / 知识点 / 我的) with a soft jade active capsule. Content reserves 76px at the bottom so the tab bar never covers the footer.
 
-Resource grids are 1 column, 2 at `sm` (640px), and 3 at `lg` (1024px), with 20px gaps; they never exceed three columns. Every section is introduced by a header sitting directly on the paper with a 2px line-colored bottom rule and a station node — teal for discovery, blue for resources, rose for concept layers — not by a card inside a card. The home page composes a white hero panel, an optional cold-start interest picker, and then the recommendation grid; detail pages use a navy masthead followed by ruled content sections.
+The admin shell uses a 248px light sidebar with the same wordmark, icon-led nav, a soft jade active pill, and an account block pinned to the bottom. The content header is a 64px white bar with a breadcrumb-like title; on mobile the sidebar becomes a horizontal chip row.
 
-The paper ground stays plain: route language appears only where it carries structure (section rules, station nodes, route strips), never as a background texture behind content. Interactive cards can repeat the route cue as a 2px inset top rule (a positioned element inside the card, not a border), keeping the corner language intact. The footer closes the paper with a five-segment line-color rule.
+Resource grids are 1 column, 2 at `sm`, 3 at `lg`, with 20px gaps. Detail pages use a `1fr 340px` split at `lg`; the rating rail is sticky at `top: 96px`. The home hero is a `1fr / 460px` split at `lg`, with the live "下一步" card flush to the right content edge and vertically centered against the copy. Auth is a `0.88fr / 1.12fr` light split at `lg`: a pale jade brand panel on the left, a white form card on the right.
 
-Two sticky regions are intentional: the top rail (64px, `z-40`) and, on the questionnaire, a bottom action bar that stays 16px above the viewport edge while the user scrolls a long self-assessment. The search filter panel sticks below the rail at `top: 64px` on desktop.
-
-### Named Rules
-**The Rail-and-Paper Rule.** Orientation lives on deep navy rail — top bar, mastheads, admin sidebar; reading lives on cool paper. A page never becomes a full-width navy field, and a masthead never floats as a white card.
-
-**The Three-Column Cap Rule.** Resource and station grids cap at three columns; density comes from tighter type and 20px gaps, never from adding a fourth column.
+Sections are separated by space, not rules. Section headers are a heading plus one line of quiet context; a right-aligned "查看全部" link uses the arrow-slide micro-interaction. Tables sit inside a 14px card; their header row is `Quiet White`, their dividers are hairlines, and their last row needs no border.
 
 ## Elevation & Depth
 
-The system is flat by default. Navy rail surfaces and white cards separate by fill and 1px paper hairlines, not by shadow. There is exactly one shadow vocabulary: a soft, ink-tinted, upward-offset hover lift for interactive cards, reused under the sticky action bar to detach it from scrolling content. Large mastheads, section blocks, and the admin sidebar carry no shadow.
+The system is flat at rest. Cards separate from paper by a 1px hairline and white fill, never by an ambient shadow.
 
-### Shadow Vocabulary
-- **Card Hover Lift** (`box-shadow: 0 10px 30px -18px rgba(11, 27, 43, 0.45)`): resource cards, discipline cards, and the sticky action bar, always paired with a 2px rise.
-- **Point Card Lift** (`box-shadow: 0 10px 24px -18px rgba(11, 27, 43, 0.45)`): the tighter variant on knowledge-point cards inside a discipline page.
+There is one elevation vocabulary:
+- **Hover lift** `0 2px 4px rgba(23,35,31,.04), 0 18px 40px -20px rgba(23,35,31,.26)` paired with `translateY(-2px)` on interactive cards.
+- **Float** `0 1px 2px rgba(23,35,31,.05), 0 28px 60px -28px rgba(23,35,31,.30)` for the home hero's live card and the sticky questionnaire bar.
 
-### Named Rules
-**The Flat-By-Default Rule.** Surfaces are flat at rest. A shadow appears only as a response to interaction (card hover, translateY(-2px)) or to detach the one sticky action bar; never as ambient decoration, and never in the generic soft-gray SaaS style — the shadow is always tinted with Station Navy.
+No shadows on headers, mastheads, tables, or static cards. A shadow is always green-tinted ink, never neutral gray or a colored halo.
 
 ## Shapes
 
-Cards are 4px-rounded rectangles; chips and controls are 3px; route strokes are 2px. A deliberate small radius keeps the interface closer to printed signage than to soft consumer SaaS. The only recurring circles are station dots (10px outline nodes, 12px strip dots), avatars, and progress tracks — circles mean "a stop on the line," not general decoration. Icons are inline SVG strokes with square line caps, which echoes the squared ends of route tracks.
+- Fields and buttons: 10px (large button 12px).
+- Cards: 14px.
+- Panels and tinted mastheads: 16px.
+- Chips, avatars, tab capsules, progress tracks: pill.
+- Connectors in the knowledge graph: 1.4–1.8px curves with arrowheads.
 
-### Named Rules
-**The Square-End Rule.** Use 4px for cards, 3px for chips and controls, 2px for route strokes, and square-capped connector strokes. Do not introduce 8px+ radii, pill buttons, or large blobs; circles are reserved for stations, avatars, and progress.
+Circles mean a state or a person: avatars, progress dots, step markers. They are not general decoration. Icons are authored 24px SVG strokes with round caps and a consistent 1.7px weight (`AppIcon.vue`); filled variants exist only for star/heart/spark.
 
 ## Components
 
 ### Buttons
-- **Shape:** 4px radius (24px-small buttons use 3px), 32px default height / 40px large, 8px 15px default padding / 12px 19px large, 600 weight.
-- **Primary:** Signal Vermilion fill with white text; the default action on every page ("选一个学习目标," "保存并返回知识点," "生成我的学习路径").
-- **Hover / Focus:** hover fill Signal Vermilion Deep, active fill Signal Vermilion Pressed; transitions run ~150ms. The global `:focus-visible` treatment is a 2px Teal Line outline with 2px offset, applied to every control and link.
-- **Secondary / Ghost:** default Element Plus buttons stay neutral on Ticket White with a hairline border; text buttons appear in admin headers. Element Plus status variants (warning for favorite state, danger for destructive admin actions) retain Element's default status colors and are not part of the branded palette.
+40px default / 46px large / 32px small, 10–12px radius, 650 weight, 18px horizontal padding. Primary is jade with a 1px inner highlight; hover deepens and lifts 1px; active presses back. Secondary is white with a strong hairline; ghost is transparent with a mist hover. Element Plus buttons are retuned to the same scale so there is one button vocabulary.
 
-### Chips
-- **Style:** `line-chip` — 3px radius, 3px 7px padding, 11px/700 uppercase with 0.06em tracking, white text on a semantic fill passed through a `--chip` custom property (teal for course, blue for video, amber for article, teal/blue/amber/rose for levels 1–4).
-- **State:** The outline variant is transparent with a 1px inset currentColor stroke, used for codes on navy mastheads. The questionnaire answer scale is a custom 3px segmented control inside a 1px Control Bar border; the interest picker uses Element Plus checkbox buttons. Status is always paired with a text label ("已改 3," "当前学习," "已全部完成"), never color alone.
+### Fields
+42px height, 10px radius, white fill, 1px `Hairline Strong` inset stroke. Hover darkens to `Control Bar`; focus becomes 1px jade plus a 3px 14%-opacity jade ring. Placeholder is `Warm Muted` (4.5:1). Textareas share the treatment. Every field has a visible label or an `aria-label`; placeholders are not labels.
 
-### Cards / Containers
-- **Corner Style:** 4px on every card, panel, and masthead.
-- **Background:** Ticket White for content; Depot Navy for mastheads, the learning-path header, and admin sidebar; Paper Ground for empty states and inset groups.
-- **Shadow Strategy:** flat at rest; Card Hover Lift on interactive cards only.
-- **Border:** 1px Paper Hairline; dashed Paper Hairline for empty states, which are action entry points rather than dead ends.
-- **Internal Padding:** 16–20px for card bodies (resource cards use 16px mobile / 20px desktop), 20–28px for panels and mastheads. Resource cards put a 16:9 cover flush to the top edge, with a type chip and category row above the title, a teal dot-and-reason line for recommendation explanations, and a ruled footer of rating and views using tabular numerals.
+### Chips and tags
+Pill, 12px/650, 3px 10px padding. Neutral chips use `Mist`; state chips use semantic soft backgrounds (`chip-primary`, `chip-success`, `chip-warning`, `chip-danger`, `chip-info`). Status is always written out; color is never the only signal.
 
-### Inputs / Fields
-- **Style:** 32px height, 4px radius, Ticket White fill, 1px inset Control Bar stroke, 14px text, Muted Slate placeholder; selects and textareas share the treatment.
-- **Focus:** the inset stroke shifts from Control Bar to Station Navy. The global keyboard focus ring is separate: 2px Teal Line, 2px offset.
-- **Rail variant:** inputs placed on the navy rail use a white 8% fill, 16% inset stroke, and white text; focus raises the stroke to 55% white and the placeholder to 50% white. Search in the top rail uses this variant.
+### Cards
+White, 1px hairline, 14px radius, 20–24px internal padding. Interactive cards lift 2px and gain the hover shadow; their cover image scales to 1.03 inside the frame. Resource cards show type, category, rating, title, two lines of description, an optional jade recommendation-reason block, and a ruled footer with view count and a "查看" arrow.
+
+### Tinted mastheads
+Pale jade (`#F2F9F7`) fill, 16px radius, 1px jade-tinted hairline, ink type, and a low-opacity authored orbit diagram in the corner. Used only for orientation: discipline, knowledge, and learning-path headers. They replace the earlier deep-ink panels so the page stays light.
+
+### Auth
+An asymmetric light split at `lg`: a `0.88fr` pale jade brand panel with the spark, a short statement, and three small feature rows; a `1.12fr` canvas holding a centered 420px white form card. On mobile the brand panel disappears and a compact wordmark sits above the card. No dark poster, no 1:1 split.
 
 ### Navigation
-- **Style:** 64px Depot Navy rail, sticky at the top, with a white 3px-radius square holding the route-mark logo, a 17px bold wordmark, and a 10px tracked subtitle. Links are 14px Control weight.
-- **States:** active link is white semibold with a 2px Signal Vermilion bottom border; inactive links are white at 65% and brighten on hover. Account menu shows a 28px avatar ringed in 25% white.
-- **Mobile:** below 768px the rail keeps the brand, collapses search, and exposes nav as a horizontally scrollable chip row (3px radius, white/12 fill when active) on a 10% white top border.
-- **Admin:** a 240px navy sidebar with a colored `route-node` beside each item (filled for the active section) and a white 10% active row; content header is a 64px white bar with a ruled bottom border.
+Sticky white header with a 1px hairline; active nav is a soft jade pill. Account menu is an avatar pill with a chevron. The mobile tab bar is fixed, white, 1px top hairline, 68px tall, with a 44px active capsule around the icon and an 11px label. Admin sidebar is light, icon-led, with a soft active pill.
 
-### Route Strip / Station Line (signature)
-The one custom visual move. A horizontal `route-strip` lays stops along a 2px track: each stop has a 12px round dot with a 3px border, a 12px label, and state encoded on the dot — done fills Go Green, current fills Signal Vermilion with an 18% halo, locked stays outline and mutes its label. The home hero uses a three-stop strip ("选目标 / 生成路径 / 完成本节") and the hero has a decorative track with two outline stations and one filled vermilion station. Vertical station lines appear on learning-path and discipline pages: a 2px track runs down the left edge, 10px `route-node` dots (outline unless unlocked) sit in the gutter, and current rows get a 40% vermilion border and 4% tint. In the knowledge graph, the same four line colors encode level and the current node is emphasized. Text labels always accompany state color.
+### Tables
+14px card wrapper, `Quiet White` header, 12px/650 muted header labels, 13.5px body, 13px vertical padding, hairline dividers, transparent row backgrounds, and a `Quiet White` hover. Pagination is 32px buttons with a soft jade active state.
 
-### Sticky Action Bar
-A white 4px-rounded bar, 1px Paper Hairline, 12px 20px padding, pinned `sticky; bottom: 16px` on the questionnaire. The left side carries a tabular count ("共 72 个知识点 · 已修改 3 项") and the right side the primary save action. It reuses Card Hover Lift to float over the long scrolling list and remains visible on mobile, where the count and button wrap into one compact row.
+### Knowledge graph
+White rounded node cards (10px), level-colored 4px dots, 12.5px bold labels, 10.5px metadata, and 1.4px curved prerequisite edges with arrowheads. The current node is forest-ink filled with a jade 1.6px stroke; its incoming edges turn jade. The graph is scrollable on desktop and scales to width on mobile.
+
+### Path timeline
+A 1px hairline rail with 32px state nodes: green check for done, jade play with a 4px soft ring for current, muted lock for locked. Step cards use a soft jade tint for the current step, quiet surface for done, white for locked. Progress is a 6px track with a jade fill; the header also shows the percent and `已完成 n / m 节`.
+
+### Page loading screen
+A full-viewport frosted mask (68% mint + 10px blur, z-index 100) with a 46px jade brand mark, a 12.5px "正在打开…" label, and a 112 × 2px jade indeterminate bar. Browsers without `backdrop-filter` get a 92% mint veil. It appears on every route change, stays visible while the new page's initial API requests are in flight, keeps a ~300ms minimum (160ms visible + 40ms settle + 120ms fade), and force-hides after 8s so a stalled request cannot trap the user. The router prefetches the destination page's primary GETs before it commits the navigation (2.6s cap), so the previous page stays visible behind the mask; the new page reads a one-shot cache and paints complete content on its first frame. Prefetch failures fall back to the normal skeletons. Document scrolling is locked while the mask is visible, and router `scrollBehavior` resets new pages to the top; back/forward restores the saved position.
+
+## Motion
+
+Motion is state, not theater. Most transitions are 150–220ms with `cubic-bezier(.22, 1, .36, 1)`.
+
+- Hover: cards lift 2px, covers zoom 1.03, arrow links slide 3px, buttons lift 1px.
+- Page transition: 180ms fade plus a 6px rise; out is a 120ms fade.
+- List transitions: 220ms fade/move.
+- Progress bars: 500–700ms width transition.
+- Page loading screen: 120ms fade, indeterminate 1.15s bar; shown only while a route and its initial requests are settling.
+- Skeletons: 1.6s shimmer.
+- No hero choreography, parallax, scroll-jacking, or autoplay carousels. Data-driven cards may fade up on first render with a capped 35ms stagger.
+- `prefers-reduced-motion: reduce` removes animation and transforms.
 
 ## Do's and Don'ts
 
-### Do:
-- **Do** keep the rail/paper split: navy for orientation and mastheads, paper for reading, white for interactive content surfaces.
-- **Do** use 4px cards, 3px chips and controls, 2px route strokes, and square-capped connector strokes.
-- **Do** map the four line colors to real levels or resource types, and pair every state color with a text label.
-- **Do** use Signal Vermilion only for the primary action, the current station, the active nav underline, and small current-state tints.
-- **Do** use tabular numerals for every count, rating, percentage, level, and code.
-- **Do** set Chinese in the system sans stack and keep micro-labels at 11px uppercase with 0.14em tracking inside chips and data rows.
-- **Do** provide a clear next action inside every empty state, using a dashed hairline container rather than a bare blank region.
-- **Do** introduce sections with a 2px line-colored rule and a station node; use teal for discovery, blue for resources, rose for concept layers.
-- **Do** repeat the line cue as an inset 2px top rule on discipline cards, and keep the paper ground plain so route lines always mean structure.
+### Do
+- Do keep the split: mint paper for reading, white for interactive surfaces, pale jade for orientation.
+- Do use one jade signal for action and current state; use level colors only where they encode level or type.
+- Do use 10px fields, 14px cards, 16px panels, and pills only for chips/small controls.
+- Do use Manrope for Latin/numerals and the system Chinese stack for Chinese; set data in tabular numerals.
+- Do write one line of context under a section heading and leave generous space above it.
+- Do provide a clear next action in every empty and error state.
+- Do keep the mobile bottom tab bar, the sticky rating rail, and keyboard focus rings.
+- Do use the brand mark, the live "下一步" card, and the orbit geometry as the only recurring brand devices.
 
-### Don't:
-- **Don't** introduce large radii (8px+), pill buttons, gradients, or soft gray ambient shadows; the only elevation is the ink-tinted hover lift.
-- **Don't** use the line palette as decoration or assign level/type colors arbitrarily; if a color does not encode level or type, it is not a line color.
-- **Don't** use vermilion as a section background, a wide wash, or a generic accent.
-- **Don't** use the 11px uppercase micro-label as a decorative kicker/eyebrow above headings.
-- **Don't** convey done/current/locked or error/success states by color alone; carry the label.
-- **Don't** load a webfont or switch Chinese body copy to a serif/display face.
-- **Don't** reintroduce a decorative route texture behind content; lines and station dots must encode structure or state.
-- **Don't** use a thick accent border on a rounded card; inset the 2px rule as its own positioned element instead.
+### Don't
+- Don't reintroduce transit signage: navy rail bands, 2px route strokes, station dots, uppercase micro-labels, 4px corners.
+- Don't go back to cream + terracotta; the palette is mint paper and jade.
+- Don't add gradient text, glass decoration, or colored halos.
+- Don't put a decorative kicker or uppercase eyebrow above a heading.
+- Don't use a colored left border thicker than 1px on cards or alerts.
+- Don't use pills for large containers or buttons; pills are for chips and small controls.
+- Don't use ambient shadows on static cards; elevation is a hover response.
+- Don't load a Chinese webfont; Chinese uses the system stack.
+- Don't convey state by color alone; always write the label.
+- Don't nest interactive elements; graph nodes are buttons inside a group, not inside a `role="img"`.
+
+## Accessibility
+
+- All body, placeholder, and helper text clears 4.5:1; large display text clears 3:1. The full page set is checked with axe-core at 1440, 768, and 390.
+- Focus-visible is a 2px jade outline with 2px offset on every control and link.
+- The skip link is the first focusable element in the front shell.
+- Status is text + color (已完成 / 当前学习 / 未解锁; 已改 n; error copy).
+- Every input/select has a visible label or an `aria-label`.
+- The mobile tab bar uses `aria-current="page"`; the path progress bar has an accessible name.
+- The knowledge graph is a `role="group"` with keyboard-selectable nodes.
+- `prefers-reduced-motion` is honored.

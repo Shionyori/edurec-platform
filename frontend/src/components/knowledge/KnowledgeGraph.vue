@@ -18,18 +18,18 @@ const emit = defineEmits<{ (e: 'select', node: KnowledgeNode): void }>()
 const layout = computed(() =>
   layoutKnowledgeGraph(props.nodes, props.edges, {
     dx: props.compact ? 220 : 260,
-    dy: props.compact ? 78 : 100,
+    dy: props.compact ? 80 : 102,
     nodeWidth: props.compact ? 150 : 180,
-    nodeHeight: props.compact ? 48 : 56,
+    nodeHeight: props.compact ? 50 : 58,
   }),
 )
 
 const nodeWidth = computed(() => (props.compact ? 150 : 180))
-const nodeHeight = computed(() => (props.compact ? 48 : 56))
+const nodeHeight = computed(() => (props.compact ? 50 : 58))
 const arrowId = `kg-arrow-${Math.random().toString(36).slice(2, 8)}`
 
 // 线路色按层级循环：层级是真实语义，不是装饰
-const LINE_COLORS = ['#0E7C7B', '#1D4ED8', '#B45309', '#BE123C']
+const LINE_COLORS = ['#0F7A66', '#2F62C4', '#A26800', '#B84A62']
 function levelColor(level: number): string {
   return LINE_COLORS[(Math.max(1, level) - 1) % LINE_COLORS.length]
 }
@@ -61,12 +61,12 @@ function onSelect(node: KnowledgeNode) {
   <div class="overflow-x-auto">
     <svg
       v-if="layout.nodes.length > 0"
-      :viewBox="`0 0 ${layout.width} ${layout.height + 14}`"
+      :viewBox="`0 0 ${layout.width} ${layout.height + 16}`"
       :width="layout.width"
-      :height="layout.height + 14"
-      role="img"
+      :height="layout.height + 16"
+      role="group"
       aria-label="知识点先修关系图"
-      class="kg-svg min-w-full"
+      class="kg-svg min-w-full font-[Manrope,system-ui,sans-serif]"
     >
       <defs>
         <marker
@@ -77,7 +77,7 @@ function onSelect(node: KnowledgeNode) {
           refY="4"
           orient="auto"
         >
-          <path d="M 0 0 L 8 4 L 0 8 z" fill="#B9B5A8" />
+          <path d="M 0 0 L 8 4 L 0 8 z" fill="#C9C2B5" />
         </marker>
         <marker
           :id="`${arrowId}-active`"
@@ -87,11 +87,11 @@ function onSelect(node: KnowledgeNode) {
           refY="4"
           orient="auto"
         >
-          <path d="M 0 0 L 8 4 L 0 8 z" fill="#C9451F" />
+          <path d="M 0 0 L 8 4 L 0 8 z" fill="#0F7A66" />
         </marker>
       </defs>
 
-      <!-- 层级刻度：线路的“站序” -->
+      <!-- Level ticks -->
       <g aria-hidden="true">
         <text
           v-for="tick in levelTicks"
@@ -100,8 +100,8 @@ function onSelect(node: KnowledgeNode) {
           y="10"
           font-size="10"
           font-weight="700"
-          letter-spacing="1.5"
-          fill="#6B7681"
+          letter-spacing="0.6"
+          fill="#5F6F69"
         >L{{ tick.level }}</text>
       </g>
 
@@ -110,16 +110,16 @@ function onSelect(node: KnowledgeNode) {
         :key="index"
         :d="edgePath(edge.from.x, edge.from.y + nodeHeight / 2, edge.to.x, edge.to.y + nodeHeight / 2)"
         fill="none"
-        :stroke="edge.to.id === currentId ? '#C9451F' : '#C9C5B8'"
-        :stroke-width="edge.to.id === currentId ? 2 : 2"
-        :opacity="edge.to.id === currentId ? 1 : 0.75"
+        :stroke="edge.to.id === currentId ? '#0F7A66' : '#D3DED9'"
+        :stroke-width="edge.to.id === currentId ? 1.8 : 1.4"
+        :opacity="edge.to.id === currentId ? 1 : 0.9"
         :marker-end="`url(#${edge.to.id === currentId ? `${arrowId}-active` : arrowId})`"
       />
 
       <g
         v-for="node in layout.nodes"
         :key="node.id"
-        :transform="`translate(${node.x}, ${node.y + 14})`"
+        :transform="`translate(${node.x}, ${node.y + 16})`"
         role="button"
         tabindex="0"
         :aria-label="`${node.name}，第 ${node.level} 层，资源 ${node.resource_count}，概念 ${node.concept_count}`"
@@ -131,32 +131,33 @@ function onSelect(node: KnowledgeNode) {
         <rect
           :width="nodeWidth"
           :height="nodeHeight"
-          rx="3"
-          :fill="node.id === currentId ? '#0B1B2B' : '#FFFFFF'"
-          :stroke="node.id === currentId ? '#C9451F' : '#DCD9CF'"
-          :stroke-width="node.id === currentId ? 2 : 1.5"
-          class="transition-colors duration-150"
+          rx="10"
+          ry="10"
+          :fill="node.id === currentId ? '#17231F' : '#FFFFFF'"
+          :stroke="node.id === currentId ? '#0F7A66' : '#E0E8E4'"
+          :stroke-width="node.id === currentId ? 1.6 : 1"
+          class="transition-[stroke] duration-150"
         />
         <circle
-          cx="14"
+          cx="16"
           :cy="nodeHeight / 2"
           r="4"
-          :fill="node.id === currentId ? '#C9451F' : levelColor(node.level)"
+          :fill="node.id === currentId ? '#0F7A66' : levelColor(node.level)"
         />
         <text
-          x="26"
-          :y="compact ? 20 : 23"
-          font-size="13"
-          font-weight="600"
-          :fill="node.id === currentId ? '#FFFFFF' : '#0B1B2B'"
+          x="28"
+          :y="compact ? 21 : 24"
+          font-size="12.5"
+          font-weight="700"
+          :fill="node.id === currentId ? '#FFFFFF' : '#17231F'"
         >
           {{ labelOf(node) }}
         </text>
         <text
-          x="26"
-          :y="compact ? 37 : 42"
-          font-size="11"
-          :fill="node.id === currentId ? 'rgba(255,255,255,0.62)' : '#6B7681'"
+          x="28"
+          :y="compact ? 38 : 43"
+          font-size="10.5"
+          :fill="node.id === currentId ? 'rgba(255,255,255,0.62)' : '#5F6F69'"
         >
           资源 {{ node.resource_count }} · 概念 {{ node.concept_count }}
         </text>
@@ -171,10 +172,10 @@ function onSelect(node: KnowledgeNode) {
 }
 .kg-node:focus-visible rect,
 .kg-node:hover rect {
-  stroke: #0b1b2b;
+  stroke: #0f7a66;
 }
 .kg-node:focus-visible rect {
-  stroke-width: 2.5;
+  stroke-width: 2.2;
 }
 
 /* 窄屏不横向裁切：整图缩放到卡片宽度，配合 compact 参数保持字号可读 */

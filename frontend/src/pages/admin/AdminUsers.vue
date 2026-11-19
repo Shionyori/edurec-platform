@@ -2,6 +2,7 @@
 import { onMounted, ref } from 'vue'
 import { adminListUsers } from '@/api/admin'
 import { formatDate } from '@/utils/format'
+import AppIcon from '@/components/ui/AppIcon.vue'
 import type { User } from '@/types'
 
 const items = ref<User[]>([])
@@ -44,28 +45,43 @@ onMounted(fetchList)
 </script>
 
 <template>
-  <div>
-    <div class="flex flex-wrap items-center justify-between gap-3">
+  <div class="mx-auto max-w-[1200px]">
+    <div class="flex flex-wrap items-end justify-between gap-4">
       <div>
-        <h1 class="text-xl font-bold">用户管理</h1>
-        <p class="mt-1 text-sm text-ink-secondary">查看平台注册用户</p>
+        <h1 class="headline">用户管理</h1>
+        <p class="mt-2 text-[13px] text-ink-secondary">查看平台注册用户</p>
       </div>
       <el-input
         v-model="keyword"
+        aria-label="按用户名或邮箱搜索"
         placeholder="按用户名 / 邮箱搜索"
         clearable
-        class="w-64"
+        class="w-full sm:w-72"
         @keyup.enter="handleSearch"
       >
+        <template #prefix>
+          <AppIcon name="search" :size="15" />
+        </template>
         <template #append>
           <el-button @click="handleSearch">搜索</el-button>
         </template>
       </el-input>
     </div>
 
-    <div v-if="loading" class="py-16 text-center text-sm text-ink-muted">加载中…</div>
-    <div v-else-if="error" class="py-16 text-center text-sm text-danger">{{ error }}</div>
-    <div v-else class="mt-4 rounded-[4px] border border-border bg-surface">
+    <div v-if="loading" class="card mt-6 overflow-hidden p-5">
+      <div class="space-y-3">
+        <div v-for="i in 6" :key="i" class="skeleton h-10 w-full"></div>
+      </div>
+    </div>
+    <div v-else-if="error" class="state-box mt-6">
+      <span class="state-icon !bg-danger-soft !text-danger">
+        <AppIcon name="alert" :size="22" />
+      </span>
+      <p class="state-title">用户加载失败</p>
+      <p class="state-copy">{{ error }}</p>
+      <button type="button" class="btn btn-secondary btn-sm mt-2" @click="fetchList">重新加载</button>
+    </div>
+    <div v-else class="card mt-6 overflow-hidden">
       <el-table :data="items">
         <el-table-column prop="id" label="ID" width="70" />
         <el-table-column prop="username" label="用户名" min-width="120" />
@@ -81,7 +97,7 @@ onMounted(fetchList)
           <template #default="{ row }">{{ formatDate(row.created_at) }}</template>
         </el-table-column>
       </el-table>
-      <div v-if="total > pageSize" class="flex justify-center p-4">
+      <div v-if="total > pageSize" class="flex justify-center border-t border-border p-4">
         <el-pagination
           background
           layout="prev, pager, next"

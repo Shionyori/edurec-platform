@@ -15,10 +15,10 @@ export function getDiscipline(code: string, limit = 12) {
 
 /** 学科无资源时触发自动爬取 */
 export function startDisciplineCrawl(code: string) {
-  return post<DisciplineCrawlStatus>(`/disciplines/${encodeURIComponent(code)}/crawl`)
+  return post<DisciplineCrawlStatus>(`/disciplines/${encodeURIComponent(code)}/crawl`, undefined, { skipPageLoading: true })
 }
 
 /** 查询自动爬取状态 */
 export function getDisciplineCrawlStatus(code: string) {
-  return get<DisciplineCrawlStatus>(`/disciplines/${encodeURIComponent(code)}/crawl`)
+  return get<DisciplineCrawlStatus>(`/disciplines/${encodeURIComponent(code)}/crawl`, { skipPageLoading: true })
 }

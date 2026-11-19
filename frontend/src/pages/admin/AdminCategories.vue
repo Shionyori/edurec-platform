@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
 import { createCategory, listCategories } from '@/api/category'
+import AppIcon from '@/components/ui/AppIcon.vue'
 import type { Category } from '@/types'
 
 const items = ref<Category[]>([])
@@ -49,13 +50,26 @@ onMounted(fetchList)
 </script>
 
 <template>
-  <div>
-    <h1 class="text-xl font-bold">分类管理</h1>
-    <p class="mt-1 text-sm text-ink-secondary">维护教育资源分类</p>
+  <div class="mx-auto max-w-[1000px]">
+    <header>
+      <h1 class="headline">分类管理</h1>
+      <p class="mt-2 text-[13px] text-ink-secondary">维护教育资源分类</p>
+    </header>
 
-    <div v-if="loading" class="py-16 text-center text-sm text-ink-muted">加载中…</div>
-    <div v-else-if="error" class="py-16 text-center text-sm text-danger">{{ error }}</div>
-    <div v-else class="mt-4 rounded-[4px] border border-border bg-surface">
+    <div v-if="loading" class="card mt-6 p-5">
+      <div class="space-y-3">
+        <div v-for="i in 5" :key="i" class="skeleton h-10 w-full"></div>
+      </div>
+    </div>
+    <div v-else-if="error" class="state-box mt-6">
+      <span class="state-icon !bg-danger-soft !text-danger">
+        <AppIcon name="alert" :size="22" />
+      </span>
+      <p class="state-title">分类加载失败</p>
+      <p class="state-copy">{{ error }}</p>
+      <button type="button" class="btn btn-secondary btn-sm mt-2" @click="fetchList">重新加载</button>
+    </div>
+    <div v-else class="card mt-6 overflow-hidden">
       <el-table :data="items">
         <el-table-column prop="id" label="ID" width="80" />
         <el-table-column prop="name" label="名称" min-width="140" />
@@ -63,14 +77,29 @@ onMounted(fetchList)
       </el-table>
     </div>
 
-    <div class="mt-6 rounded-[4px] border border-border bg-surface p-5">
-      <h2 class="text-sm font-semibold text-ink">新建分类</h2>
-      <div class="mt-3 flex flex-wrap items-start gap-3">
-        <div class="w-48"><el-input v-model="name" placeholder="分类名称（必填）" clearable maxlength="64" /></div>
-        <div class="w-80"><el-input v-model="description" placeholder="描述（选填）" clearable maxlength="256" /></div>
+    <div class="card mt-6 p-5 sm:p-6">
+      <div class="flex items-center gap-2.5">
+        <span class="flex h-8 w-8 items-center justify-center rounded-[9px] bg-primary-soft text-primary">
+          <AppIcon name="plus" :size="16" />
+        </span>
+        <div>
+          <h2 class="text-[15px] font-bold text-ink">新建分类</h2>
+          <p class="mt-0.5 text-[11.5px] text-ink-muted">分类用于资源归类与兴趣推荐</p>
+        </div>
+      </div>
+      <div class="mt-4 flex flex-wrap items-start gap-3">
+        <div class="w-full sm:w-48">
+          <el-input v-model="name" aria-label="分类名称" placeholder="分类名称（必填）" clearable maxlength="64" />
+        </div>
+        <div class="w-full sm:w-80">
+          <el-input v-model="description" aria-label="分类描述" placeholder="描述（选填）" clearable maxlength="256" />
+        </div>
         <el-button type="primary" :loading="creating" @click="handleCreate">创建</el-button>
       </div>
-      <p v-if="createError" class="mt-2 text-sm text-danger">{{ createError }}</p>
+      <p v-if="createError" class="mt-3 flex items-center gap-1.5 text-[12.5px] text-danger">
+        <AppIcon name="alert" :size="14" />
+        {{ createError }}
+      </p>
     </div>
   </div>
 </template>

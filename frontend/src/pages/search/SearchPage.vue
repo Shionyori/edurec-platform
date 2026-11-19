@@ -6,6 +6,7 @@ import { listResources } from '@/api/resource'
 import { startGenerationByKeyword, getConceptGenerationStatus } from '@/api/knowledge'
 import ResourceCard from '@/components/resource/ResourceCard.vue'
 import ResourceCardSkeleton from '@/components/resource/ResourceCardSkeleton.vue'
+import AppIcon from '@/components/ui/AppIcon.vue'
 import type { Category, GenerationStatus, Resource } from '@/types'
 
 const PAGE_SIZE = 12
@@ -333,124 +334,158 @@ onBeforeUnmount(() => {
   generationToken += 1
 })
 </script>
-
 <template>
-  <div class="mx-auto max-w-7xl px-4 py-8 sm:px-6">
-    <div class="flex flex-wrap items-end justify-between gap-3 border-b border-border pb-4">
+  <div class="page shell">
+    <header class="flex flex-wrap items-end justify-between gap-4">
       <div>
-        <h1 class="text-2xl font-bold tracking-tight text-ink sm:text-3xl">{{ pageTitle }}</h1>
-        <p class="mt-2 text-sm text-ink-secondary">搜索并筛选全部课程、文章与视频</p>
+        <h1 class="headline">{{ pageTitle }}</h1>
+        <p class="mt-2 text-[13.5px] text-ink-secondary">搜索并筛选全部课程、文章与视频</p>
       </div>
-      <span v-if="total > 0" class="data-num text-xs text-ink-muted">共 {{ total }} 条</span>
-    </div>
+      <span v-if="total > 0" class="chip tnum">
+        <AppIcon name="layers" :size="13" />
+        共 {{ total }} 条
+      </span>
+    </header>
 
     <div
       v-if="generation"
-      class="mt-4 flex flex-wrap items-center gap-2 rounded-[4px] border border-border bg-surface px-4 py-3 text-sm"
+      class="mt-5 flex flex-wrap items-center gap-2.5 rounded-[12px] border border-border bg-surface px-4 py-3 text-[13px]"
     >
       <template v-if="generation.status.status === 'running'">
-        <span class="route-node" style="--node: var(--color-line-amber)" aria-hidden="true"></span>
+        <span class="spinner-dots" aria-hidden="true"><span></span><span></span><span></span></span>
         <span class="text-ink-secondary">
           正在为「{{ generation.pointName }}」自动构建概念图谱…
         </span>
       </template>
       <template v-else-if="generation.status.status === 'done'">
-        <span class="route-node" style="--node: var(--color-success)" aria-hidden="true"></span>
+        <span class="flex h-6 w-6 items-center justify-center rounded-md bg-success-soft text-success">
+          <AppIcon name="check" :size="14" />
+        </span>
         <span class="text-ink-secondary">
           已为「{{ generation.pointName }}」补充 {{ generation.status.generated }} 个概念（共
           {{ generation.status.total }} 个）。
         </span>
         <RouterLink
           :to="{ name: 'knowledge-detail', params: { code: generation.pointCode } }"
-          class="font-medium text-primary underline-offset-4 hover:underline"
-        >查看知识点 →</RouterLink>
+          class="link-arrow !text-[13px]"
+        >查看知识点 <AppIcon name="arrow-right" :size="13" /></RouterLink>
       </template>
       <template v-else-if="generation.status.status === 'failed'">
-        <span class="route-node" style="--node: var(--color-danger)" aria-hidden="true"></span>
+        <span class="flex h-6 w-6 items-center justify-center rounded-md bg-danger-soft text-danger">
+          <AppIcon name="alert" :size="14" />
+        </span>
         <span class="text-danger">
           概念生成失败：{{ generation.status.error || 'engine 未启动' }}（搜索不受影响）
         </span>
       </template>
     </div>
 
-    <div class="relative mt-5 overflow-hidden rounded-[4px] border border-border bg-surface p-4 md:sticky md:top-16 md:z-30">
-      <span class="absolute inset-x-0 top-0 h-[2px]" style="background: var(--color-line-teal)" aria-hidden="true"></span>
+    <!-- Filter toolbar: sticky under the header, one row on desktop -->
+    <div class="panel mt-5 p-4 md:sticky md:top-[73px] md:z-30 md:shadow-[0_1px_2px_rgba(11,27,43,0.05)]">
       <div class="flex flex-wrap items-center gap-2.5">
-        <div class="w-full sm:w-56">
+        <div class="w-full sm:w-60">
           <el-input
             v-model="keyword"
+            aria-label="关键词"
             placeholder="输入关键词…"
             clearable
             @keyup.enter="handleSearch"
-          />
+          >
+            <template #prefix>
+              <AppIcon name="search" :size="16" />
+            </template>
+          </el-input>
         </div>
-        <div class="w-36">
-          <el-select v-model="categoryId" placeholder="全部分类" clearable @change="handleSearch">
+        <div class="w-[calc(50%-5px)] sm:w-36">
+          <el-select v-model="categoryId" aria-label="按分类筛选" placeholder="全部分类" clearable @change="handleSearch">
             <el-option v-for="c in categories" :key="c.id" :label="c.name" :value="c.id" />
           </el-select>
         </div>
-        <div class="w-32">
-          <el-select v-model="type" placeholder="全部类型" clearable @change="handleSearch">
+        <div class="w-[calc(50%-5px)] sm:w-32">
+          <el-select v-model="type" aria-label="按类型筛选" placeholder="全部类型" clearable @change="handleSearch">
             <el-option label="课程" value="course" />
             <el-option label="文章" value="article" />
             <el-option label="视频" value="video" />
           </el-select>
         </div>
-        <div class="w-32">
-          <el-select v-model="sort" @change="handleSearch">
+        <div class="w-[calc(50%-5px)] sm:w-32">
+          <el-select v-model="sort" aria-label="排序方式" @change="handleSearch">
             <el-option label="最新" value="latest" />
             <el-option label="热门" value="popular" />
             <el-option label="评分" value="rating" />
           </el-select>
         </div>
-        <div class="w-44">
-          <el-input v-model="tags" placeholder="标签（逗号分隔）" clearable @keyup.enter="handleSearch" />
+        <div class="w-[calc(50%-5px)] sm:w-44">
+          <el-input v-model="tags" aria-label="标签筛选" placeholder="标签（逗号分隔）" clearable @keyup.enter="handleSearch" />
         </div>
-        <el-button type="primary" @click="handleSearch">搜索</el-button>
+        <button type="button" class="btn btn-primary shrink-0" @click="handleSearch">
+          <AppIcon name="search" :size="15" />
+          搜索
+        </button>
         <button
           v-if="hasFilters"
           type="button"
-          class="ml-auto text-xs text-ink-muted underline-offset-4 hover:text-primary hover:underline"
+          class="ml-auto text-[12.5px] font-semibold text-ink-muted underline-offset-4 hover:text-primary hover:underline"
           @click="clearFilters"
         >清除筛选</button>
       </div>
     </div>
 
-    <div v-if="loading" class="mt-5">
-      <p class="py-3 text-center text-sm text-ink-muted">{{ loadingText }}</p>
-      <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+    <div class="mt-7 flex flex-wrap items-end justify-between gap-2">
+      <h2 class="text-[18px] font-bold text-ink">资源列表</h2>
+      <span v-if="total > 0" class="tnum text-[12px] text-ink-muted">共 {{ total }} 条</span>
+    </div>
+
+    <div v-if="loading" class="mt-4">
+      <p class="flex items-center justify-center gap-2 py-3 text-[13px] text-ink-muted">
+        <span class="spinner-dots" aria-hidden="true"><span></span><span></span><span></span></span>
+        {{ loadingText }}
+      </p>
+      <div class="mt-5 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
         <ResourceCardSkeleton v-for="i in 6" :key="i" />
       </div>
     </div>
 
-    <div v-else-if="error && resources.length === 0" class="mt-5 flex flex-col items-center gap-3 rounded-[4px] border border-border bg-surface px-6 py-16 text-center">
-      <p class="text-sm text-danger">{{ error }}</p>
-      <el-button @click="handleSearch">重新搜索</el-button>
+    <div v-else-if="error && resources.length === 0" class="state-box mt-4">
+      <span class="state-icon !bg-danger-soft !text-danger">
+        <AppIcon name="alert" :size="22" />
+      </span>
+      <p class="state-title">搜索失败</p>
+      <p class="state-copy">{{ error }}</p>
+      <button type="button" class="btn btn-secondary btn-sm mt-2" @click="handleSearch">重新搜索</button>
     </div>
 
-    <div v-else-if="resources.length === 0 && !loadingMore" class="mt-5 flex flex-col items-center gap-3 rounded-[4px] border border-dashed border-border px-6 py-16 text-center">
-      <p class="text-sm font-medium text-ink">没有符合条件的资源</p>
-      <p class="text-xs text-ink-muted">
+    <div v-else-if="resources.length === 0 && !loadingMore" class="state-box mt-4">
+      <span class="state-icon">
+        <AppIcon name="search" :size="22" />
+      </span>
+      <p class="state-title">没有符合条件的资源</p>
+      <p class="state-copy">
         {{ hasFilters ? '换个关键词，或清除筛选后再试。' : '资源准备好后会出现在这里。' }}
       </p>
-      <el-button v-if="hasFilters" @click="clearFilters">清除筛选</el-button>
+      <button v-if="hasFilters" type="button" class="btn btn-secondary btn-sm mt-2" @click="clearFilters">
+        清除筛选
+      </button>
     </div>
 
-    <div v-else class="mt-5 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+    <div v-else class="mt-4 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
       <ResourceCard
         v-for="(r, i) in resources"
         :key="r.id"
         :resource="r"
+        class="fade-up"
         :style="{ animationDelay: `${Math.min(i, 8) * 25}ms` }"
       />
     </div>
 
-    <div v-if="loadingMore" class="flex items-center justify-center gap-2 py-8 text-sm text-ink-muted">
-      <span class="route-node" style="--node: var(--color-line-teal)" aria-hidden="true"></span>
-      正在加载…
+    <div v-if="loadingMore" class="flex items-center justify-center gap-2.5 py-10 text-[13px] text-ink-muted">
+      <span class="spinner-dots" aria-hidden="true"><span></span><span></span><span></span></span>
+      正在加载更多
     </div>
-    <div v-else-if="exhausted && resources.length > 0" class="py-8 text-center text-sm text-ink-muted">
+    <div v-else-if="exhausted && resources.length > 0" class="flex items-center justify-center gap-2 py-10 text-[12.5px] text-ink-muted">
+      <span class="h-px w-12 bg-border"></span>
       没有更多内容
+      <span class="h-px w-12 bg-border"></span>
     </div>
     <div ref="sentinel" class="h-px"></div>
   </div>

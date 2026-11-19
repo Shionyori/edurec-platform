@@ -7,6 +7,7 @@ import { createLearningPath } from '@/api/learning'
 import ResourceCard from '@/components/resource/ResourceCard.vue'
 import KnowledgeGraph from '@/components/knowledge/KnowledgeGraph.vue'
 import type { KnowledgeConcept, KnowledgeDetail, KnowledgeNode } from '@/types'
+import AppIcon from '@/components/ui/AppIcon.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -35,9 +36,14 @@ function syncNarrow(event?: MediaQueryListEvent) {
   isNarrow.value = event ? event.matches : (narrowQuery?.matches ?? false)
 }
 
-const LINE_COLORS = ['#0E7C7B', '#1D4ED8', '#B45309', '#BE123C']
+const LINE_COLORS = ['#0F7A66', '#2F62C4', '#A26800', '#B84A62']
+const LEVEL_INKS = ['#0B6354', '#2757B5', '#7A4D00', '#913B4D']
 function levelColor(level: number): string {
   return LINE_COLORS[(Math.max(1, level) - 1) % LINE_COLORS.length]
+}
+
+function levelInk(level: number): string {
+  return LEVEL_INKS[(Math.max(1, level) - 1) % LEVEL_INKS.length]
 }
 
 function conceptColor(concept: KnowledgeConcept): string {
@@ -156,95 +162,136 @@ onBeforeUnmount(() => {
 
 watch(code, load)
 </script>
-
 <template>
-  <div class="mx-auto max-w-7xl px-4 py-8 sm:px-6 sm:py-10">
+  <div class="page shell">
     <RouterLink
       :to="detail?.point.discipline_code
         ? { name: 'discipline', params: { code: detail.point.discipline_code } }
         : { name: 'knowledge' }"
-      class="text-sm text-ink-secondary underline-offset-4 hover:text-primary hover:underline"
+      class="link-quiet inline-flex items-center gap-1.5 text-[12.5px]"
     >
-      ← {{ detail?.point.discipline_code ? '返回所属学科' : '返回学科导航' }}
+      <AppIcon name="arrow-left" :size="14" />
+      {{ detail?.point.discipline_code ? '返回所属学科' : '返回学科导航' }}
     </RouterLink>
 
     <div v-if="loading" class="mt-6">
-      <el-skeleton :rows="8" animated />
+      <h1 class="sr-only">知识点详情</h1>
+      <div class="skeleton h-52 w-full !rounded-[16px]"></div>
+      <div class="mt-6 skeleton h-72 w-full !rounded-[16px]"></div>
     </div>
 
-    <div v-else-if="error" class="mt-6 flex flex-col items-center gap-3 rounded-[4px] border border-border bg-surface px-6 py-16 text-center">
-      <p class="text-sm text-danger">{{ error }}</p>
-      <el-button @click="load">重新加载</el-button>
+    <div v-else-if="error" class="mt-6">
+      <h1 class="headline">知识点详情</h1>
+      <div class="state-box mt-4">
+      <span class="state-icon !bg-danger-soft !text-danger">
+        <AppIcon name="alert" :size="22" />
+      </span>
+      <p class="state-title">知识点加载失败</p>
+      <p class="state-copy">{{ error }}</p>
+      <button type="button" class="btn btn-secondary btn-sm mt-2" @click="load">重新加载</button>
+      </div>
     </div>
 
     <template v-else-if="detail">
-      <header class="mt-4 flex flex-wrap items-end justify-between gap-6 rounded-[4px] bg-rail-soft px-6 py-7 text-white">
-        <div class="max-w-3xl">
-          <div class="flex flex-wrap items-center gap-2">
-            <span class="line-chip" :style="{ '--chip': levelColor(detail.point.level) }">L{{ detail.point.level }}</span>
-            <span class="text-xs text-white/60">第 {{ detail.point.level }} 层</span>
+      <header class="panel-tint mt-4 px-6 py-7 sm:px-8 sm:py-9">
+        <svg
+          class="pointer-events-none absolute -right-20 -top-28 h-[340px] w-[340px] text-primary/10"
+          viewBox="0 0 340 340"
+          fill="none"
+          aria-hidden="true"
+        >
+          <circle cx="170" cy="170" r="126" stroke="currentColor" stroke-width="1" />
+          <circle cx="170" cy="170" r="158" stroke="currentColor" stroke-width="1" stroke-dasharray="2 8" />
+          <circle cx="296" cy="170" r="5" fill="var(--color-primary)" />
+        </svg>
+
+        <div class="relative flex flex-wrap items-end justify-between gap-6">
+          <div class="max-w-3xl">
+            <div class="flex flex-wrap items-center gap-2">
+              <span
+                class="flex h-6 min-w-6 items-center justify-center rounded-full px-2 text-[11px] font-bold"
+                :style="{ backgroundColor: `color-mix(in srgb, ${levelColor(detail.point.level)} 12%, white)`, color: levelInk(detail.point.level) }"
+              >L{{ detail.point.level }}</span>
+              <span class="text-[12px] text-ink-muted">第 {{ detail.point.level }} 层</span>
+            </div>
+            <h1 class="mt-3 text-[24px] font-bold leading-tight tracking-[-0.025em] text-ink sm:text-[30px]">
+              {{ detail.point.name }}
+            </h1>
+            <p class="mt-2 max-w-2xl text-[13.5px] leading-relaxed text-ink-secondary">
+              {{ detail.point.description || '暂无描述' }}
+            </p>
+            <div class="tnum mt-5 flex flex-wrap gap-x-6 gap-y-2 text-[12px] text-ink-muted">
+              <span>课程资源 <strong class="font-semibold text-ink">{{ detail.point.resource_count }}</strong></span>
+              <span>概念 <strong class="font-semibold text-ink">{{ detail.point.concept_count }}</strong></span>
+            </div>
           </div>
-          <h1 class="mt-3 text-2xl font-bold tracking-tight sm:text-3xl">{{ detail.point.name }}</h1>
-          <p class="mt-2 text-sm leading-relaxed text-white/70">
-            {{ detail.point.description || '暂无描述' }}
-          </p>
-          <div class="data-num mt-3 flex gap-5 text-xs text-white/60">
-            <span>课程资源 <strong class="font-semibold text-white">{{ detail.point.resource_count }}</strong></span>
-            <span>概念 <strong class="font-semibold text-white">{{ detail.point.concept_count }}</strong></span>
+          <div class="flex flex-wrap items-center gap-2.5">
+            <el-button type="primary" :loading="creatingPath" @click="startLearningPath">
+              <AppIcon name="route" :size="15" class="mr-1.5" />
+              生成我的学习路径
+            </el-button>
+            <RouterLink :to="{ name: 'questionnaire' }">
+              <el-button>调整学习问卷</el-button>
+            </RouterLink>
           </div>
-        </div>
-        <div class="flex flex-wrap items-center gap-3">
-          <el-button type="primary" :loading="creatingPath" @click="startLearningPath">
-            生成我的学习路径
-          </el-button>
-          <RouterLink :to="{ name: 'questionnaire' }">
-            <el-button>调整学习问卷</el-button>
-          </RouterLink>
         </div>
       </header>
 
-      <p class="mt-3 text-xs text-ink-muted">
+      <p class="mt-3 text-[12px] text-ink-muted">
         路径会按先修关系跳过你已掌握的内容，学完一节才解锁下一节。
       </p>
 
-      <section class="mt-6 rounded-[4px] border border-border bg-surface p-5">
-        <div class="flex flex-wrap items-center justify-between gap-3 border-b-2 pb-3" style="border-color: var(--color-line-teal)">
-          <div class="flex items-center gap-3">
-            <span class="route-node" style="--node: var(--color-line-teal)" aria-hidden="true"></span>
-            <h2 class="text-lg font-bold text-ink">先修关系</h2>
+      <section class="card mt-6 p-5 sm:p-6">
+        <div class="flex flex-wrap items-center justify-between gap-3">
+          <div class="flex items-center gap-2.5">
+            <span class="flex h-8 w-8 items-center justify-center rounded-[9px] bg-primary-soft text-primary">
+              <AppIcon name="route" :size="16" />
+            </span>
+            <div>
+              <h2 class="text-[16px] font-bold text-ink">先修关系</h2>
+              <p class="mt-0.5 text-[11.5px] text-ink-muted">箭头表示「先学 → 后学」，点击节点可切换</p>
+            </div>
           </div>
-          <div class="flex items-center gap-3">
-            <span class="hidden text-xs text-ink-muted sm:inline">箭头表示「先学 → 后学」，点击节点可切换</span>
-            <el-switch v-model="showAllNodes" size="small" active-text="显示全部学科" />
-          </div>
+          <el-switch v-model="showAllNodes" size="small" aria-label="显示全部学科" active-text="显示全部学科" />
         </div>
+
         <KnowledgeGraph
-          class="mt-4"
+          class="mt-5"
           :nodes="goalGraph.nodes"
           :edges="goalGraph.edges"
           :current-id="detail.point.id"
           :compact="isNarrow"
           @select="openNode"
         />
-        <p v-if="goalGraph.nodes.length === 0" class="py-8 text-center text-sm text-ink-muted">
-          暂无先修关系，这条知识点是独立起点。
+        <p v-if="goalGraph.nodes.length === 0" class="state-box mt-4 !border-0 !bg-surface-2 !py-10">
+          <span class="state-icon !h-10 !w-10">
+            <AppIcon name="route" :size="18" />
+          </span>
+          <span class="state-title">暂无先修关系</span>
+          <span class="state-copy">这条知识点是独立起点，可以直接开始学习。</span>
         </p>
       </section>
 
-      <section class="mt-6 rounded-[4px] border border-border bg-surface p-5">
-        <div class="flex flex-wrap items-center justify-between gap-3 border-b-2 pb-3" style="border-color: var(--color-line-rose)">
-          <div class="flex flex-wrap items-baseline gap-3">
-            <span class="route-node" style="--node: var(--color-line-rose)" aria-hidden="true"></span>
-            <h2 class="text-lg font-bold text-ink">概念图谱</h2>
-            <span class="data-num text-xs text-ink-muted">
-              来自 EMBEDD-ER{{ concepts.length ? ` · 共 ${concepts.length} 个概念` : '' }}
+      <section class="card mt-4 p-5 sm:p-6">
+        <div class="flex flex-wrap items-center justify-between gap-3">
+          <div class="flex flex-wrap items-center gap-2.5">
+            <span class="flex h-8 w-8 items-center justify-center rounded-[9px] bg-sunken text-ink-secondary">
+              <AppIcon name="layers" :size="16" />
             </span>
+            <div>
+              <h2 class="text-[16px] font-bold text-ink">概念图谱</h2>
+              <p class="mt-0.5 text-[11.5px] text-ink-muted">
+                来自 EMBEDD-ER{{ concepts.length ? ` · 共 ${concepts.length} 个概念` : '' }}
+              </p>
+            </div>
           </div>
           <el-button size="small" :loading="regenerating" @click="regenerateConcepts">
+            <AppIcon name="refresh" :size="14" class="mr-1.5" />
             重新生成概念
           </el-button>
         </div>
-        <p v-if="generationNotice" class="mt-3 text-xs font-medium text-primary">{{ generationNotice }}</p>
+
+        <p v-if="generationNotice" class="mt-3 text-[12.5px] font-semibold text-primary">{{ generationNotice }}</p>
 
         <template v-if="visibleConcepts.length > 0">
           <div class="mt-4 flex flex-wrap gap-2">
@@ -254,50 +301,52 @@ watch(code, load)
               :content="concept.explanation || `${concept.name}（${concept.field}）`"
               placement="top"
             >
-              <span
-                class="inline-flex cursor-default items-center gap-1.5 rounded-[3px] border border-border bg-bg/60 px-2 py-1 text-xs text-ink"
-              >
+              <span class="inline-flex cursor-default items-center gap-1.5 rounded-full border border-border bg-surface-2 px-2.5 py-1 text-[12px] font-medium text-ink">
                 <span class="h-1.5 w-1.5 rounded-full" :style="{ background: conceptColor(concept) }" aria-hidden="true"></span>
                 {{ concept.name }}
-                <span class="data-num text-[10px] text-ink-muted">
+                <span class="tnum text-[10px] text-ink-muted">
                   {{ concept.source === 'generated' ? '生成' : `L${concept.level}` }}
                 </span>
               </span>
             </el-tooltip>
           </div>
-          <p v-if="hiddenConceptCount > 0" class="mt-3 text-xs text-ink-muted">
+          <p v-if="hiddenConceptCount > 0" class="mt-3 text-[12px] text-ink-muted">
             另有 {{ hiddenConceptCount }} 个概念未展示
           </p>
-          <p class="mt-3 text-xs text-ink-muted">
+          <p class="mt-3 text-[12px] text-ink-muted">
             概念先修边 {{ conceptEdges.length }} 条；同一层级的概念可以并行学习。
           </p>
         </template>
-        <div v-else class="mt-4 flex flex-col items-center gap-2 rounded-[4px] border border-dashed border-border px-6 py-10 text-center">
-          <p class="text-sm text-ink-secondary">
-            该学科暂未匹配到概念层（MOOCCube 未覆盖）；可点击「重新生成概念」尝试补齐，或先按学科先修顺序学习
+        <div v-else class="state-box mt-4 !py-10">
+          <span class="state-icon !h-10 !w-10">
+            <AppIcon name="layers" :size="18" />
+          </span>
+          <p class="state-title">暂未匹配到概念层</p>
+          <p class="state-copy">
+            该学科暂未匹配到概念层（MOOCCube 未覆盖）；可点击「重新生成概念」尝试补齐，或先按学科先修顺序学习。
           </p>
         </div>
       </section>
 
-      <section class="mt-8">
-        <div class="flex flex-wrap items-end justify-between gap-2 border-b-2 pb-3" style="border-color: var(--color-line-blue)">
-          <div class="flex items-center gap-3">
-            <span class="route-node" style="--node: var(--color-line-blue)" aria-hidden="true"></span>
-            <h2 class="text-xl font-bold text-ink">课程资源</h2>
+      <section class="mt-10">
+        <div class="flex flex-wrap items-end justify-between gap-3">
+          <div>
+            <h2 class="section-title">课程资源</h2>
+            <p class="mt-1.5 text-[13px] text-ink-muted">与这个知识点关联的课程、视频与文章</p>
           </div>
-          <span class="data-num text-xs text-ink-muted">共 {{ detail.resource_total }} 条</span>
+          <span class="tnum text-[12px] text-ink-muted">共 {{ detail.resource_total }} 条</span>
         </div>
 
-        <div v-if="resources.length > 0" class="mt-5 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
-          <ResourceCard
-            v-for="resource in resources"
-            :key="resource.id"
-            :resource="resource"
-          />
+        <div v-if="resources.length > 0" class="mt-6 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+          <ResourceCard v-for="resource in resources" :key="resource.id" :resource="resource" />
         </div>
-        <div v-else class="mt-5 flex flex-col items-center gap-3 rounded-[4px] border border-dashed border-border px-6 py-12 text-center">
-          <p class="text-sm text-ink-secondary">该知识点下暂无资源，可先到搜索页按关键词采集</p>
-          <RouterLink :to="{ name: 'search' }"><el-button>去搜索资源</el-button></RouterLink>
+        <div v-else class="state-box mt-6">
+          <span class="state-icon">
+            <AppIcon name="book" :size="22" />
+          </span>
+          <p class="state-title">暂无资源</p>
+          <p class="state-copy">该知识点下暂无资源，可先到搜索页按关键词采集。</p>
+          <RouterLink :to="{ name: 'search' }" class="btn btn-primary btn-sm mt-2">去搜索资源</RouterLink>
         </div>
       </section>
     </template>

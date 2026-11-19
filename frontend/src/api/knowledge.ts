@@ -30,15 +30,15 @@ export function listKnowledgeResources(code: string, page = 1, pageSize = 12) {
 
 /** 触发某个学科的概念生成（调用 engine，异步执行） */
 export function startConceptGeneration(code: string) {
-  return post<GenerationStatus>(`/knowledge-points/${encodeURIComponent(code)}/generate`)
+  return post<GenerationStatus>(`/knowledge-points/${encodeURIComponent(code)}/generate`, undefined, { skipPageLoading: true })
 }
 
 /** 查询概念生成状态 */
 export function getConceptGenerationStatus(code: string) {
-  return get<GenerationStatus>(`/knowledge-points/${encodeURIComponent(code)}/generate`)
+  return get<GenerationStatus>(`/knowledge-points/${encodeURIComponent(code)}/generate`, { skipPageLoading: true })
 }
 
 /** 搜索栏关键词触发：后端匹配最近的知识点并开始生成 */
 export function startGenerationByKeyword(keyword: string) {
-  return post<KeywordGenerationResult>('/knowledge-generation', { keyword })
+  return post<KeywordGenerationResult>('/knowledge-generation', { keyword }, { skipPageLoading: true })
 }

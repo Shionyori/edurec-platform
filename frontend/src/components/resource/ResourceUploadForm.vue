@@ -2,6 +2,7 @@
 import { ref } from 'vue'
 import { createResource } from '@/api/resource'
 import type { Category, ResourceType } from '@/types'
+import AppIcon from '@/components/ui/AppIcon.vue'
 
 defineProps<{ categories: Category[] }>()
 const emit = defineEmits<{ (e: 'created', resource: { id: number }): void }>()
@@ -60,57 +61,66 @@ async function submit() {
   }
 }
 </script>
-
 <template>
-  <div class="mt-6 rounded-[4px] border border-border bg-surface p-6">
+  <div class="card mt-6 p-5 sm:p-6">
     <div class="grid grid-cols-1 gap-5">
       <div>
-        <label class="mb-1 block text-xs text-ink-muted">标题 *</label>
-        <el-input v-model="title" placeholder="请填写标题" maxlength="256" />
+        <label class="field-label">标题 *</label>
+        <el-input v-model="title" aria-label="标题" placeholder="请填写标题" maxlength="256" />
       </div>
       <div>
-        <label class="mb-1 block text-xs text-ink-muted">描述 *</label>
-        <el-input v-model="description" type="textarea" :rows="4" placeholder="请填写描述" />
+        <label class="field-label">描述 *</label>
+        <el-input v-model="description" aria-label="描述" type="textarea" :rows="4" placeholder="请填写描述" />
       </div>
+
       <div class="grid grid-cols-1 gap-5 sm:grid-cols-2">
         <div>
-          <label class="mb-1 block text-xs text-ink-muted">类型 *</label>
-          <el-select v-model="type" placeholder="选择类型" class="w-full">
+          <label class="field-label">类型 *</label>
+          <el-select v-model="type" aria-label="资源类型" placeholder="选择类型" class="w-full">
             <el-option label="课程" value="course" />
             <el-option label="文章" value="article" />
             <el-option label="视频" value="video" />
           </el-select>
         </div>
         <div>
-          <label class="mb-1 block text-xs text-ink-muted">分类 *</label>
-          <el-select v-model="categoryId" placeholder="选择分类" class="w-full">
+          <label class="field-label">分类 *</label>
+          <el-select v-model="categoryId" aria-label="资源分类" placeholder="选择分类" class="w-full">
             <el-option v-for="c in categories" :key="c.id" :label="c.name" :value="c.id" />
           </el-select>
         </div>
       </div>
+
       <div>
-        <label class="mb-1 block text-xs text-ink-muted">标签（逗号分隔）</label>
-        <el-input v-model="tags" placeholder="例如：Python, 数据分析" />
+        <label class="field-label">标签</label>
+        <el-input v-model="tags" aria-label="标签" placeholder="例如：Python, 数据分析" />
+        <p class="field-hint mt-1.5">用英文逗号分隔多个标签。</p>
       </div>
+
       <div class="grid grid-cols-1 gap-5 sm:grid-cols-2">
         <div>
-          <label class="mb-1 block text-xs text-ink-muted">作者</label>
-          <el-input v-model="author" placeholder="选填" maxlength="128" />
+          <label class="field-label">作者</label>
+          <el-input v-model="author" aria-label="作者" placeholder="选填" maxlength="128" />
         </div>
         <div>
-          <label class="mb-1 block text-xs text-ink-muted">封面 URL</label>
-          <el-input v-model="coverUrl" placeholder="选填" maxlength="512" />
+          <label class="field-label">封面 URL</label>
+          <el-input v-model="coverUrl" aria-label="封面 URL" placeholder="https://…" maxlength="512" />
         </div>
       </div>
+
       <div>
-        <label class="mb-1 block text-xs text-ink-muted">源地址</label>
-        <el-input v-model="sourceUrl" placeholder="选填" maxlength="512" />
+        <label class="field-label">源地址</label>
+        <el-input v-model="sourceUrl" aria-label="源地址" placeholder="https://…" maxlength="512" />
+        <p class="field-hint mt-1.5">填写原始内容地址，学习者可以从详情页直接前往。</p>
       </div>
     </div>
 
-    <p v-if="error" class="mt-4 text-sm text-danger">{{ error }}</p>
+    <div v-if="error" class="mt-4 flex items-center gap-1.5 text-[12.5px] text-danger">
+      <AppIcon name="alert" :size="14" />
+      {{ error }}
+    </div>
     <div class="mt-6 flex gap-2">
       <el-button type="primary" :loading="submitting" @click="submit">提交</el-button>
+      <RouterLink :to="{ name: 'admin-resources' }"><el-button>取消</el-button></RouterLink>
     </div>
   </div>
 </template>

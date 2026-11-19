@@ -35,15 +35,16 @@ web
 - 首页推荐流（含推荐理由）、搜索页无限滚动、资源详情。
 - 学科 → 知识点 → 学习路径（先修关系、逐节解锁、掌握度）。
 - 初始学习问卷、兴趣选择、个人中心、管理后台（用户/资源/分类/推荐）。
-- Element Plus + Tailwind CSS v4；现有 token 位于 `frontend/src/styles/index.css`。
+- Element Plus + Tailwind CSS v4；设计 token 与组件样式位于 `frontend/src/styles/index.css`，系统说明见 `DESIGN.md`。
 - 知识点、概念、资源为空是常态，界面必须给出明确空状态与下一步动作。
 
-未决：是否保留现有视觉识别；没有品牌手册或 Logo 资产。
+视觉识别：已重做为「清晓书桌 / Daylight Study」（薄荷纸底、森林墨字、单一玉青信号、浅玉色标题面板、Manrope + 系统中文字体、玉青方块 + 白色 spark 标记）。没有品牌手册或现成 Logo 资产；spark 标记为当前实现。
 
 ## Brand Commitments
 
 - 名称：edurec；定位：教育资源推荐平台。
-- 现有产品名称与功能文案需保留；除此之外没有已确认的品牌资产。
+- 现有产品名称与功能文案需保留；视觉识别为「清晓书桌」：薄荷纸底、森林墨字、玉青作为唯一行动信号。
+- 品牌标记为玉青圆角方块 + 白色四角 spark + 薄荷小点；没有外部品牌手册或 Logo 资产。
 
 ## Evidence on Hand
 

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
+import AppIcon from '@/components/ui/AppIcon.vue'
 
 export interface VideoFrames {
   bvid?: string
@@ -63,23 +64,28 @@ function position(index: number, length: number): number {
 </script>
 
 <template>
-  <div v-if="cells.length > 0" class="mt-4 rounded-[4px] border border-border bg-surface p-5">
-    <div class="flex items-center justify-between">
-      <h2 class="text-base font-semibold text-ink">关键帧</h2>
-      <span class="text-xs text-ink-muted">
+  <div v-if="cells.length > 0" class="card mt-4 p-5 sm:p-6">
+    <div class="flex flex-wrap items-center justify-between gap-2">
+      <div class="flex items-center gap-2.5">
+        <span class="flex h-8 w-8 items-center justify-center rounded-[9px] bg-sunken text-ink-secondary">
+          <AppIcon name="play" :size="15" />
+        </span>
+        <h2 class="text-[16px] font-bold text-ink">关键帧</h2>
+      </div>
+      <span class="tnum text-[11.5px] text-ink-muted">
         共 {{ frames.count ?? cells.length }} 帧 · 来自 B 站视频预览
       </span>
     </div>
-    <div class="mt-3 flex gap-2 overflow-x-auto pb-1">
+    <div class="mt-4 flex gap-2 overflow-x-auto pb-1">
       <div
         v-for="cell in cells"
         :key="cell.key"
-        class="shrink-0 rounded-md border border-border bg-bg bg-no-repeat"
+        class="shrink-0 rounded-[9px] border border-border bg-bg bg-no-repeat"
         :style="cell.style"
         :title="`关键帧：${cell.sprite}`"
       />
     </div>
-    <p class="mt-2 text-xs text-ink-muted">
+    <p class="mt-3 text-[11.5px] leading-relaxed text-ink-muted">
       关键帧用于快速预览课程节奏，不额外存储图片；点击封面或前往原站可观看完整视频。
     </p>
   </div>

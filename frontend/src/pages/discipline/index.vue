@@ -86,11 +86,11 @@ onMounted(load)
       >
         <div class="flex items-start justify-between gap-3">
           <span
-            class="flex h-11 w-11 items-center justify-center rounded-[11px] text-[11px] font-extrabold tracking-[0.02em]"
+            class="inline-flex h-11 min-w-11 max-w-[8.5rem] shrink-0 items-center justify-center rounded-[11px] px-2.5 text-[10.5px] font-extrabold uppercase leading-none tracking-[0.03em]"
             :style="{ backgroundColor: `color-mix(in srgb, ${lineColor(index)} 10%, white)`, color: lineInk(index) }"
             aria-hidden="true"
           >
-            {{ item.code.toUpperCase() }}
+            <span class="min-w-0 truncate">{{ item.code.toUpperCase() }}</span>
           </span>
           <span
             v-if="item.resource_count === 0"

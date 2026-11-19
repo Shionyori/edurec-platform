@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
+import { pageLoading } from '@/composables/pageLoading'
 import { resolveGuard } from './guards'
 import FrontLayout from '@/components/layout/FrontLayout.vue'
 import AdminLayout from '@/components/layout/AdminLayout.vue'
@@ -113,11 +114,32 @@ const routes = [
 const router = createRouter({
   history: createWebHistory(),
   routes,
+  // SPA navigations otherwise keep the previous page's scroll offset. Always
+  // start a new page at the top; back/forward restores the saved position.
+  scrollBehavior(to, _from, savedPosition) {
+    if (savedPosition) return savedPosition
+    if (to.hash) return { el: to.hash, top: 16 }
+    return { top: 0, left: 0 }
+  },
 })
 
+// One loading screen per navigation. The token makes redirects safe: the
+// failed navigation's afterEach cannot end the redirect that replaced it.
+const navigationTokens = new WeakMap<object, number>()
+
 router.beforeEach(async (to) => {
+  navigationTokens.set(to, pageLoading.startNavigation())
   const auth = useAuthStore()
   return resolveGuard(to, auth)
+})
+
+router.afterEach((to) => {
+  pageLoading.endNavigation(navigationTokens.get(to))
+  navigationTokens.delete(to)
+})
+
+router.onError(() => {
+  pageLoading.endNavigation()
 })
 
 export default router

@@ -1,5 +1,6 @@
 import axios, { AxiosRequestConfig, InternalAxiosRequestConfig } from 'axios'
 import { tokenStorage } from '@/utils/token'
+import { pageLoading } from '@/composables/pageLoading'
 
 export interface ApiResponse<T = unknown> {
   code: number
@@ -24,6 +25,7 @@ export const client = axios.create({
 export const CRAWL_TIMEOUT = 35000
 
 client.interceptors.request.use((config) => {
+  pageLoading.beginRequest()
   const token = tokenStorage.getAccess()
   if (token) {
     config.headers.Authorization = `Bearer ${token}`
@@ -38,6 +40,7 @@ async function refreshToken(): Promise<boolean> {
     refreshing = (async () => {
       const rt = tokenStorage.getRefresh()
       if (!rt) return false
+      pageLoading.beginRequest()
       try {
         const resp = await axios.post<ApiResponse<{ access_token: string; refresh_token: string }>>(
           '/api/v1/auth/refresh',
@@ -50,6 +53,7 @@ async function refreshToken(): Promise<boolean> {
         tokenStorage.clear()
         return false
       } finally {
+        pageLoading.endRequest()
         refreshing = null
       }
     })()
@@ -58,8 +62,12 @@ async function refreshToken(): Promise<boolean> {
 }
 
 client.interceptors.response.use(
-  (resp) => resp,
+  (resp) => {
+    pageLoading.endRequest()
+    return resp
+  },
   async (error) => {
+    pageLoading.endRequest()
     const original = error.config as (InternalAxiosRequestConfig & { _retried?: boolean }) | undefined
     // 认证类接口的 401 是凭证错误（而非 access token 过期），不应触发 token 续期与整页跳转
     const url = original?.url ?? ''

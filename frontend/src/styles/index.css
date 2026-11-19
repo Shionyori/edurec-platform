@@ -73,7 +73,7 @@
     color-scheme: light;
   }
   html {
-    scroll-behavior: smooth;
+    scroll-behavior: auto;
     scrollbar-gutter: stable;
   }
 
@@ -690,6 +690,70 @@
   }
 
   /* ---------------------------------------------------------------------
+     Page loading screen
+     --------------------------------------------------------------------- */
+  .page-loader {
+    position: fixed;
+    inset: 0;
+    z-index: 100;
+    display: grid;
+    place-items: center;
+    background: var(--color-bg);
+  }
+
+  .page-loader__inner {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+  }
+
+  .page-loader__mark {
+    display: flex;
+    width: 46px;
+    height: 46px;
+    align-items: center;
+    justify-content: center;
+    border-radius: 14px;
+    background: var(--color-ink);
+    color: var(--color-primary);
+    animation: loader-breathe 1.6s ease-in-out infinite;
+  }
+
+  .page-loader__label {
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--color-ink-muted);
+  }
+
+  .page-loader__bar {
+    display: block;
+    width: 112px;
+    height: 2px;
+    overflow: hidden;
+    border-radius: 999px;
+    background: var(--color-primary-soft);
+  }
+
+  .page-loader__bar span {
+    display: block;
+    width: 40%;
+    height: 100%;
+    border-radius: inherit;
+    background: var(--color-primary);
+    animation: loader-slide 1.15s cubic-bezier(0.22, 1, 0.36, 1) infinite;
+  }
+
+  .page-loader-enter-active,
+  .page-loader-leave-active {
+    transition: opacity 120ms var(--ease-out-expo);
+  }
+  .page-loader-enter-from,
+  .page-loader-leave-to {
+    opacity: 0;
+  }
+
+  /* ---------------------------------------------------------------------
      Page and list motion
      --------------------------------------------------------------------- */
   .route-enter-active {
@@ -1212,6 +1276,25 @@
   50% {
     opacity: 1;
     transform: translateY(-2px);
+  }
+}
+
+@keyframes loader-slide {
+  from {
+    transform: translateX(-120%);
+  }
+  to {
+    transform: translateX(320%);
+  }
+}
+
+@keyframes loader-breathe {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.04);
   }
 }
 

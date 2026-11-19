@@ -1,4 +1,4 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
-  <rect width="32" height="32" rx="8" fill="#4f46e5"/>
-  <text x="16" y="22" font-family="system-ui" font-size="16" font-weight="700" fill="#fff" text-anchor="middle">E</text>
+  <rect width="32" height="32" rx="9" fill="#0B1B2B"/>
+  <path d="M16 6.5l2.1 6.9 6.9 2.1-6.9 2.1L16 24.5l-2.1-6.9L7 15.5l6.9-2.1L16 6.5Z" fill="#C9451F"/>
 </svg>

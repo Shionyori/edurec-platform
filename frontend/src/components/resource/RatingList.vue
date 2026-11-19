@@ -16,20 +16,21 @@ const emit = defineEmits<{
 
 <template>
   <div>
-    <div v-if="loading" class="py-16 text-center text-sm text-ink-muted">加载中…</div>
-    <div v-else-if="ratings.length === 0" class="py-16 text-center text-sm text-ink-muted">
-      暂无评价，来抢沙发吧
+    <div v-if="loading" class="py-16 text-center text-[13px] text-ink-muted">加载中…</div>
+    <div v-else-if="ratings.length === 0" class="flex flex-col items-center gap-2 py-16 text-center">
+      <p class="text-[14px] font-semibold text-ink">暂无评价</p>
+      <p class="text-[12.5px] text-ink-muted">来抢沙发，写下第一条学习感受吧。</p>
     </div>
     <ul v-else class="divide-y divide-border">
-      <li v-for="r in ratings" :key="r.id" class="flex gap-4 py-4">
+      <li v-for="r in ratings" :key="r.id" class="flex gap-3.5 py-4">
         <el-avatar :size="36">{{ (r.user.display_name ?? r.user.username).charAt(0) }}</el-avatar>
         <div class="min-w-0 flex-1">
-          <div class="flex items-center justify-between">
-            <span class="text-sm font-medium text-ink">{{ r.user.display_name ?? r.user.username }}</span>
-            <span class="text-xs text-ink-muted">{{ formatDate(r.created_at) }}</span>
+          <div class="flex items-center justify-between gap-3">
+            <span class="text-[13px] font-semibold text-ink">{{ r.user.display_name ?? r.user.username }}</span>
+            <span class="tnum text-[11.5px] text-ink-muted">{{ formatDate(r.created_at) }}</span>
           </div>
           <el-rate :model-value="r.score" disabled class="mt-1" />
-          <p v-if="r.comment" class="mt-1 text-sm text-ink-secondary">{{ r.comment }}</p>
+          <p v-if="r.comment" class="mt-1.5 text-[13px] leading-relaxed text-ink-secondary">{{ r.comment }}</p>
         </div>
       </li>
     </ul>

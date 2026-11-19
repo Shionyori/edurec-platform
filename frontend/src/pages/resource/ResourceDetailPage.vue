@@ -13,6 +13,7 @@ import RatingForm from '@/components/resource/RatingForm.vue'
 import RatingList from '@/components/resource/RatingList.vue'
 import CommentList from '@/components/resource/CommentList.vue'
 import KeyframeStrip, { type VideoFrames } from '@/components/resource/KeyframeStrip.vue'
+import AppIcon from '@/components/ui/AppIcon.vue'
 
 const PAGE_SIZE = 10
 
@@ -202,95 +203,113 @@ onMounted(() => {
   loadRatings(1)
 })
 </script>
-
 <template>
-  <div class="mx-auto max-w-7xl px-4 py-8 sm:px-6">
-    <div v-if="resourceLoading" class="grid grid-cols-1 gap-8 lg:grid-cols-3">
+  <div class="page shell">
+    <RouterLink :to="{ name: 'search' }" class="link-quiet inline-flex items-center gap-1.5 text-[12.5px]">
+      <AppIcon name="arrow-left" :size="14" />
+      返回资源库
+    </RouterLink>
+
+    <div v-if="resourceLoading" class="mt-5 grid grid-cols-1 gap-8 lg:grid-cols-3">
       <div class="lg:col-span-2">
-        <el-skeleton animated>
-          <template #template>
-            <el-skeleton-item variant="image" style="width: 100%; height: 320px; border-radius: 4px" />
-            <el-skeleton-item variant="h1" style="width: 60%; margin-top: 20px" />
-            <el-skeleton-item variant="text" style="width: 100%; margin-top: 14px" />
-            <el-skeleton-item variant="text" style="width: 92%; margin-top: 8px" />
-            <el-skeleton-item variant="text" style="width: 84%; margin-top: 8px" />
-          </template>
-        </el-skeleton>
+        <div class="skeleton aspect-video w-full !rounded-[16px]"></div>
+        <div class="skeleton mt-5 h-4 w-24"></div>
+        <div class="skeleton mt-3 h-8 w-3/4"></div>
+        <div class="skeleton mt-3 h-4 w-1/2"></div>
+        <div class="card mt-6 p-5">
+          <div class="skeleton h-4 w-20"></div>
+          <div class="skeleton mt-3 h-4 w-full"></div>
+          <div class="skeleton mt-2 h-4 w-5/6"></div>
+        </div>
       </div>
-      <div>
-        <el-skeleton :rows="5" animated />
+      <div class="card h-64 p-5">
+        <div class="skeleton h-8 w-24"></div>
+        <div class="skeleton mt-4 h-4 w-full"></div>
+        <div class="skeleton mt-2 h-4 w-2/3"></div>
       </div>
     </div>
-    <div v-else-if="resourceError" class="py-24 text-center">
-      <p class="text-sm text-danger">{{ resourceError }}</p>
-      <RouterLink :to="{ name: 'home' }">
-        <el-button class="mt-4">返回首页</el-button>
-      </RouterLink>
+
+    <div v-else-if="resourceError" class="state-box mt-6">
+      <span class="state-icon !bg-danger-soft !text-danger">
+        <AppIcon name="alert" :size="22" />
+      </span>
+      <p class="state-title">资源加载失败</p>
+      <p class="state-copy">{{ resourceError }}</p>
+      <RouterLink :to="{ name: 'home' }" class="btn btn-secondary btn-sm mt-2">返回首页</RouterLink>
     </div>
 
     <template v-else-if="resource">
-      <div class="grid grid-cols-1 gap-8 lg:grid-cols-3">
-        <!-- 主内容 -->
-        <div class="lg:col-span-2">
-          <img
-            v-if="resource.cover_url && !coverFailed"
-            :src="resource.cover_url"
-            :alt="resource.title"
-            referrerpolicy="no-referrer"
-            loading="lazy"
-            class="mb-5 max-h-96 w-full rounded-[4px] border border-border object-cover"
-            @error="coverFailed = true"
-          />
-
-          <div class="flex flex-wrap items-center gap-2">
-            <span
-              class="line-chip"
-              :style="{ '--chip': resource.type === 'course' ? 'var(--color-line-teal)' : resource.type === 'video' ? 'var(--color-line-blue)' : 'var(--color-line-amber)' }"
-            >{{ resource.type === 'course' ? '课程' : resource.type === 'video' ? '视频' : '文章' }}</span>
-            <span class="data-num text-xs text-ink-muted">更新于 {{ formatDate(resource.updated_at) }}</span>
+      <div class="mt-4 grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,1fr)_340px] lg:gap-10">
+        <div class="min-w-0">
+          <!-- Hero -->
+          <div v-if="resource.cover_url && !coverFailed" class="overflow-hidden rounded-[16px] border border-border bg-sunken">
+            <img
+              :src="resource.cover_url"
+              :alt="resource.title"
+              referrerpolicy="no-referrer"
+              loading="lazy"
+              class="max-h-[420px] w-full object-cover"
+              @error="coverFailed = true"
+            />
           </div>
-          <h1 class="mt-3 text-2xl font-bold tracking-tight text-ink sm:text-3xl">{{ resource.title }}</h1>
-          <div class="data-num mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-ink-secondary">
-            <span>{{ resource.category?.name }}</span>
-            <span v-for="t in resource.tags" :key="t" class="text-primary">#{{ t }}</span>
-            <span>作者：{{ resource.author }}</span>
-            <span v-if="resource.avg_rating > 0" class="flex items-center gap-1 text-ink">
-              <svg viewBox="0 0 24 24" class="h-3.5 w-3.5" fill="currentColor" aria-hidden="true">
-                <path d="M12 3.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8-5.2-2.7-5.2 2.7 1-5.8L3.5 9.7l5.9-.9L12 3.5z" />
-              </svg>
+
+          <div class="mt-5 flex flex-wrap items-center gap-2">
+            <span
+              class="chip"
+              :class="resource.type === 'course' ? 'chip-success' : resource.type === 'video' ? 'chip-info' : 'chip-warning'"
+            >
+              <AppIcon :name="resource.type === 'video' ? 'play' : resource.type === 'course' ? 'book' : 'book-open'" :size="12" />
+              {{ resource.type === 'course' ? '课程' : resource.type === 'video' ? '视频' : '文章' }}
+            </span>
+            <span class="tnum text-[12px] text-ink-muted">更新于 {{ formatDate(resource.updated_at) }}</span>
+          </div>
+
+          <h1 class="mt-3 text-[26px] font-extrabold leading-[1.22] tracking-[-0.03em] text-ink sm:text-[34px]">
+            {{ resource.title }}
+          </h1>
+
+          <div class="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2 text-[12.5px] text-ink-secondary">
+            <span v-if="resource.category?.name" class="flex items-center gap-1.5">
+              <AppIcon name="folder" :size="14" class="text-ink-muted" />
+              {{ resource.category.name }}
+            </span>
+            <span v-if="resource.author" class="flex items-center gap-1.5">
+              <AppIcon name="user" :size="14" class="text-ink-muted" />
+              {{ resource.author }}
+            </span>
+            <span v-if="resource.avg_rating > 0" class="tnum flex items-center gap-1.5 font-semibold text-ink">
+              <AppIcon name="star-filled" :size="14" class="text-[#d99a20]" />
               {{ resource.avg_rating.toFixed(1) }}
             </span>
-            <span v-else>暂无评分</span>
-            <span>{{ resource.view_count }} 次浏览</span>
-            <span v-if="resource.difficulty">{{ difficultyLabel(resource.difficulty) }}</span>
-            <span v-if="resource.duration_minutes">{{ formatDuration(resource.duration_minutes) }}</span>
+            <span v-else class="text-ink-muted">暂无评分</span>
+            <span class="tnum flex items-center gap-1.5">
+              <AppIcon name="eye" :size="14" class="text-ink-muted" />
+              {{ resource.view_count }} 次浏览
+            </span>
+            <span v-if="resource.difficulty" class="flex items-center gap-1.5">
+              <AppIcon name="layers" :size="14" class="text-ink-muted" />
+              {{ difficultyLabel(resource.difficulty) }}
+            </span>
+            <span v-if="resource.duration_minutes" class="tnum flex items-center gap-1.5">
+              <AppIcon name="clock" :size="14" class="text-ink-muted" />
+              {{ formatDuration(resource.duration_minutes) }}
+            </span>
           </div>
 
-          <div class="mt-6 rounded-[4px] border border-border bg-surface p-5">
-            <div class="flex items-center gap-3 border-b-2 pb-2" style="border-color: var(--color-line-teal)">
-              <span class="route-node" style="--node: var(--color-line-teal)" aria-hidden="true"></span>
-              <h2 class="text-base font-bold text-ink">简介</h2>
-            </div>
-            <p class="mt-2 whitespace-pre-line text-sm leading-relaxed text-ink-secondary">{{ resource.description }}</p>
+          <div v-if="resource.tags?.length" class="mt-4 flex flex-wrap gap-1.5">
+            <span v-for="t in resource.tags" :key="t" class="chip !bg-primary-softer !text-primary-active">#{{ t }}</span>
           </div>
 
-          <div v-if="metaEntries.length > 0" class="mt-4 rounded-[4px] border border-border bg-surface p-5">
-            <div class="flex items-center gap-3 border-b-2 pb-2" style="border-color: var(--color-line-amber)">
-              <span class="route-node" style="--node: var(--color-line-amber)" aria-hidden="true"></span>
-              <h2 class="text-base font-bold text-ink">元信息</h2>
-            </div>
-            <dl class="mt-2 grid grid-cols-2 gap-3 text-sm sm:grid-cols-3">
-              <div v-for="([key, value]) in metaEntries" :key="key">
-                <dt class="text-ink-muted">{{ key }}</dt>
-                <dd class="text-ink">{{ formatMetadataValue(key, value) }}</dd>
-              </div>
-            </dl>
-          </div>
-
-          <KeyframeStrip v-if="frames" :frames="frames" />
-
-          <div class="mt-4 flex flex-wrap gap-3">
-            <el-button v-if="resource.source_url" type="primary" @click="openSource">前往原站学习</el-button>
+          <div class="mt-6 flex flex-wrap gap-3">
+            <button
+              v-if="resource.source_url"
+              type="button"
+              class="btn btn-primary"
+              @click="openSource"
+            >
+              <AppIcon name="external" :size="16" />
+              前往原站学习
+            </button>
             <el-button
               :type="favorited ? 'warning' : 'default'"
               :loading="favoritePending"
@@ -300,40 +319,90 @@ onMounted(() => {
             </el-button>
           </div>
 
-          <div class="mt-8">
-            <div class="flex items-center gap-3 border-b-2 pb-2" style="border-color: var(--color-line-blue)">
-              <span class="route-node" style="--node: var(--color-line-blue)" aria-hidden="true"></span>
-              <h2 class="text-base font-bold text-ink">用户评价（{{ total }}）</h2>
+          <!-- 简介 -->
+          <section class="card mt-8 p-5 sm:p-6">
+            <div class="flex items-center gap-2.5">
+              <span class="flex h-8 w-8 items-center justify-center rounded-[9px] bg-primary-soft text-primary">
+                <AppIcon name="book-open" :size="16" />
+              </span>
+              <h2 class="text-[16px] font-bold text-ink">简介</h2>
             </div>
-            <RatingList
-              :ratings="ratings"
-              :total="total"
-              :page="page"
-              :loading="ratingsLoading"
-              @page-change="handlePageChange"
-            />
-          </div>
+            <p class="mt-4 whitespace-pre-line text-[14px] leading-[1.8] text-ink-secondary">{{ resource.description }}</p>
+          </section>
 
-          <div v-if="isBilibiliResource" class="mt-8">
-            <div class="flex items-center gap-3 border-b-2 pb-2" style="border-color: var(--color-line-rose)">
-              <span class="route-node" style="--node: var(--color-line-rose)" aria-hidden="true"></span>
-              <h2 class="text-base font-bold text-ink">B 站评论</h2>
+          <!-- 元信息 -->
+          <section v-if="metaEntries.length > 0" class="card mt-4 p-5 sm:p-6">
+            <div class="flex items-center gap-2.5">
+              <span class="flex h-8 w-8 items-center justify-center rounded-[9px] bg-sunken text-ink-secondary">
+                <AppIcon name="info" :size="16" />
+              </span>
+              <h2 class="text-[16px] font-bold text-ink">元信息</h2>
             </div>
-            <CommentList :comments="comments" :loading="commentsLoading" />
-          </div>
+            <dl class="mt-4 grid grid-cols-2 gap-x-5 gap-y-4 text-[13px] sm:grid-cols-3">
+              <div v-for="([key, value]) in metaEntries" :key="key" class="min-w-0">
+                <dt class="text-[11.5px] font-semibold text-ink-muted">{{ key }}</dt>
+                <dd class="mt-0.5 break-words text-ink">{{ formatMetadataValue(key, value) }}</dd>
+              </div>
+            </dl>
+          </section>
+
+          <KeyframeStrip v-if="frames" :frames="frames" />
+
+          <!-- 评价 -->
+          <section class="mt-8">
+            <div class="flex items-center justify-between gap-3">
+              <div class="flex items-center gap-2.5">
+                <span class="flex h-8 w-8 items-center justify-center rounded-[9px] bg-primary-soft text-primary">
+                  <AppIcon name="star" :size="16" />
+                </span>
+                <h2 class="text-[18px] font-bold text-ink">用户评价</h2>
+                <span class="chip tnum !text-[11px]">{{ total }}</span>
+              </div>
+            </div>
+            <div class="card mt-4 px-5 sm:px-6">
+              <RatingList
+                :ratings="ratings"
+                :total="total"
+                :page="page"
+                :loading="ratingsLoading"
+                @page-change="handlePageChange"
+              />
+            </div>
+          </section>
+
+          <!-- B 站评论 -->
+          <section v-if="isBilibiliResource" class="mt-8">
+            <div class="flex items-center gap-2.5">
+              <span class="flex h-8 w-8 items-center justify-center rounded-[9px] bg-sunken text-ink-secondary">
+                <AppIcon name="users" :size="16" />
+              </span>
+              <h2 class="text-[18px] font-bold text-ink">B 站评论</h2>
+            </div>
+            <div class="card mt-4 px-5 sm:px-6">
+              <CommentList :comments="comments" :loading="commentsLoading" />
+            </div>
+          </section>
         </div>
 
-        <!-- 右侧评分卡 -->
+        <!-- Rating rail -->
         <aside>
-          <div class="sticky top-20 overflow-hidden rounded-[4px] border border-border bg-surface p-5">
-            <span class="absolute inset-x-0 top-0 h-[2px]" style="background: var(--color-primary)" aria-hidden="true"></span>
-            <div class="flex items-end justify-between gap-3">
-              <div v-if="total > 0" class="data-num text-3xl font-bold text-ink">{{ resource.avg_rating.toFixed(1) }}</div>
-              <div v-else class="text-sm font-medium text-ink-muted">暂无评分</div>
-              <div class="data-num text-sm text-ink-muted">{{ total }} 条评价</div>
+          <div class="card p-5 lg:sticky lg:top-24">
+            <div class="flex items-center justify-between gap-3">
+              <p class="text-[12.5px] font-semibold text-ink-muted">学习者的评分</p>
+              <span class="chip tnum !text-[11px]">{{ total }} 条</span>
             </div>
+
+            <div v-if="total > 0" class="mt-3 flex items-end gap-2">
+              <span class="tnum text-[42px] font-extrabold leading-none tracking-[-0.04em] text-ink">
+                {{ resource.avg_rating.toFixed(1) }}
+              </span>
+              <span class="pb-1 text-[12px] text-ink-muted">/ 5</span>
+            </div>
+            <p v-else class="mt-3 text-[14px] font-semibold text-ink-muted">暂无评分</p>
             <el-rate :model-value="Math.round(resource.avg_rating)" disabled class="mt-2" />
-            <div class="mt-4 border-t border-border pt-4">
+
+            <div class="mt-5 border-t border-border pt-5">
+              <p class="mb-4 text-[13.5px] font-bold text-ink">写下你的评价</p>
               <RatingForm
                 :initial-score="initialScore"
                 :initial-comment="initialComment"

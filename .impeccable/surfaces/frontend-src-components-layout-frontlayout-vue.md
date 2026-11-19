@@ -15,14 +15,14 @@ related_targets: ["frontend/src/pages/home/index.vue","frontend/src/pages/discip
 
 ## Direction contract
 
-THESIS: 把“下一步学什么”画成一条可读的线路：知识点是先修线路上的站点，当前目标是“你在这里”。拒绝通用 SaaS 卡片瀑布（白底 + 紫色主色 + 等宽卡片）作为身份。
+THESIS: 把“下一步学什么”变成桌面上的一张真实推荐卡：暖纸、深墨、一支朱红笔。拒绝旧的车站牌语言（深蓝横条、2px 线路、站点圆点、全大写微标签、4px 直角），也拒绝通用 SaaS 的冷白 + 紫色渐变。
 
-OWN-WORLD: 深墨蓝站牌 `#14293D` 承担导航与标题带，冷白纸面 `#F5F4EF` 承担内容地；信号朱红 `#C9451F` 只用于“当前/行动”；线路色青 `#0E7C7B`、蓝 `#1D4ED8`、琥珀 `#B45309`、玫红 `#BE123C` 按层级与学科分配，承担真实语义。中文用系统黑体，编码/数字用紧凑大写微标签与 tabular-nums；2px 线路、圆点站点、方形端头组成可复用的线路语言。密度偏紧，用线路条组织信息。
+OWN-WORLD: 暖纸底 `#F7F4EE` 承担阅读，白纸卡片承担交互，深墨 `#0B1B2B` 只用于方向性暗面板与文字；信号朱红 `#C9451F` 只用于行动与当前状态。Manrope 自托管用于拉丁字母与数字，中文回退到系统黑体；14px 卡片、10px 控件、16px 面板，pill 只给 chip 与小控件。层级色青/蓝/琥珀/玫红仅在层级与资源类型标记、知识图谱中承担语义。每页留出大段安静留白，用 1px 发丝线而不是 2px 轨道组织信息。
 
-STORY: 用户先看到“下一站”是什么；进入学科看到一条条线路；点进知识点看先修换乘图；学习路径是行程单，已完成/当前/未解锁一眼可辨。
+STORY: 用户先看到“下一步”这一节是什么、为什么是它；进入学科看到按层级分组的知识点；知识点详情用先修图解释顺序；学习路径用逐节解锁的时间线把“已完成 / 当前学习 / 未解锁”写清楚。移动端用底部四个目的地取代挤压的横向导航。
 
-FIRST VIEWPORT: 顶部深墨蓝站牌导航（线路牌式品牌、搜索、主导航、用户）；下方首页以“下一站，学什么？”为主标题，右侧是“学习问卷 / 全部资源”动作；推荐资源以“本站推荐”线路标题 + 三列站卡呈现，冷启动兴趣选择紧随其后并保持显著。
+FIRST VIEWPORT: 白色粘性顶栏（spark 品牌、首页/发现/知识点、搜索、账户）；首页以“下一站，学什么？”为唯一 h1，右侧是真实的“下一步”推荐卡与三步行进说明；搜索、浏览知识点、调整问卷是首屏动作。
 
-FORM: grounded direction #4 of 7（transit route map），code-led；seed:cf400a00f4b999af。
+FORM: Operate mode, editorial warm-paper direction; code-led implementation in `frontend/src/styles/index.css` and `frontend/src/components/ui/AppIcon.vue`; no image assets required.
 
 FINISH: unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, DESIGN.md, and every shipping raster carrying its provenance

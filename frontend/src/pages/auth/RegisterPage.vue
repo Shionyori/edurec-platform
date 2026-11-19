@@ -79,36 +79,38 @@ async function onSubmit() {
 
 <template>
   <AuthShell>
-    <h1 class="text-xl font-bold text-ink">创建账号</h1>
-    <p class="mt-1 text-sm text-ink-secondary">加入 edurec，发现适合你的教育资源</p>
+    <h1 class="text-[26px] font-extrabold tracking-[-0.03em] text-ink">创建账号</h1>
+    <p class="mt-1.5 text-[13.5px] text-ink-secondary">加入 edurec，发现适合你的教育资源</p>
 
-    <el-form ref="formRef" :model="form" :rules="rules" label-position="top" class="mt-6">
+    <el-form ref="formRef" :model="form" :rules="rules" label-position="top" class="mt-7">
       <el-form-item label="用户名" prop="username">
         <el-input v-model="form.username" placeholder="用户名" size="large" autocomplete="username" />
       </el-form-item>
       <el-form-item label="邮箱" prop="email">
         <el-input v-model="form.email" placeholder="邮箱" size="large" autocomplete="email" />
       </el-form-item>
-      <el-form-item label="密码" prop="password">
-        <el-input
-          v-model="form.password"
-          type="password"
-          placeholder="密码"
-          size="large"
-          show-password
-          autocomplete="new-password"
-        />
-      </el-form-item>
-      <el-form-item label="确认密码" prop="confirmPassword">
-        <el-input
-          v-model="form.confirmPassword"
-          type="password"
-          placeholder="再次输入密码"
-          size="large"
-          show-password
-          autocomplete="new-password"
-        />
-      </el-form-item>
+      <div class="grid grid-cols-1 gap-x-4 sm:grid-cols-2">
+        <el-form-item label="密码" prop="password">
+          <el-input
+            v-model="form.password"
+            type="password"
+            placeholder="密码"
+            size="large"
+            show-password
+            autocomplete="new-password"
+          />
+        </el-form-item>
+        <el-form-item label="确认密码" prop="confirmPassword">
+          <el-input
+            v-model="form.confirmPassword"
+            type="password"
+            placeholder="再次输入密码"
+            size="large"
+            show-password
+            autocomplete="new-password"
+          />
+        </el-form-item>
+      </div>
       <el-form-item label="昵称（选填）" prop="display_name">
         <el-input v-model="form.display_name" placeholder="昵称" size="large" />
       </el-form-item>
@@ -117,9 +119,9 @@ async function onSubmit() {
       </el-button>
     </el-form>
 
-    <p class="mt-6 text-center text-sm text-ink-secondary">
+    <p class="mt-6 text-center text-[13px] text-ink-secondary">
       已有账号？
-      <RouterLink :to="{ name: 'login' }" class="text-primary hover:underline">去登录</RouterLink>
+      <RouterLink :to="{ name: 'login' }" class="font-semibold text-primary-active hover:underline">去登录</RouterLink>
     </p>
   </AuthShell>
 </template>

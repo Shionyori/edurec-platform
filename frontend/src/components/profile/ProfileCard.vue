@@ -49,7 +49,7 @@ function cancel() {
       </svg>
     </div>
 
-    <div class="px-5 pb-5 sm:px-6 sm:pb-6">
+    <div class="relative z-10 px-5 pb-5 sm:px-6 sm:pb-6">
       <div class="-mt-9 flex flex-wrap items-end justify-between gap-4">
         <div class="flex items-end gap-4">
           <el-avatar :size="72" :src="user.avatar_url ?? undefined" class="!border-4 !border-surface !bg-ink">

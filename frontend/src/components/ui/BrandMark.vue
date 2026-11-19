@@ -13,7 +13,7 @@ withDefaults(defineProps<{ size?: number | string }>(), { size: 36 })
   >
     <rect width="32" height="32" rx="9" fill="currentColor" />
     <path
-      d="M16 4l2.8 9.2L28 16l-9.2 2.8L16 28l-2.8-9.2L4 16l9.2-2.8L16 4Z"
+      d="M16 6l2.33 7.67L26 16l-7.67 2.33L16 26l-2.33-7.67L6 16l7.67-2.33L16 6Z"
       fill="#FFFFFF"
     />
     <circle cx="24.6" cy="7.4" r="1.7" fill="#B7E4D8" />

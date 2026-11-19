@@ -938,12 +938,25 @@
 }
 .el-input__inner,
 .el-select__placeholder {
+  background: transparent;
   color: var(--color-ink);
   font-size: 14px;
 }
 .el-input__inner::placeholder,
 .el-textarea__inner::placeholder {
   color: var(--color-ink-muted);
+}
+
+/* Chrome/Safari autofill paints its own yellow/blue fill over the field. Keep
+   autofilled credentials on the same white ticket as the rest of the form. */
+.el-input__inner:-webkit-autofill,
+.el-input__inner:-webkit-autofill:hover,
+.el-input__inner:-webkit-autofill:focus,
+.el-input__inner:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0 1000px var(--color-surface) inset !important;
+  -webkit-text-fill-color: var(--color-ink) !important;
+  caret-color: var(--color-ink);
+  transition: background-color 9999s ease-out 0s;
 }
 .el-textarea__inner {
   border-radius: var(--radius-field);

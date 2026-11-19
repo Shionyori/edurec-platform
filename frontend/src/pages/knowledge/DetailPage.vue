@@ -36,9 +36,14 @@ function syncNarrow(event?: MediaQueryListEvent) {
   isNarrow.value = event ? event.matches : (narrowQuery?.matches ?? false)
 }
 
-const LINE_COLORS = ['#0E7C7B', '#1D4ED8', '#B45309', '#BE123C']
+const LINE_COLORS = ['#0F7A66', '#2F62C4', '#A26800', '#B84A62']
+const LEVEL_INKS = ['#0B6354', '#2757B5', '#7A4D00', '#913B4D']
 function levelColor(level: number): string {
   return LINE_COLORS[(Math.max(1, level) - 1) % LINE_COLORS.length]
+}
+
+function levelInk(level: number): string {
+  return LEVEL_INKS[(Math.max(1, level) - 1) % LEVEL_INKS.length]
 }
 
 function conceptColor(concept: KnowledgeConcept): string {
@@ -188,16 +193,16 @@ watch(code, load)
     </div>
 
     <template v-else-if="detail">
-      <header class="dark-panel mt-4 px-6 py-7 sm:px-8 sm:py-9">
+      <header class="panel-tint mt-4 px-6 py-7 sm:px-8 sm:py-9">
         <svg
-          class="pointer-events-none absolute -right-20 -top-28 h-[340px] w-[340px] text-white/10"
+          class="pointer-events-none absolute -right-20 -top-28 h-[340px] w-[340px] text-primary/10"
           viewBox="0 0 340 340"
           fill="none"
           aria-hidden="true"
         >
           <circle cx="170" cy="170" r="126" stroke="currentColor" stroke-width="1" />
           <circle cx="170" cy="170" r="158" stroke="currentColor" stroke-width="1" stroke-dasharray="2 8" />
-          <circle cx="296" cy="170" r="5" fill="#c9451f" />
+          <circle cx="296" cy="170" r="5" fill="var(--color-primary)" />
         </svg>
 
         <div class="relative flex flex-wrap items-end justify-between gap-6">
@@ -205,19 +210,19 @@ watch(code, load)
             <div class="flex flex-wrap items-center gap-2">
               <span
                 class="flex h-6 min-w-6 items-center justify-center rounded-full px-2 text-[11px] font-bold"
-                :style="{ backgroundColor: `color-mix(in srgb, ${levelColor(detail.point.level)} 22%, transparent)`, color: '#fff' }"
+                :style="{ backgroundColor: `color-mix(in srgb, ${levelColor(detail.point.level)} 12%, white)`, color: levelInk(detail.point.level) }"
               >L{{ detail.point.level }}</span>
-              <span class="text-[12px] text-white/55">第 {{ detail.point.level }} 层</span>
+              <span class="text-[12px] text-ink-muted">第 {{ detail.point.level }} 层</span>
             </div>
-            <h1 class="mt-3 text-[26px] font-extrabold leading-tight tracking-[-0.03em] text-white sm:text-[34px]">
+            <h1 class="mt-3 text-[24px] font-bold leading-tight tracking-[-0.025em] text-ink sm:text-[30px]">
               {{ detail.point.name }}
             </h1>
-            <p class="mt-2 max-w-2xl text-[13.5px] leading-relaxed text-white/65">
+            <p class="mt-2 max-w-2xl text-[13.5px] leading-relaxed text-ink-secondary">
               {{ detail.point.description || '暂无描述' }}
             </p>
-            <div class="tnum mt-5 flex flex-wrap gap-x-6 gap-y-2 text-[12px] text-white/60">
-              <span>课程资源 <strong class="font-semibold text-white">{{ detail.point.resource_count }}</strong></span>
-              <span>概念 <strong class="font-semibold text-white">{{ detail.point.concept_count }}</strong></span>
+            <div class="tnum mt-5 flex flex-wrap gap-x-6 gap-y-2 text-[12px] text-ink-muted">
+              <span>课程资源 <strong class="font-semibold text-ink">{{ detail.point.resource_count }}</strong></span>
+              <span>概念 <strong class="font-semibold text-ink">{{ detail.point.concept_count }}</strong></span>
             </div>
           </div>
           <div class="flex flex-wrap items-center gap-2.5">

@@ -47,7 +47,7 @@ async function onSubmit() {
 
 <template>
   <AuthShell>
-    <h1 class="text-[26px] font-extrabold tracking-[-0.03em] text-ink">欢迎回来</h1>
+    <h1 class="text-[24px] font-bold tracking-[-0.025em] text-ink">欢迎回来</h1>
     <p class="mt-1.5 text-[13.5px] text-ink-secondary">登录 edurec，继续你的学习之旅</p>
 
     <el-form ref="formRef" :model="form" :rules="rules" label-position="top" class="mt-7">

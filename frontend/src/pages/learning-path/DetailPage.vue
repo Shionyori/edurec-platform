@@ -113,16 +113,16 @@ watch(pathId, load)
       </div>
 
       <template v-else-if="path">
-        <header class="dark-panel mt-4 px-6 py-7 sm:px-8 sm:py-8">
+        <header class="panel-tint mt-4 px-6 py-7 sm:px-8 sm:py-8">
           <svg
-            class="pointer-events-none absolute -right-16 -top-24 h-[320px] w-[320px] text-white/10"
+            class="pointer-events-none absolute -right-16 -top-24 h-[320px] w-[320px] text-primary/10"
             viewBox="0 0 320 320"
             fill="none"
             aria-hidden="true"
           >
             <circle cx="160" cy="160" r="118" stroke="currentColor" stroke-width="1" />
             <circle cx="160" cy="160" r="150" stroke="currentColor" stroke-width="1" stroke-dasharray="2 8" />
-            <circle cx="278" cy="160" r="5" fill="#c9451f" />
+            <circle cx="278" cy="160" r="5" fill="var(--color-primary)" />
           </svg>
 
           <div class="relative flex flex-wrap items-end justify-between gap-6">
@@ -131,21 +131,21 @@ watch(pathId, load)
                 class="chip !text-[11px]"
                 :class="path.status === 'completed' ? 'chip-success' : 'chip-primary'"
               >{{ path.status === 'completed' ? '已全部完成' : '进行中' }}</span>
-              <h1 class="mt-3 text-[26px] font-extrabold leading-tight tracking-[-0.03em] text-white sm:text-[32px]">
+              <h1 class="mt-3 text-[24px] font-bold leading-tight tracking-[-0.025em] text-ink sm:text-[30px]">
                 {{ path.target_name }} · 学习路径
               </h1>
-              <p class="mt-2 text-[13px] leading-relaxed text-white/65">
+              <p class="mt-2 text-[13px] leading-relaxed text-ink-secondary">
                 按先修关系逐节解锁；已掌握的内容会跳过，只推荐路径上还没掌握的部分。
               </p>
             </div>
             <div class="tnum flex w-full items-end justify-between gap-4 sm:block sm:w-auto sm:text-right">
-              <p class="text-[44px] font-extrabold leading-none tracking-[-0.05em] text-white">
-                {{ progress }}<span class="text-[18px] font-semibold text-white/50">%</span>
+              <p class="text-[40px] font-bold leading-none tracking-[-0.04em] text-ink">
+                {{ progress }}<span class="text-[16px] font-semibold text-ink-muted">%</span>
               </p>
-              <p class="text-[12px] text-white/55 sm:mt-2">已完成 {{ doneCount }} / {{ path.steps.length }} 节</p>
+              <p class="text-[12px] text-ink-muted sm:mt-2">已完成 {{ doneCount }} / {{ path.steps.length }} 节</p>
             </div>
           </div>
-          <div class="relative mt-6 h-1.5 overflow-hidden rounded-full bg-white/15" role="progressbar" aria-label="学习路径完成进度" :aria-valuenow="progress" aria-valuemin="0" aria-valuemax="100">
+          <div class="relative mt-6 h-1.5 overflow-hidden rounded-full bg-primary-soft" role="progressbar" aria-label="学习路径完成进度" :aria-valuenow="progress" aria-valuemin="0" aria-valuemax="100">
             <div class="h-full rounded-full bg-primary transition-[width] duration-700 ease-[cubic-bezier(.22,1,.36,1)]" :style="{ width: `${progress}%` }"></div>
           </div>
         </header>

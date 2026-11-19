@@ -9,12 +9,12 @@ const loading = ref(true)
 const error = ref('')
 const keyword = ref('')
 
-const LINE_COLORS = ['#0E7C7B', '#1D4ED8', '#B45309', '#BE123C']
+const LINE_COLORS = ['#0F7A66', '#2F62C4', '#A26800', '#B84A62']
 
 function levelColor(level: number): string {
   return LINE_COLORS[(Math.max(1, level) - 1) % LINE_COLORS.length]
 }
-const LEVEL_INKS = ['#0B6463', '#1839A8', '#7A4500', '#9B1032']
+const LEVEL_INKS = ['#0B6354', '#2757B5', '#7A4D00', '#913B4D']
 function levelInk(level: number): string {
   return LEVEL_INKS[(Math.max(1, level) - 1) % LEVEL_INKS.length]
 }

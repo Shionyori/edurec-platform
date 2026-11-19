@@ -1,27 +1,27 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-11-19T10:20:00Z",
+  "generatedAt": "2026-11-19T10:50:00Z",
   "title": "Design System: edurec",
   "extensions": {
     "colorMeta": {
       "primary": {
-        "displayName": "Signal Vermilion",
+        "displayName": "Jade Signal",
         "role": "primary"
       },
       "primary-hover": {
-        "displayName": "Vermilion Deep",
+        "displayName": "Jade Deep",
         "role": "primary"
       },
       "primary-active": {
-        "displayName": "Vermilion Pressed",
+        "displayName": "Jade Pressed",
         "role": "primary"
       },
       "primary-soft": {
-        "displayName": "Vermilion Soft",
+        "displayName": "Jade Soft",
         "role": "primary"
       },
       "primary-softer": {
-        "displayName": "Vermilion Softer",
+        "displayName": "Jade Softer",
         "role": "primary"
       },
       "surface": {
@@ -29,19 +29,19 @@
         "role": "neutral"
       },
       "surface-2": {
-        "displayName": "Surface Quiet",
+        "displayName": "Quiet White",
         "role": "neutral"
       },
       "paper-bg": {
-        "displayName": "Paper Ground",
+        "displayName": "Mint Paper",
         "role": "neutral"
       },
       "sunken": {
-        "displayName": "Sunken Paper",
+        "displayName": "Mist",
         "role": "neutral"
       },
       "border": {
-        "displayName": "Paper Hairline",
+        "displayName": "Mint Hairline",
         "role": "neutral"
       },
       "border-strong": {
@@ -53,7 +53,7 @@
         "role": "neutral"
       },
       "ink": {
-        "displayName": "Station Ink",
+        "displayName": "Forest Ink",
         "role": "neutral"
       },
       "ink-secondary": {
@@ -64,12 +64,8 @@
         "displayName": "Warm Muted",
         "role": "neutral"
       },
-      "rail": {
-        "displayName": "Ink Panel",
-        "role": "neutral"
-      },
       "line-teal": {
-        "displayName": "Level 1 Teal",
+        "displayName": "Level 1 Jade",
         "role": "accent"
       },
       "line-blue": {
@@ -95,23 +91,27 @@
       "danger": {
         "displayName": "Halt Red",
         "role": "semantic"
+      },
+      "info": {
+        "displayName": "Info Blue",
+        "role": "semantic"
       }
     },
     "typographyMeta": {
       "display": {
         "displayName": "Display",
         "role": "home hero only",
-        "canonical": "800 / 52px / 1.08 / -0.035em"
+        "canonical": "750 / 46px / 1.1 / -0.03em"
       },
       "headline": {
         "displayName": "Headline",
         "role": "page titles",
-        "canonical": "750 / 30px / 1.2 / -0.03em"
+        "canonical": "700 / 28px / 1.25 / -0.025em"
       },
       "section": {
         "displayName": "Section",
         "role": "section headings",
-        "canonical": "750 / 24px / 1.3 / -0.025em"
+        "canonical": "700 / 22px / 1.35 / -0.02em"
       },
       "title": {
         "displayName": "Title",
@@ -132,12 +132,12 @@
     "shadows": [
       {
         "name": "hover-lift",
-        "value": "0 2px 4px rgba(11,27,43,.04), 0 18px 40px -20px rgba(11,27,43,.28)",
+        "value": "0 2px 4px rgba(23,35,31,.04), 0 18px 40px -20px rgba(23,35,31,.26)",
         "purpose": "Interactive cards on hover, paired with translateY(-2px)."
       },
       {
         "name": "float",
-        "value": "0 1px 2px rgba(11,27,43,.05), 0 28px 60px -28px rgba(11,27,43,.32)",
+        "value": "0 1px 2px rgba(23,35,31,.05), 0 28px 60px -28px rgba(23,35,31,.30)",
         "purpose": "The home hero's live recommendation card and the sticky questionnaire bar."
       }
     ],
@@ -160,7 +160,7 @@
       {
         "name": "progress",
         "value": "500–700ms cubic-bezier(.22,1,.36,1)",
-        "purpose": "Progress bars and rings changing value."
+        "purpose": "Progress bars changing value."
       },
       {
         "name": "skeleton",
@@ -185,12 +185,12 @@
     "focusRings": [
       {
         "name": "global",
-        "value": "2px solid #C9451F, offset 2px",
+        "value": "2px solid #0F7A66, offset 2px",
         "purpose": "Keyboard focus on every control and link."
       },
       {
         "name": "field",
-        "value": "1px #C9451F inset + 3px rgba(201,69,31,.14)",
+        "value": "1px #0F7A66 inset + 3px rgba(15,122,102,.16)",
         "purpose": "Focused inputs and selects."
       }
     ]
@@ -200,33 +200,33 @@
       "name": "Primary Button",
       "kind": "button",
       "refersTo": "button-primary",
-      "description": "40px vermilion action button with a 10px radius, 650 weight, hover lift, and a 46px large variant.",
+      "description": "40px jade action button with a 10px radius, 650 weight, hover lift, and a 46px large variant.",
       "html": "<button class=\"ds-btn-primary\" type=\"button\">选一个学习目标</button>",
-      "css": ".ds-btn-primary {\n  display:inline-flex; align-items:center; justify-content:center; gap:8px;\n  height:40px; padding:0 18px; border:0; border-radius:10px;\n  background:#C9451F; color:#FFFFFF; font-family:Manrope, system-ui, -apple-system, 'Segoe UI', Roboto, 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;\n  font-size:14px; font-weight:650; line-height:1; cursor:pointer;\n  box-shadow:inset 0 1px 0 rgba(255,255,255,.16);\n  transition:background-color 160ms cubic-bezier(.22,1,.36,1), transform 160ms cubic-bezier(.22,1,.36,1), box-shadow 160ms cubic-bezier(.22,1,.36,1);\n}\n.ds-btn-primary:hover { background:#B23A15; transform:translateY(-1px); box-shadow:inset 0 1px 0 rgba(255,255,255,.16), 0 10px 22px -12px rgba(201,69,31,.7); }\n.ds-btn-primary:active { background:#9C3010; transform:translateY(0); }\n.ds-btn-primary:focus-visible { outline:2px solid #C9451F; outline-offset:2px; }"
+      "css": ".ds-btn-primary {\n  display:inline-flex; align-items:center; justify-content:center; gap:8px;\n  height:40px; padding:0 18px; border:0; border-radius:10px;\n  background:#0F7A66; color:#FFFFFF; font-family:Manrope, system-ui, -apple-system, 'Segoe UI', Roboto, 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;\n  font-size:14px; font-weight:650; line-height:1; cursor:pointer;\n  box-shadow:inset 0 1px 0 rgba(255,255,255,.16);\n  transition:background-color 160ms cubic-bezier(.22,1,.36,1), transform 160ms cubic-bezier(.22,1,.36,1);\n}\n.ds-btn-primary:hover { background:#0B6857; transform:translateY(-1px); }\n.ds-btn-primary:active { background:#085545; transform:translateY(0); }\n.ds-btn-primary:focus-visible { outline:2px solid #0F7A66; outline-offset:2px; }"
     },
     {
       "name": "Secondary Button",
       "kind": "button",
       "refersTo": "button-secondary",
-      "description": "White button with a strong hairline; hover raises the surface and border contrast.",
+      "description": "White button with a strong mint hairline; hover raises the surface and border contrast.",
       "html": "<button class=\"ds-btn-secondary\" type=\"button\">浏览知识点</button>",
-      "css": ".ds-btn-secondary {\n  display:inline-flex; align-items:center; justify-content:center; gap:8px;\n  height:40px; padding:0 18px; border:1px solid #D4CABB; border-radius:10px;\n  background:#FFFFFF; color:#0B1B2B; font-family:Manrope, system-ui, -apple-system, 'Segoe UI', Roboto, 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;\n  font-size:14px; font-weight:650; line-height:1; cursor:pointer;\n  transition:background-color 160ms cubic-bezier(.22,1,.36,1), border-color 160ms cubic-bezier(.22,1,.36,1), transform 160ms cubic-bezier(.22,1,.36,1);\n}\n.ds-btn-secondary:hover { background:#FCFAF6; border-color:#8A8172; transform:translateY(-1px); }"
+      "css": ".ds-btn-secondary {\n  display:inline-flex; align-items:center; justify-content:center; gap:8px;\n  height:40px; padding:0 18px; border:1px solid #C7D5CF; border-radius:10px;\n  background:#FFFFFF; color:#17231F; font-family:Manrope, system-ui, -apple-system, 'Segoe UI', Roboto, 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;\n  font-size:14px; font-weight:650; line-height:1; cursor:pointer;\n  transition:background-color 160ms cubic-bezier(.22,1,.36,1), border-color 160ms cubic-bezier(.22,1,.36,1), transform 160ms cubic-bezier(.22,1,.36,1);\n}\n.ds-btn-secondary:hover { background:#FAFCFB; border-color:#7C8F87; transform:translateY(-1px); }"
     },
     {
       "name": "Text Input",
       "kind": "input",
       "refersTo": "input",
-      "description": "42px paper-white field with a 1px strong hairline inset, a vermilion focus ring, and a 4.5:1 placeholder.",
+      "description": "42px paper-white field with a 1px strong hairline inset, a jade focus ring, and a 4.5:1 placeholder.",
       "html": "<input class=\"ds-input\" type=\"search\" placeholder=\"搜索课程、文章、视频…\" aria-label=\"搜索\" />",
-      "css": ".ds-input {\n  width:100%; height:42px; padding:1px 12px; border:0; border-radius:10px;\n  background:#FFFFFF; color:#0B1B2B; box-shadow:0 0 0 1px #D4CABB inset;\n  font-family:Manrope, system-ui, -apple-system, 'Segoe UI', Roboto, 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif; font-size:14px; outline:none;\n  transition:box-shadow 160ms cubic-bezier(.22,1,.36,1);\n}\n.ds-input::placeholder { color:#6B665C; }\n.ds-input:hover { box-shadow:0 0 0 1px #8A8172 inset; }\n.ds-input:focus { box-shadow:0 0 0 1px #C9451F inset, 0 0 0 3px rgba(201,69,31,.14); }"
+      "css": ".ds-input {\n  width:100%; height:42px; padding:1px 12px; border:0; border-radius:10px;\n  background:#FFFFFF; color:#17231F; box-shadow:0 0 0 1px #C7D5CF inset;\n  font-family:Manrope, system-ui, -apple-system, 'Segoe UI', Roboto, 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif; font-size:14px; outline:none;\n}\n.ds-input::placeholder { color:#5F6F69; }\n.ds-input:focus { box-shadow:0 0 0 1px #0F7A66 inset, 0 0 0 3px rgba(15,122,102,.16); }"
     },
     {
       "name": "Paper Card",
       "kind": "card",
       "refersTo": "card",
-      "description": "14px white card with a 1px paper hairline; interactive cards lift 2px on hover.",
+      "description": "14px white card with a 1px mint hairline; interactive cards lift 2px on hover.",
       "html": "<article class=\"ds-card\"><h3>机器学习入门</h3><p>面向零基础学习者的机器学习课程。</p></article>",
-      "css": ".ds-card {\n  background:#FFFFFF; border:1px solid #E7E1D6; border-radius:14px; padding:20px;\n  color:#0B1B2B; font-family:Manrope, system-ui, -apple-system, 'Segoe UI', Roboto, 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif; font-size:14px; line-height:1.65;\n}\n.ds-card h3 { margin:0 0 6px; font-size:16px; font-weight:700; letter-spacing:-.015em; }\n.ds-card p { margin:0; color:#4C5661; }\n.ds-card--interactive { transition:transform 200ms cubic-bezier(.22,1,.36,1), box-shadow 200ms cubic-bezier(.22,1,.36,1), border-color 200ms cubic-bezier(.22,1,.36,1); }\n.ds-card--interactive:hover { transform:translateY(-2px); border-color:#D4CABB; box-shadow:0 2px 4px rgba(11,27,43,.04), 0 18px 40px -20px rgba(11,27,43,.28); }"
+      "css": ".ds-card {\n  background:#FFFFFF; border:1px solid #E0E8E4; border-radius:14px; padding:20px;\n  color:#17231F; font-family:Manrope, system-ui, -apple-system, 'Segoe UI', Roboto, 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif; font-size:14px; line-height:1.65;\n}\n.ds-card h3 { margin:0 0 6px; font-size:16px; font-weight:700; letter-spacing:-.015em; }\n.ds-card p { margin:0; color:#4C5D57; }\n.ds-card--interactive:hover { transform:translateY(-2px); border-color:#C7D5CF; box-shadow:0 2px 4px rgba(23,35,31,.04), 0 18px 40px -20px rgba(23,35,31,.26); }"
     },
     {
       "name": "Status Chip",
@@ -234,45 +234,47 @@
       "refersTo": "chip",
       "description": "Pill chip with a soft semantic fill and a written label; color is never the only state signal.",
       "html": "<span class=\"ds-chip ds-chip--primary\">当前学习</span>",
-      "css": ".ds-chip {\n  display:inline-flex; align-items:center; gap:5px; padding:3px 10px;\n  border-radius:999px; background:#F1ECE3; color:#4C5661;\n  font-family:Manrope, system-ui, -apple-system, 'Segoe UI', Roboto, 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif; font-size:12px; font-weight:650; line-height:1.6;\n}\n.ds-chip--primary { background:#FBECE6; color:#9C3010; }\n.ds-chip--success { background:#E7F5EF; color:#0E7C5A; }\n.ds-chip--warning { background:#FBF0DF; color:#A15C00; }\n.ds-chip--danger { background:#FBEAE8; color:#B3261E; }"
+      "css": ".ds-chip {\n  display:inline-flex; align-items:center; gap:5px; padding:3px 10px;\n  border-radius:999px; background:#EDF2EF; color:#4C5D57;\n  font-family:Manrope, system-ui, -apple-system, 'Segoe UI', Roboto, 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif; font-size:12px; font-weight:650; line-height:1.6;\n}\n.ds-chip--primary { background:#E8F4F0; color:#085545; }\n.ds-chip--success { background:#E8F4F0; color:#0F7A66; }\n.ds-chip--warning { background:#FBF3E3; color:#8A5700; }\n.ds-chip--danger { background:#FAEBE9; color:#B33A32; }"
     },
     {
-      "name": "Ink Panel",
+      "name": "Tinted Masthead",
       "kind": "panel",
-      "refersTo": "dark-panel",
-      "description": "16px deep-ink orientation panel with white type and a low-opacity orbit diagram. Used for auth and mastheads only.",
-      "html": "<section class=\"ds-ink\"><span class=\"ds-chip\">MATH</span><h1>数学</h1><p>分析、代数与几何</p></section>",
-      "css": ".ds-ink {\n  position:relative; overflow:hidden; border-radius:16px; padding:32px;\n  background:#0B1B2B; color:#FFFFFF; font-family:Manrope, system-ui, -apple-system, 'Segoe UI', Roboto, 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;\n}\n.ds-ink h1 { margin:12px 0 8px; font-size:34px; font-weight:800; letter-spacing:-.03em; color:#FFFFFF; }\n.ds-ink p { margin:0; max-width:56ch; color:rgba(255,255,255,.65); font-size:13.5px; line-height:1.7; }\n.ds-ink::after { content:''; position:absolute; right:-80px; top:-100px; width:320px; height:320px; border:1px solid rgba(255,255,255,.1); border-radius:50%; }"
+      "refersTo": "tinted-panel",
+      "description": "16px pale-jade orientation panel with ink type and a low-opacity orbit line. Used for discipline, knowledge, and path headers.",
+      "html": "<section class=\"ds-tint\"><span class=\"ds-chip\">MATH</span><h1>数学</h1><p>分析、代数与几何</p></section>",
+      "css": ".ds-tint {\n  position:relative; overflow:hidden; border-radius:16px; padding:32px;\n  background:#F2F9F7; border:1px solid #D8EAE5; color:#17231F; font-family:Manrope, system-ui, -apple-system, 'Segoe UI', Roboto, 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;\n}\n.ds-tint h1 { margin:12px 0 8px; font-size:30px; font-weight:700; letter-spacing:-.025em; color:#17231F; }\n.ds-tint p { margin:0; max-width:56ch; color:#4C5D57; font-size:13.5px; line-height:1.7; }\n.ds-tint::after { content:''; position:absolute; right:-80px; top:-100px; width:320px; height:320px; border:1px solid rgba(15,122,102,.12); border-radius:50%; }"
     }
   ],
   "narrative": {
-    "northStar": "学习桌面 / The Study Desk",
-    "overview": "edurec is a Chinese educational-resource recommender. Its interface is a calm study desk: warm paper, deep ink, one vermilion pen. The home hero puts a real recommendation card on the desk, not an illustration; every page answers what to learn next and why. The previous transit-signage world is replaced by an editorial, warm, product-first system in Operate mode.",
+    "northStar": "清晓书桌 / Daylight Study",
+    "overview": "edurec is a Chinese educational-resource recommender. Its interface is a fresh, quiet study desk: cool mint paper, deep forest ink, one jade pen. The home hero puts a real recommendation card on the desk, not an illustration; every page answers what to learn next and why. The earlier transit-signage and cream/terracotta worlds are replaced by a light mint-and-jade system in Operate mode.",
     "keyCharacteristics": [
-      "Warm paper ground with white paper cards and deep ink type.",
-      "One vermilion signal for action and current state.",
-      "Editorial type scale with self-hosted Manrope for Latin/numerals and the system Chinese stack.",
+      "Cool mint paper ground with white cards and deep forest-green ink.",
+      "One jade signal for action and current state.",
+      "Softer editorial scale with self-hosted Manrope and the system Chinese stack.",
       "10px fields, 14px cards, 16px panels; pills only for chips and small controls.",
-      "Borders at rest, one ink-tinted hover lift, no ambient card shadows.",
-      "Deep-ink orientation panels with authored orbit geometry.",
+      "Borders at rest, one green-tinted hover lift, no ambient card shadows.",
+      "Pale jade tinted mastheads instead of dark bands.",
+      "Asymmetric light auth split instead of a 1:1 dark poster.",
       "A fixed four-destination bottom tab bar on mobile."
     ],
     "rules": [
-      "One Signal Rule: vermilion means act here or you are here; never a page wash or gradient.",
+      "One Signal Rule: jade means act here or you are here; never a page wash or gradient.",
       "Meaningful Color Rule: level/type colors only where they encode level, type, or state.",
       "No-Eyebrow Rule: no decorative kicker or uppercase label above a heading.",
-      "Dark Panel Rule: ink panels are for orientation surfaces only.",
+      "Tinted Masthead Rule: orientation panels are pale jade; deep ink is not a full-width band.",
       "Flat-by-default Rule: elevation is a hover response, not ambient decoration."
     ],
     "dos": [
-      "Keep the paper/white/ink split and generous section spacing.",
-      "Use one vermilion signal and semantic level colors only where meaningful.",
+      "Keep the mint paper / white / forest ink split and generous section spacing.",
+      "Use one jade signal and semantic level colors only where meaningful.",
       "Use Manrope for Latin/numerals and tabular numerals for data.",
       "Give every empty and error state a clear next action.",
       "Keep keyboard focus rings and reduced-motion support."
     ],
     "donts": [
       "Do not reintroduce transit signage: navy rail bands, 2px route strokes, station dots, uppercase micro-labels, 4px corners.",
+      "Do not go back to cream + terracotta.",
       "Do not use gradient text, glass decoration, or colored halos.",
       "Do not put a kicker above a heading.",
       "Do not use pills for large containers or buttons.",

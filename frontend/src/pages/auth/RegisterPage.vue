@@ -79,7 +79,7 @@ async function onSubmit() {
 
 <template>
   <AuthShell>
-    <h1 class="text-[26px] font-extrabold tracking-[-0.03em] text-ink">创建账号</h1>
+    <h1 class="text-[24px] font-bold tracking-[-0.025em] text-ink">创建账号</h1>
     <p class="mt-1.5 text-[13.5px] text-ink-secondary">加入 edurec，发现适合你的教育资源</p>
 
     <el-form ref="formRef" :model="form" :rules="rules" label-position="top" class="mt-7">

@@ -29,7 +29,7 @@ const nodeHeight = computed(() => (props.compact ? 50 : 58))
 const arrowId = `kg-arrow-${Math.random().toString(36).slice(2, 8)}`
 
 // 线路色按层级循环：层级是真实语义，不是装饰
-const LINE_COLORS = ['#0E7C7B', '#1D4ED8', '#B45309', '#BE123C']
+const LINE_COLORS = ['#0F7A66', '#2F62C4', '#A26800', '#B84A62']
 function levelColor(level: number): string {
   return LINE_COLORS[(Math.max(1, level) - 1) % LINE_COLORS.length]
 }
@@ -87,7 +87,7 @@ function onSelect(node: KnowledgeNode) {
           refY="4"
           orient="auto"
         >
-          <path d="M 0 0 L 8 4 L 0 8 z" fill="#C9451F" />
+          <path d="M 0 0 L 8 4 L 0 8 z" fill="#0F7A66" />
         </marker>
       </defs>
 
@@ -101,7 +101,7 @@ function onSelect(node: KnowledgeNode) {
           font-size="10"
           font-weight="700"
           letter-spacing="0.6"
-          fill="#6B665C"
+          fill="#5F6F69"
         >L{{ tick.level }}</text>
       </g>
 
@@ -110,7 +110,7 @@ function onSelect(node: KnowledgeNode) {
         :key="index"
         :d="edgePath(edge.from.x, edge.from.y + nodeHeight / 2, edge.to.x, edge.to.y + nodeHeight / 2)"
         fill="none"
-        :stroke="edge.to.id === currentId ? '#C9451F' : '#D8D1C4'"
+        :stroke="edge.to.id === currentId ? '#0F7A66' : '#D3DED9'"
         :stroke-width="edge.to.id === currentId ? 1.8 : 1.4"
         :opacity="edge.to.id === currentId ? 1 : 0.9"
         :marker-end="`url(#${edge.to.id === currentId ? `${arrowId}-active` : arrowId})`"
@@ -133,8 +133,8 @@ function onSelect(node: KnowledgeNode) {
           :height="nodeHeight"
           rx="10"
           ry="10"
-          :fill="node.id === currentId ? '#0B1B2B' : '#FFFFFF'"
-          :stroke="node.id === currentId ? '#C9451F' : '#DCD9CF'"
+          :fill="node.id === currentId ? '#17231F' : '#FFFFFF'"
+          :stroke="node.id === currentId ? '#0F7A66' : '#E0E8E4'"
           :stroke-width="node.id === currentId ? 1.6 : 1"
           class="transition-[stroke] duration-150"
         />
@@ -142,14 +142,14 @@ function onSelect(node: KnowledgeNode) {
           cx="16"
           :cy="nodeHeight / 2"
           r="4"
-          :fill="node.id === currentId ? '#C9451F' : levelColor(node.level)"
+          :fill="node.id === currentId ? '#0F7A66' : levelColor(node.level)"
         />
         <text
           x="28"
           :y="compact ? 21 : 24"
           font-size="12.5"
           font-weight="700"
-          :fill="node.id === currentId ? '#FFFFFF' : '#0B1B2B'"
+          :fill="node.id === currentId ? '#FFFFFF' : '#17231F'"
         >
           {{ labelOf(node) }}
         </text>
@@ -157,7 +157,7 @@ function onSelect(node: KnowledgeNode) {
           x="28"
           :y="compact ? 38 : 43"
           font-size="10.5"
-          :fill="node.id === currentId ? 'rgba(255,255,255,0.62)' : '#6B665C'"
+          :fill="node.id === currentId ? 'rgba(255,255,255,0.62)' : '#5F6F69'"
         >
           资源 {{ node.resource_count }} · 概念 {{ node.concept_count }}
         </text>
@@ -172,7 +172,7 @@ function onSelect(node: KnowledgeNode) {
 }
 .kg-node:focus-visible rect,
 .kg-node:hover rect {
-  stroke: #c9451f;
+  stroke: #0f7a66;
 }
 .kg-node:focus-visible rect {
   stroke-width: 2.2;

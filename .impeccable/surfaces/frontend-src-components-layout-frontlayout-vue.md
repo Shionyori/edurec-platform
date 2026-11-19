@@ -15,14 +15,14 @@ related_targets: ["frontend/src/pages/home/index.vue","frontend/src/pages/discip
 
 ## Direction contract
 
-THESIS: 把“下一步学什么”变成桌面上的一张真实推荐卡：暖纸、深墨、一支朱红笔。拒绝旧的车站牌语言（深蓝横条、2px 线路、站点圆点、全大写微标签、4px 直角），也拒绝通用 SaaS 的冷白 + 紫色渐变。
+THESIS: 把“下一步学什么”变成书桌上一张轻松可拿起的推荐卡：薄荷纸、森林墨、一支玉青笔。拒绝旧的车站牌语言（深蓝横条、2px 线路、站点圆点、全大写微标签、4px 直角），也拒绝上一版的奶油纸 + 赤陶红；这一版要清新、轻、不用力。
 
-OWN-WORLD: 暖纸底 `#F7F4EE` 承担阅读，白纸卡片承担交互，深墨 `#0B1B2B` 只用于方向性暗面板与文字；信号朱红 `#C9451F` 只用于行动与当前状态。Manrope 自托管用于拉丁字母与数字，中文回退到系统黑体；14px 卡片、10px 控件、16px 面板，pill 只给 chip 与小控件。层级色青/蓝/琥珀/玫红仅在层级与资源类型标记、知识图谱中承担语义。每页留出大段安静留白，用 1px 发丝线而不是 2px 轨道组织信息。
+OWN-WORLD: 薄荷纸底 `#F4F7F5` 承担阅读，白纸卡片承担交互，森林墨 `#17231F` 用于文字与品牌标记；玉青 `#0F7A66` 只用于行动与当前状态。方向性标题面板改为浅玉色 `#F2F9F7`，不再使用深色横条。Manrope 自托管用于拉丁字母与数字，中文回退系统黑体；14px 卡片、10px 控件、16px 面板，pill 只给 chip 与小控件。层级色玉青/蓝/琥珀/玫红仅在层级与资源类型标记、知识图谱中承担语义。每页留出大段安静留白，用 1px 发丝线而不是 2px 轨道组织信息。
 
-STORY: 用户先看到“下一步”这一节是什么、为什么是它；进入学科看到按层级分组的知识点；知识点详情用先修图解释顺序；学习路径用逐节解锁的时间线把“已完成 / 当前学习 / 未解锁”写清楚。移动端用底部四个目的地取代挤压的横向导航。
+STORY: 用户先看到“下一步”这一节是什么、为什么是它；进入学科看到按层级分组的知识点；知识点详情用先修图解释顺序；学习路径用逐节解锁的时间线把“已完成 / 当前学习 / 未解锁”写清楚。移动端用底部四个目的地取代挤压的横向导航；登录页用浅玉色 44/56 分栏，而不是 1:1 深色海报。
 
-FIRST VIEWPORT: 白色粘性顶栏（spark 品牌、首页/发现/知识点、搜索、账户）；首页以“下一站，学什么？”为唯一 h1，右侧是真实的“下一步”推荐卡与三步行进说明；搜索、浏览知识点、调整问卷是首屏动作。
+FIRST VIEWPORT: 白色粘性顶栏（spark 品牌、首页/发现/知识点、搜索、账户）；首页以“下一站，学什么？”为唯一 h1，右侧是真实的“下一步”推荐卡，卡片右缘与内容右缘对齐并与左侧文案垂直居中；搜索、浏览知识点、调整问卷是首屏动作。
 
-FORM: Operate mode, editorial warm-paper direction; code-led implementation in `frontend/src/styles/index.css` and `frontend/src/components/ui/AppIcon.vue`; no image assets required.
+FORM: Operate mode, fresh mint-and-jade direction; code-led implementation in `frontend/src/styles/index.css` and `frontend/src/components/ui/AppIcon.vue`; no image assets required.
 
 FINISH: unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, DESIGN.md, and every shipping raster carrying its provenance

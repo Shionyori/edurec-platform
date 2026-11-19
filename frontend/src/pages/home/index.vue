@@ -55,7 +55,7 @@ onMounted(load)
   <div class="overflow-x-clip pb-20 md:pb-28">
     <!-- Hero: the product's own question, then the actual next step -->
     <section class="shell pt-10 md:pt-16 lg:pt-20">
-      <div class="grid items-center gap-12 lg:grid-cols-[1.02fr_0.98fr] lg:gap-16">
+      <div class="grid items-center gap-12 lg:grid-cols-[minmax(0,1fr)_460px] lg:gap-16">
         <div class="max-w-xl">
           <h1 class="display">
             下一站，<span class="text-primary">学什么？</span>
@@ -77,7 +77,7 @@ onMounted(load)
                 name="keyword"
                 type="search"
                 placeholder="搜索课程、文章或视频"
-                class="h-[50px] w-full rounded-[12px] border border-border-strong bg-surface pl-11 pr-4 text-[14px] text-ink outline-none transition-[box-shadow,border-color] duration-150 placeholder:text-ink-muted focus:border-primary focus:shadow-[0_0_0_3px_rgba(201,69,31,0.14)]"
+                class="h-[50px] w-full rounded-[12px] border border-border-strong bg-surface pl-11 pr-4 text-[14px] text-ink outline-none transition-[box-shadow,border-color] duration-150 placeholder:text-ink-muted focus:border-primary focus:shadow-[0_0_0_3px_rgba(15,122,102,0.16)]"
               />
             </label>
             <button type="submit" class="btn btn-primary btn-lg shrink-0">
@@ -114,9 +114,9 @@ onMounted(load)
         </div>
 
         <!-- The live recommendation, not an illustration -->
-        <div class="relative mx-auto w-full max-w-[480px] lg:mx-0">
+        <div class="relative w-full">
           <svg
-            class="pointer-events-none absolute -right-2 -top-10 h-[250px] w-[250px] text-ink/10 sm:-right-10 sm:-top-16 sm:h-[330px] sm:w-[330px]"
+            class="pointer-events-none absolute -right-2 -top-10 h-[250px] w-[250px] text-primary/10 sm:-right-10 sm:-top-16 sm:h-[330px] sm:w-[330px]"
             viewBox="0 0 330 330"
             fill="none"
             aria-hidden="true"
@@ -214,25 +214,6 @@ onMounted(load)
                 <p class="state-title">还没有可推荐的内容</p>
                 <p class="state-copy">先按关键词采集一些资源，或直接浏览知识点。</p>
                 <RouterLink :to="{ name: 'search' }" class="btn btn-secondary btn-sm mt-2">去搜索资源</RouterLink>
-              </div>
-            </div>
-
-            <!-- The method behind the recommendation, in plain words -->
-            <div class="card mt-3 flex items-center justify-between gap-3 px-5 py-3.5">
-              <div
-                v-for="(step, index) in [
-                  { label: '先修检查', icon: 'route' },
-                  { label: '掌握度匹配', icon: 'target' },
-                  { label: '逐节解锁', icon: 'check-circle' },
-                ]"
-                :key="step.label"
-                class="flex min-w-0 items-center gap-2"
-              >
-                <span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-[8px] bg-sunken text-ink-secondary">
-                  <AppIcon :name="step.icon" :size="14" />
-                </span>
-                <span class="truncate text-[11.5px] font-semibold text-ink-secondary">{{ step.label }}</span>
-                <span v-if="index < 2" class="hidden h-px w-4 shrink-0 bg-border-strong sm:block" aria-hidden="true"></span>
               </div>
             </div>
           </div>

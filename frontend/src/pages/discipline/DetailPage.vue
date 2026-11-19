@@ -20,11 +20,11 @@ const crawling = ref(false)
 const crawlNotice = ref('')
 let crawlAttempted = false
 
-const LINE_COLORS = ['#0E7C7B', '#1D4ED8', '#B45309', '#BE123C']
+const LINE_COLORS = ['#0F7A66', '#2F62C4', '#A26800', '#B84A62']
 function levelColor(level: number): string {
   return LINE_COLORS[(Math.max(1, level) - 1) % LINE_COLORS.length]
 }
-const LEVEL_INKS = ['#0B6463', '#1839A8', '#7A4500', '#9B1032']
+const LEVEL_INKS = ['#0B6354', '#2757B5', '#7A4D00', '#913B4D']
 function levelInk(level: number): string {
   return LEVEL_INKS[(Math.max(1, level) - 1) % LEVEL_INKS.length]
 }
@@ -118,30 +118,30 @@ onMounted(load)
     </div>
 
     <template v-else-if="detail">
-      <header class="dark-panel mt-4 px-6 py-7 sm:px-8 sm:py-9">
+      <header class="panel-tint mt-4 px-6 py-7 sm:px-8 sm:py-9">
         <svg
-          class="pointer-events-none absolute -right-16 -top-24 h-[320px] w-[320px] text-white/10"
+          class="pointer-events-none absolute -right-16 -top-24 h-[320px] w-[320px] text-primary/10"
           viewBox="0 0 320 320"
           fill="none"
           aria-hidden="true"
         >
           <circle cx="160" cy="160" r="118" stroke="currentColor" stroke-width="1" />
           <circle cx="160" cy="160" r="150" stroke="currentColor" stroke-width="1" stroke-dasharray="2 8" />
-          <circle cx="278" cy="160" r="5" fill="#c9451f" />
+          <circle cx="278" cy="160" r="5" fill="var(--color-primary)" />
         </svg>
 
         <div class="relative flex flex-wrap items-end justify-between gap-6">
           <div class="max-w-3xl">
             <span class="chip !text-[11px]">{{ detail.discipline.code.toUpperCase() }}</span>
-            <h1 class="mt-3 text-[26px] font-extrabold leading-tight tracking-[-0.03em] text-white sm:text-[34px]">
+            <h1 class="mt-3 text-[24px] font-bold leading-tight tracking-[-0.025em] text-ink sm:text-[30px]">
               {{ detail.discipline.name }}
             </h1>
-            <p class="mt-2 max-w-2xl text-[13.5px] leading-relaxed text-white/65">
+            <p class="mt-2 max-w-2xl text-[13.5px] leading-relaxed text-ink-secondary">
               {{ detail.discipline.description }}
             </p>
-            <div class="tnum mt-5 flex flex-wrap gap-x-6 gap-y-2 text-[12px] text-white/60">
-              <span>知识点 <strong class="font-semibold text-white">{{ detail.discipline.point_count }}</strong></span>
-              <span>课程资源 <strong class="font-semibold text-white">{{ detail.resource_total }}</strong></span>
+            <div class="tnum mt-5 flex flex-wrap gap-x-6 gap-y-2 text-[12px] text-ink-muted">
+              <span>知识点 <strong class="font-semibold text-ink">{{ detail.discipline.point_count }}</strong></span>
+              <span>课程资源 <strong class="font-semibold text-ink">{{ detail.resource_total }}</strong></span>
             </div>
           </div>
           <el-button v-if="detail.resource_total === 0" :loading="crawling" @click="autoCrawl">

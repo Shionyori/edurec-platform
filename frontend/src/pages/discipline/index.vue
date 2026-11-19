@@ -8,8 +8,8 @@ const items = ref<Discipline[]>([])
 const loading = ref(true)
 const error = ref('')
 
-const LINE_COLORS = ['#0E7C7B', '#1D4ED8', '#B45309', '#BE123C']
-const LINE_INKS = ['#0B6463', '#1839A8', '#7A4500', '#9B1032']
+const LINE_COLORS = ['#0F7A66', '#2F62C4', '#A26800', '#B84A62']
+const LINE_INKS = ['#0B6354', '#2757B5', '#7A4D00', '#913B4D']
 
 function lineColor(index: number): string {
   return LINE_COLORS[index % LINE_COLORS.length]

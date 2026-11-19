@@ -38,12 +38,12 @@ web
 - Element Plus + Tailwind CSS v4；设计 token 与组件样式位于 `frontend/src/styles/index.css`，系统说明见 `DESIGN.md`。
 - 知识点、概念、资源为空是常态，界面必须给出明确空状态与下一步动作。
 
-视觉识别：已重做为「学习桌面 / The Study Desk」（暖纸、深墨、单一朱红信号、Manrope + 系统中文字体、spark 标记）。没有品牌手册或现成 Logo 资产；spark 标记为当前实现。
+视觉识别：已重做为「清晓书桌 / Daylight Study」（薄荷纸底、森林墨字、单一玉青信号、浅玉色标题面板、Manrope + 系统中文字体、spark 标记）。没有品牌手册或现成 Logo 资产；spark 标记为当前实现。
 
 ## Brand Commitments
 
 - 名称：edurec；定位：教育资源推荐平台。
-- 现有产品名称与功能文案需保留；视觉识别为「学习桌面」：暖纸底、深墨字、朱红作为唯一行动信号。
+- 现有产品名称与功能文案需保留；视觉识别为「清晓书桌」：薄荷纸底、森林墨字、玉青作为唯一行动信号。
 - 品牌标记为四角 spark；没有外部品牌手册或 Logo 资产。
 
 ## Evidence on Hand

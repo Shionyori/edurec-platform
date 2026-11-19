@@ -1,10 +1,9 @@
 @import 'tailwindcss';
 
 /* ===========================================================================
-   edurec · 学习桌面 (Study Desk)
-   Warm paper, deep ink, one vermilion signal. Editorial scale, soft paper
-   cards, quiet motion. The old transit-signage language is gone: no station
-   dots, no 2px rails, no uppercase micro-labels, no 4px corners.
+   edurec · 清晓书桌 (Daylight Study)
+   Cool mint paper, deep green ink, one jade signal. A fresh, quiet system
+   for reading and acting: soft cards, generous air, small exact geometry.
    =========================================================================== */
 
 @font-face {
@@ -20,41 +19,41 @@
     'Manrope', system-ui, -apple-system, 'Segoe UI', Roboto, 'PingFang SC',
     'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
 
-  --color-primary: #c9451f;
-  --color-primary-hover: #b23a15;
-  --color-primary-active: #9c3010;
-  --color-primary-soft: #fbece6;
-  --color-primary-softer: #fdf5f1;
+  --color-primary: #0f7a66;
+  --color-primary-hover: #0b6857;
+  --color-primary-active: #085545;
+  --color-primary-soft: #e8f4f0;
+  --color-primary-softer: #f2f9f7;
 
-  --color-bg: #f7f4ee;
+  --color-bg: #f4f7f5;
   --color-surface: #ffffff;
-  --color-surface-2: #fcfaf6;
-  --color-sunken: #f1ece3;
-  --color-border: #e7e1d6;
-  --color-border-strong: #d4cabb;
-  --color-control: #8a8172;
+  --color-surface-2: #fafcfb;
+  --color-sunken: #edf2ef;
+  --color-border: #e0e8e4;
+  --color-border-strong: #c7d5cf;
+  --color-control: #7c8f87;
 
-  --color-ink: #0b1b2b;
-  --color-ink-secondary: #4c5661;
-  --color-ink-muted: #6b665c;
+  --color-ink: #17231f;
+  --color-ink-secondary: #4c5d57;
+  --color-ink-muted: #5f6f69;
 
-  --color-rail: #0b1b2b;
-  --color-rail-soft: #14293d;
-  --color-rail-line: #23384b;
+  --color-rail: #17231f;
+  --color-rail-soft: #20302a;
+  --color-rail-line: #2c4139;
 
-  --color-line-teal: #0e7c7b;
-  --color-line-blue: #1d4ed8;
-  --color-line-amber: #a15c00;
-  --color-line-rose: #be123c;
+  --color-line-teal: #0f7a66;
+  --color-line-blue: #2f62c4;
+  --color-line-amber: #a26800;
+  --color-line-rose: #b84a62;
 
-  --color-success: #0e7c5a;
-  --color-success-soft: #e7f5ef;
-  --color-warning: #a15c00;
-  --color-warning-soft: #fbf0df;
-  --color-danger: #b3261e;
-  --color-danger-soft: #fbeae8;
-  --color-info: #1d4ed8;
-  --color-info-soft: #edf2fe;
+  --color-success: #0f7a66;
+  --color-success-soft: #e8f4f0;
+  --color-warning: #8a5700;
+  --color-warning-soft: #fbf3e3;
+  --color-danger: #b33a32;
+  --color-danger-soft: #faebe9;
+  --color-info: #2f62c4;
+  --color-info-soft: #ecf1fb;
 
   --radius-field: 10px;
   --radius-card: 14px;
@@ -62,9 +61,9 @@
   --radius-pill: 999px;
 
   --shadow-lift:
-    0 2px 4px rgba(11, 27, 43, 0.04), 0 18px 40px -20px rgba(11, 27, 43, 0.28);
+    0 2px 4px rgba(23, 35, 31, 0.04), 0 18px 40px -20px rgba(23, 35, 31, 0.26);
   --shadow-float:
-    0 1px 2px rgba(11, 27, 43, 0.05), 0 28px 60px -28px rgba(11, 27, 43, 0.32);
+    0 1px 2px rgba(23, 35, 31, 0.05), 0 28px 60px -28px rgba(23, 35, 31, 0.30);
 
   --ease-out-expo: cubic-bezier(0.22, 1, 0.36, 1);
 }
@@ -101,7 +100,7 @@
   h4 {
     text-wrap: balance;
     color: var(--color-ink);
-    letter-spacing: -0.025em;
+    letter-spacing: -0.02em;
   }
 
   p {
@@ -121,20 +120,20 @@
 
   * {
     scrollbar-width: thin;
-    scrollbar-color: #cfc6b7 transparent;
+    scrollbar-color: #cfdad5 transparent;
   }
   *::-webkit-scrollbar {
     width: 10px;
     height: 10px;
   }
   *::-webkit-scrollbar-thumb {
-    background: #cfc6b7;
+    background: #cfdad5;
     border: 3px solid transparent;
     background-clip: content-box;
     border-radius: 999px;
   }
   *::-webkit-scrollbar-thumb:hover {
-    background: #b6ab97;
+    background: #b1c2bb;
     border: 3px solid transparent;
     background-clip: content-box;
   }
@@ -155,40 +154,40 @@
 
 :root {
   color-scheme: light;
-  --el-color-primary: #c9451f;
-  --el-color-primary-light-3: #d97d62;
-  --el-color-primary-light-5: #e49990;
-  --el-color-primary-light-7: #efc7bc;
-  --el-color-primary-light-8: #f4dad2;
-  --el-color-primary-light-9: #faece9;
-  --el-color-primary-dark-2: #a13719;
-  --el-color-danger: #b3261e;
-  --el-color-danger-light-3: #c95c55;
-  --el-color-danger-light-5: #d98f8a;
-  --el-color-danger-light-7: #e9c2bf;
-  --el-color-danger-light-8: #f0d5d3;
-  --el-color-danger-light-9: #f8eae9;
-  --el-color-danger-dark-2: #8f1e18;
-  --el-color-success: #0e7c5a;
-  --el-color-warning: #a15c00;
+  --el-color-primary: #0f7a66;
+  --el-color-primary-light-3: #57a294;
+  --el-color-primary-light-5: #87bcb2;
+  --el-color-primary-light-7: #b6d6d0;
+  --el-color-primary-light-8: #cfe4e0;
+  --el-color-primary-light-9: #e6f1ef;
+  --el-color-primary-dark-2: #0c6252;
+  --el-color-danger: #b33a32;
+  --el-color-danger-light-3: #c96f69;
+  --el-color-danger-light-5: #d99c98;
+  --el-color-danger-light-7: #eac5c2;
+  --el-color-danger-light-8: #f1d8d6;
+  --el-color-danger-light-9: #f9eceb;
+  --el-color-danger-dark-2: #8f2e28;
+  --el-color-success: #0f7a66;
+  --el-color-warning: #8a5700;
   --el-border-radius-base: 10px;
   --el-border-radius-small: 8px;
   --el-border-radius-round: 999px;
   --el-font-family: var(--font-sans);
-  --el-text-color-primary: #0b1b2b;
-  --el-text-color-regular: #4c5661;
-  --el-text-color-secondary: #6b665c;
-  --el-text-color-placeholder: #6b665c;
-  --el-border-color: #e7e1d6;
-  --el-border-color-light: #ece7de;
-  --el-border-color-lighter: #f1ece3;
+  --el-text-color-primary: #17231f;
+  --el-text-color-regular: #4c5d57;
+  --el-text-color-secondary: #5f6f69;
+  --el-text-color-placeholder: #5f6f69;
+  --el-border-color: #e0e8e4;
+  --el-border-color-light: #e9efec;
+  --el-border-color-lighter: #eff3f1;
   --el-fill-color-blank: #ffffff;
-  --el-fill-color-light: #fcfaf6;
-  --el-fill-color-lighter: #f7f4ee;
+  --el-fill-color-light: #fafcfb;
+  --el-fill-color-lighter: #f4f7f5;
   --el-bg-color: #ffffff;
-  --el-bg-color-page: #f7f4ee;
+  --el-bg-color-page: #f4f7f5;
   --el-box-shadow-light:
-    0 1px 2px rgba(11, 27, 43, 0.05), 0 20px 48px -28px rgba(11, 27, 43, 0.3);
+    0 1px 2px rgba(23, 35, 31, 0.05), 0 20px 48px -28px rgba(23, 35, 31, 0.26);
   --el-font-size-base: 14px;
 }
 
@@ -245,42 +244,42 @@
      --------------------------------------------------------------------- */
   .display {
     font-size: 32px;
-    line-height: 1.08;
-    font-weight: 800;
-    letter-spacing: -0.035em;
-  }
-  @media (min-width: 768px) {
-    .display {
-      font-size: 46px;
-    }
-  }
-  @media (min-width: 1024px) {
-    .display {
-      font-size: 52px;
-    }
-  }
-
-  .headline {
-    font-size: 24px;
-    line-height: 1.2;
+    line-height: 1.1;
     font-weight: 750;
     letter-spacing: -0.03em;
   }
   @media (min-width: 768px) {
+    .display {
+      font-size: 44px;
+    }
+  }
+  @media (min-width: 1024px) {
+    .display {
+      font-size: 46px;
+    }
+  }
+
+  .headline {
+    font-size: 23px;
+    line-height: 1.25;
+    font-weight: 700;
+    letter-spacing: -0.025em;
+  }
+  @media (min-width: 768px) {
     .headline {
-      font-size: 30px;
+      font-size: 28px;
     }
   }
 
   .section-title {
     font-size: 20px;
-    line-height: 1.3;
-    font-weight: 750;
-    letter-spacing: -0.025em;
+    line-height: 1.35;
+    font-weight: 700;
+    letter-spacing: -0.02em;
   }
   @media (min-width: 768px) {
     .section-title {
-      font-size: 24px;
+      font-size: 22px;
     }
   }
 
@@ -363,11 +362,6 @@
     border: 0;
   }
 
-  .tint-iris {
-    background: var(--color-primary-soft);
-    color: var(--color-primary-active);
-  }
-
   /* ---------------------------------------------------------------------
      Buttons
      --------------------------------------------------------------------- */
@@ -411,7 +405,7 @@
     transform: translateY(-1px);
     box-shadow:
       inset 0 1px 0 rgba(255, 255, 255, 0.16),
-      0 10px 22px -12px rgba(201, 69, 31, 0.7);
+      0 10px 22px -12px rgba(15, 122, 102, 0.7);
   }
   .btn-primary:active {
     background: var(--color-primary-active);
@@ -521,7 +515,7 @@
   }
   .chip-accent {
     background: #fbe7df;
-    color: #9c3010;
+    color: #085545;
   }
   .chip-success {
     background: var(--color-success-soft);
@@ -597,22 +591,22 @@
     justify-content: center;
     overflow: hidden;
     background:
-      radial-gradient(120% 120% at 15% 15%, #fdf3ee 0%, transparent 55%),
-      radial-gradient(110% 110% at 90% 90%, #eef4f3 0%, transparent 60%),
+      radial-gradient(120% 120% at 15% 15%, #eff8f5 0%, transparent 55%),
+      radial-gradient(110% 110% at 90% 90%, #eef6f3 0%, transparent 60%),
       var(--color-sunken);
   }
   .cover-fallback__letter {
     font-size: clamp(38px, 6vw, 58px);
     font-weight: 800;
     letter-spacing: -0.06em;
-    color: rgba(11, 27, 43, 0.16);
+    color: rgba(23, 35, 31, 0.14);
     user-select: none;
   }
   .cover-fallback__spark {
     position: absolute;
     right: 16px;
     bottom: 14px;
-    color: rgba(201, 69, 31, 0.5);
+    color: rgba(15, 122, 102, 0.5);
   }
 
   /* ---------------------------------------------------------------------
@@ -753,37 +747,15 @@
 }
 
 /* ---------------------------------------------------------------------------
-   Decorative geometry: orbits are authored SVG in components. These helpers
-   only keep the dark panels consistent.
+   Tinted orientation panel: light, fresh, still clearly a masthead.
+   Used by discipline / knowledge / learning-path headers.
    --------------------------------------------------------------------------- */
-.dark-panel {
+.panel-tint {
   position: relative;
   overflow: hidden;
-  background: var(--color-rail);
-  color: #fff;
+  background: var(--color-primary-softer);
+  border: 1px solid color-mix(in srgb, var(--color-primary) 16%, var(--color-border));
   border-radius: var(--radius-panel);
-}
-.dark-panel :is(h1, h2, h3, h4) {
-  color: #fff;
-}
-.dark-panel .lede,
-.dark-panel .muted {
-  color: rgba(255, 255, 255, 0.66);
-}
-.dark-panel .chip {
-  background: rgba(255, 255, 255, 0.1);
-  color: rgba(255, 255, 255, 0.86);
-}
-.dark-panel .chip-primary {
-  background: rgba(201, 69, 31, 0.22);
-  color: #ffb59d;
-}
-
-.orbit-art {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  color: rgba(255, 255, 255, 0.16);
 }
 
 /* ---------------------------------------------------------------------------
@@ -821,7 +793,7 @@
 .el-button--primary:hover {
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.16),
-    0 10px 22px -12px rgba(201, 69, 31, 0.7);
+    0 10px 22px -12px rgba(15, 122, 102, 0.7);
 }
 .el-button--default {
   --el-button-bg-color: var(--color-surface);
@@ -836,14 +808,14 @@
 .el-button--success {
   --el-button-bg-color: var(--color-success);
   --el-button-border-color: var(--color-success);
-  --el-button-hover-bg-color: #0a6b4e;
-  --el-button-hover-border-color: #0a6b4e;
+  --el-button-hover-bg-color: #0b6857;
+  --el-button-hover-border-color: #0b6857;
 }
 .el-button--danger {
   --el-button-bg-color: var(--color-danger);
   --el-button-border-color: var(--color-danger);
-  --el-button-hover-bg-color: #99201a;
-  --el-button-hover-border-color: #99201a;
+  --el-button-hover-bg-color: #8f2e28;
+  --el-button-hover-border-color: #8f2e28;
 }
 .el-button.is-text {
   background: transparent;
@@ -898,7 +870,7 @@
 .el-select__wrapper.is-hovering:not(.is-focused) {
   box-shadow:
     0 0 0 1px var(--color-primary) inset,
-    0 0 0 3px rgba(201, 69, 31, 0.14);
+    0 0 0 3px rgba(15, 122, 102, 0.14);
 }
 .el-input__inner,
 .el-select__placeholder {
@@ -924,7 +896,7 @@
 .el-textarea__inner:focus {
   box-shadow:
     0 0 0 1px var(--color-primary) inset,
-    0 0 0 3px rgba(201, 69, 31, 0.14);
+    0 0 0 3px rgba(15, 122, 102, 0.14);
 }
 .el-input-group__append,
 .el-input-group__prepend {
@@ -1072,8 +1044,8 @@
 
 .el-rate {
   --el-rate-fill-color: #d99a20;
-  --el-rate-void-color: #ddd5c7;
-  --el-rate-disabled-void-color: #ddd5c7;
+  --el-rate-void-color: #d9e2dd;
+  --el-rate-disabled-void-color: #d9e2dd;
   height: 22px;
 }
 .el-rate__item {
@@ -1081,7 +1053,7 @@
 }
 
 .el-skeleton {
-  --el-skeleton-color: #f1ece3;
+  --el-skeleton-color: #edf2ef;
   --el-skeleton-to-color: #f8f4ed;
 }
 .el-skeleton__item {
@@ -1220,18 +1192,6 @@
   border-radius: 12px;
   border: 1px solid var(--color-border);
   box-shadow: var(--el-box-shadow-light);
-}
-
-/* Dark rail inputs (auth or dark panels) */
-.on-dark .el-input__wrapper {
-  background: rgba(255, 255, 255, 0.08);
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.2);
-}
-.on-dark .el-input__inner {
-  color: #fff;
-}
-.on-dark .el-input__inner::placeholder {
-  color: rgba(255, 255, 255, 0.55);
 }
 
 /* ---------------------------------------------------------------------------
